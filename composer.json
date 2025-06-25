@@ -1,0 +1,142 @@
+{
+    "name": "eprofos/reverse-engineering-bundle",
+    "description": "Bundle Symfony professionnel pour l'ingénierie inverse de base de données - Génération automatique d'entités Doctrine à partir de bases de données existantes",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "symfony",
+        "doctrine",
+        "reverse-engineering",
+        "database",
+        "entity-generation",
+        "orm",
+        "mysql",
+        "postgresql",
+        "sqlite",
+        "code-generation",
+        "legacy-migration",
+        "database-migration"
+    ],
+    "homepage": "https://github.com/eprofos/reverse-engineering-bundle",
+    "readme": "README.md",
+    "authors": [
+        {
+            "name": "Eprofos Team",
+            "email": "contact@eprofos.com",
+            "homepage": "https://eprofos.com",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/eprofos/reverse-engineering-bundle/issues",
+        "source": "https://github.com/eprofos/reverse-engineering-bundle",
+        "docs": "https://github.com/eprofos/reverse-engineering-bundle#readme",
+        "wiki": "https://github.com/eprofos/reverse-engineering-bundle/wiki"
+    },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/eprofos"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "symfony/framework-bundle": "^7.0",
+        "symfony/console": "^7.0",
+        "symfony/config": "^7.0",
+        "symfony/dependency-injection": "^7.0",
+        "symfony/http-kernel": "^7.0",
+        "doctrine/dbal": "^3.0",
+        "doctrine/orm": "^2.15",
+        "doctrine/doctrine-bundle": "^2.10",
+        "twig/twig": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "symfony/phpunit-bridge": "^7.0",
+        "phpstan/phpstan": "^1.10",
+        "friendsofphp/php-cs-fixer": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "symfony/flex": true,
+            "symfony/runtime": true
+        }
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "7.0.*"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": [
+            "phpunit"
+        ],
+        "test-coverage": [
+            "phpunit --coverage-html=coverage/html --coverage-text --coverage-clover=coverage/clover.xml"
+        ],
+        "test-unit": [
+            "phpunit --testsuite=Unit"
+        ],
+        "test-integration": [
+            "phpunit --testsuite=Integration"
+        ],
+        "test-performance": [
+            "phpunit --testsuite=Performance"
+        ],
+        "cs-check": [
+            "php-cs-fixer fix --dry-run --diff"
+        ],
+        "cs-fix": [
+            "php-cs-fixer fix"
+        ],
+        "phpstan": [
+            "phpstan analyse src --level=8"
+        ],
+        "phpstan-baseline": [
+            "phpstan analyse src --level=8 --generate-baseline"
+        ],
+        "quality": [
+            "@phpstan",
+            "@cs-check",
+            "@test"
+        ],
+        "validate": [
+            "@quality",
+            "@test-coverage"
+        ],
+        "post-install-cmd": [
+            "@php bin/console cache:clear --env=test --no-warmup || true"
+        ],
+        "post-update-cmd": [
+            "@php bin/console cache:clear --env=test --no-warmup || true"
+        ]
+    },
+    "scripts-descriptions": {
+        "test": "Exécute tous les tests",
+        "test-coverage": "Exécute les tests avec rapport de couverture",
+        "test-unit": "Exécute uniquement les tests unitaires",
+        "test-integration": "Exécute uniquement les tests d'intégration",
+        "test-performance": "Exécute uniquement les tests de performance",
+        "cs-check": "Vérifie le style de code sans modification",
+        "cs-fix": "Corrige automatiquement le style de code",
+        "phpstan": "Analyse statique du code",
+        "phpstan-baseline": "Génère une baseline PHPStan",
+        "quality": "Vérifie la qualité globale du code",
+        "validate": "Validation complète du projet"
+    }
+}

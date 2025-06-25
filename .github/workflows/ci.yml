@@ -1,0 +1,459 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  PHP_VERSION: '8.2'
+
+jobs:
+  tests:
+    name: Tests (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+        
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+          
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: pdo, mysql, pgsql, sqlite3, mbstring, xml, ctype, iconv, intl, dom, filter, gd, json
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup test databases
+        run: |
+          # MySQL
+          mysql -h 127.0.0.1 -u root -proot -e "
+            CREATE TABLE users (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              email VARCHAR(255) NOT NULL UNIQUE,
+              first_name VARCHAR(100),
+              last_name VARCHAR(100),
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE posts (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              title VARCHAR(255) NOT NULL,
+              content TEXT,
+              user_id INT,
+              published_at DATETIME,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+          " test_db
+          
+          # PostgreSQL
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d test_db -c "
+            CREATE TABLE categories (
+              id SERIAL PRIMARY KEY,
+              name VARCHAR(255) NOT NULL,
+              description TEXT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE products (
+              id SERIAL PRIMARY KEY,
+              name VARCHAR(255) NOT NULL,
+              price DECIMAL(10,2),
+              category_id INTEGER REFERENCES categories(id),
+              is_active BOOLEAN DEFAULT TRUE
+            );
+          "
+
+      - name: Run PHPUnit tests
+        run: |
+          ./run-tests.sh
+        env:
+          DATABASE_URL_MYSQL: "mysql://root:root@127.0.0.1:3306/test_db"
+          DATABASE_URL_PGSQL: "postgresql://postgres:postgres@127.0.0.1:5432/test_db"
+          DATABASE_URL_SQLITE: "sqlite:///:memory:"
+
+      - name: Upload coverage reports
+        if: matrix.php-version == '8.2'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/clover.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, mysql, pgsql, sqlite3, mbstring, xml, ctype, iconv, intl
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run PHPStan
+        run: composer phpstan
+
+      - name: Check code style
+        run: composer cs-check
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Security check
+        uses: symfonycorp/security-checker-action@v5
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [tests, code-quality]
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: integration_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, mysql, pgsql, sqlite3, mbstring, xml, ctype, iconv, intl
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup complex test database
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "
+            -- E-commerce schema for integration tests
+            CREATE TABLE categories (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(255) NOT NULL,
+              slug VARCHAR(255) UNIQUE,
+              parent_id INT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (parent_id) REFERENCES categories(id)
+            );
+            
+            CREATE TABLE products (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(255) NOT NULL,
+              slug VARCHAR(255) UNIQUE,
+              description TEXT,
+              price DECIMAL(10,2) NOT NULL,
+              stock_quantity INT DEFAULT 0,
+              category_id INT NOT NULL,
+              is_active BOOLEAN DEFAULT TRUE,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              FOREIGN KEY (category_id) REFERENCES categories(id)
+            );
+            
+            CREATE TABLE customers (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              email VARCHAR(255) NOT NULL UNIQUE,
+              first_name VARCHAR(100),
+              last_name VARCHAR(100),
+              phone VARCHAR(20),
+              birth_date DATE,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE TABLE orders (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              customer_id INT NOT NULL,
+              order_number VARCHAR(50) UNIQUE,
+              status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
+              total_amount DECIMAL(10,2) NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (customer_id) REFERENCES customers(id)
+            );
+            
+            CREATE TABLE order_items (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              order_id INT NOT NULL,
+              product_id INT NOT NULL,
+              quantity INT NOT NULL,
+              unit_price DECIMAL(10,2) NOT NULL,
+              total_price DECIMAL(10,2) NOT NULL,
+              FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+              FOREIGN KEY (product_id) REFERENCES products(id)
+            );
+            
+            -- Insert test data
+            INSERT INTO categories (name, slug) VALUES 
+              ('Electronics', 'electronics'),
+              ('Books', 'books'),
+              ('Clothing', 'clothing');
+              
+            INSERT INTO products (name, slug, price, category_id) VALUES
+              ('Laptop', 'laptop', 999.99, 1),
+              ('PHP Book', 'php-book', 29.99, 2),
+              ('T-Shirt', 't-shirt', 19.99, 3);
+              
+            INSERT INTO customers (email, first_name, last_name) VALUES
+              ('john@example.com', 'John', 'Doe'),
+              ('jane@example.com', 'Jane', 'Smith');
+          " integration_test
+
+      - name: Run integration tests
+        run: |
+          php bin/console reverse:generate \
+            --dry-run \
+            --verbose \
+            --env=test
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/integration_test
+
+      - name: Generate and validate entities
+        run: |
+          # Generate all entities
+          php bin/console reverse:generate \
+            --namespace="App\\Entity\\Generated" \
+            --output-dir="src/Entity/Generated" \
+            --force \
+            --env=test
+            
+          # Validate generated PHP syntax
+          find src/Entity/Generated -name "*.php" -exec php -l {} \;
+          
+          # Count generated files
+          ENTITY_COUNT=$(find src/Entity/Generated -name "*.php" | wc -l)
+          echo "Generated $ENTITY_COUNT entity files"
+          
+          if [ $ENTITY_COUNT -lt 5 ]; then
+            echo "Error: Expected at least 5 entities, got $ENTITY_COUNT"
+            exit 1
+          fi
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/integration_test
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [tests]
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: perf_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, mysql, mbstring, xml, ctype, iconv, intl
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup performance test database
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "
+            -- Create tables with many columns for performance testing
+            CREATE TABLE large_table (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              col1 VARCHAR(255), col2 VARCHAR(255), col3 VARCHAR(255), col4 VARCHAR(255), col5 VARCHAR(255),
+              col6 VARCHAR(255), col7 VARCHAR(255), col8 VARCHAR(255), col9 VARCHAR(255), col10 VARCHAR(255),
+              col11 TEXT, col12 TEXT, col13 TEXT, col14 TEXT, col15 TEXT,
+              col16 INT, col17 INT, col18 INT, col19 INT, col20 INT,
+              col21 DECIMAL(10,2), col22 DECIMAL(10,2), col23 DECIMAL(10,2), col24 DECIMAL(10,2), col25 DECIMAL(10,2),
+              col26 DATETIME, col27 DATETIME, col28 DATETIME, col29 DATETIME, col30 DATETIME,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          " perf_test
+          
+          # Create multiple tables for batch testing
+          for i in {1..20}; do
+            mysql -h 127.0.0.1 -u root -proot -e "
+              CREATE TABLE test_table_$i (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                value DECIMAL(10,2),
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+            " perf_test
+          done
+
+      - name: Run performance tests
+        run: |
+          echo "Testing large table generation..."
+          time php bin/console reverse:generate \
+            --tables=large_table \
+            --dry-run \
+            --env=test
+            
+          echo "Testing batch generation..."
+          time php bin/console reverse:generate \
+            --dry-run \
+            --env=test
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/perf_test
+
+      - name: Memory usage test
+        run: |
+          php -d memory_limit=128M bin/console reverse:generate \
+            --dry-run \
+            --env=test
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/perf_test
+
+  build-and-package:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    needs: [tests, code-quality, security]
+    if: github.event_name == 'release'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Create release archive
+        run: |
+          # Create clean archive without dev dependencies
+          tar -czf reverse-engineering-bundle-${{ github.event.release.tag_name }}.tar.gz \
+            --exclude='.git*' \
+            --exclude='tests' \
+            --exclude='coverage' \
+            --exclude='.phpunit*' \
+            --exclude='phpunit.xml' \
+            .
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./reverse-engineering-bundle-${{ github.event.release.tag_name }}.tar.gz
+          asset_name: reverse-engineering-bundle-${{ github.event.release.tag_name }}.tar.gz
+          asset_content_type: application/gzip
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [tests, code-quality, security, integration-tests]
+    if: always()
+    
+    steps:
+      - name: Notify success
+        if: ${{ needs.tests.result == 'success' && needs.code-quality.result == 'success' && needs.security.result == 'success' && needs.integration-tests.result == 'success' }}
+        run: |
+          echo "✅ All checks passed successfully!"
+          
+      - name: Notify failure
+        if: ${{ needs.tests.result == 'failure' || needs.code-quality.result == 'failure' || needs.security.result == 'failure' || needs.integration-tests.result == 'failure' }}
+        run: |
+          echo "❌ Some checks failed!"
+          echo "Tests: ${{ needs.tests.result }}"
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Security: ${{ needs.security.result }}"
+          echo "Integration: ${{ needs.integration-tests.result }}"

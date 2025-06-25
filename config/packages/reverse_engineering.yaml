@@ -1,0 +1,55 @@
+# Configuration du ReverseEngineeringBundle
+reverse_engineering:
+    # Configuration de la base de données
+    database:
+        # Driver de base de données (pdo_mysql, pdo_pgsql, pdo_sqlite)
+        driver: pdo_mysql
+        
+        # Paramètres de connexion
+        host: localhost
+        port: 3306
+        dbname: your_database_name
+        user: your_username
+        password: your_password
+        charset: utf8mb4
+        
+        # Pour PostgreSQL, utilisez :
+        # driver: pdo_pgsql
+        # port: 5432
+        # charset: utf8
+        
+        # Pour SQLite, utilisez :
+        # driver: pdo_sqlite
+        # path: '%kernel.project_dir%/var/data.db'
+    
+    # Configuration de la génération
+    generation:
+        # Namespace des entités générées
+        namespace: App\Entity
+        
+        # Répertoire de sortie des entités
+        output_dir: src/Entity
+        
+        # Générer les classes Repository
+        generate_repository: true
+        
+        # Utiliser les annotations au lieu des attributs PHP 8
+        use_annotations: false
+        
+        # Tables spécifiques à traiter (toutes si vide)
+        tables: []
+        # Exemple pour traiter seulement certaines tables :
+        # tables:
+        #     - users
+        #     - products
+        #     - orders
+        
+        # Tables à exclure du traitement
+        exclude_tables:
+            - doctrine_migration_versions
+            - messenger_messages
+        # Exemple d'exclusions supplémentaires :
+        # exclude_tables:
+        #     - cache_items
+        #     - sessions
+        #     - logs

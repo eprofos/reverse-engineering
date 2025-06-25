@@ -1,0 +1,45 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Services principaux du bundle
+    App\Service\ReverseEngineeringService:
+        arguments:
+            $config: '%reverse_engineering.config%'
+
+    App\Service\DatabaseAnalyzer:
+        arguments:
+            $databaseConfig: '%reverse_engineering.config.database%'
+
+    App\Service\MetadataExtractor: ~
+
+    App\Service\EntityGenerator:
+        arguments:
+            $config: '%reverse_engineering.config.generation%'
+
+    App\Service\FileWriter:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $config: '%reverse_engineering.config.generation%'
+
+    # Commande CLI
+    App\Command\ReverseGenerateCommand:
+        tags:
+            - { name: 'console.command' }
+
+    # Configuration Twig pour la génération d'entités
+    reverse_engineering.twig:
+        class: Twig\Environment
+        arguments:
+            - '@reverse_engineering.twig_loader'
+            - { cache: false, debug: true }
+
+    reverse_engineering.twig_loader:
+        class: Twig\Loader\FilesystemLoader
+        arguments:
+            - '%kernel.project_dir%/src/Resources/templates'
+
+    # Alias pour l'injection dans EntityGenerator
+    Twig\Environment: '@reverse_engineering.twig'
