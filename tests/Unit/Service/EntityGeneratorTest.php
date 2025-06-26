@@ -622,8 +622,8 @@ class EntityGeneratorTest extends TestCase
                 if ($template === 'entity.php.twig') {
                     $imports = $data['imports'];
                     $this->assertContains('DateTimeInterface', $imports);
-                    $this->assertContains('Doctrine\\ORM\\Mapping\\ManyToOne', $imports);
-                    $this->assertContains('Doctrine\\ORM\\Mapping\\JoinColumn', $imports);
+                    $this->assertContains('Doctrine\\ORM\\Mapping as ORM', $imports);
+                    $this->assertContains('App\\Repository\\ArticleRepository', $imports);
 
                     return $expectedCode;
                 }

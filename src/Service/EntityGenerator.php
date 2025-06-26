@@ -69,6 +69,16 @@ class EntityGenerator
         $properties = $this->prepareProperties($metadata['columns'], $metadata['primary_key']);
 
         $namespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
+        
+        // Generate base imports
+        $imports = $this->generateImports($metadata, $useAnnotations);
+        
+        // Add repository import if repository is being generated
+        $generateRepository = $options['generate_repository'] ?? $this->config['generate_repository'] ?? true;
+        if ($generateRepository && !empty($metadata['repository_name'])) {
+            $repositoryNamespace = str_replace('\\Entity', '\\Repository', $namespace);
+            $imports[] = $repositoryNamespace . '\\' . $metadata['repository_name'];
+        }
 
         return [
             'entity_name'     => $metadata['entity_name'],
@@ -79,7 +89,7 @@ class EntityGenerator
             'properties'      => $properties,
             'relations'       => $this->prepareRelations($metadata['relations'], $namespace),
             'indexes'         => $metadata['indexes'],
-            'imports'         => $this->generateImports($metadata, $useAnnotations),
+            'imports'         => array_unique($imports),
             'constants'       => $this->generateConstants($properties),
         ];
     }
@@ -153,31 +163,14 @@ class EntityGenerator
     {
         $imports = [];
 
-        if ($useAnnotations) {
-            $imports[] = 'Doctrine\\ORM\\Mapping as ORM';
-        } else {
-            $imports[] = 'Doctrine\\ORM\\Mapping as ORM';
-            $imports[] = 'Doctrine\\ORM\\Mapping\\Entity';
-            $imports[] = 'Doctrine\\ORM\\Mapping\\Table';
-            $imports[] = 'Doctrine\\ORM\\Mapping\\Column';
-            $imports[] = 'Doctrine\\ORM\\Mapping\\Id';
-            $imports[] = 'Doctrine\\ORM\\Mapping\\GeneratedValue';
-        }
+        // Always use the unified ORM import for both annotation and attribute modes
+        $imports[] = 'Doctrine\\ORM\\Mapping as ORM';
 
         // Add imports for date types
         foreach ($metadata['columns'] as $column) {
             if ($column['type'] === '\DateTimeInterface') {
                 $imports[] = 'DateTimeInterface';
                 break;
-            }
-        }
-
-        // Add imports for relations
-        if (! empty($metadata['relations'])) {
-            if (! $useAnnotations) {
-                $imports[] = 'Doctrine\\ORM\\Mapping\\ManyToOne';
-                $imports[] = 'Doctrine\\ORM\\Mapping\\OneToMany';
-                $imports[] = 'Doctrine\\ORM\\Mapping\\JoinColumn';
             }
         }
 

@@ -14,11 +14,11 @@ use {{ import }};
  */
 {% if use_annotations %}
 /**
- * @ORM\Entity(repositoryClass="{{ namespace|replace({'\\Entity': '\\Repository'}) }}\{{ repository_name }}")
+ * @ORM\Entity(repositoryClass="{{ repository_name }}")
  * @ORM\Table(name="{{ table_name }}")
  */
 {% else %}
-#[ORM\Entity(repositoryClass: {{ namespace|replace({'\\Entity': '\\Repository'}) }}\{{ repository_name }}::class)]
+#[ORM\Entity(repositoryClass: {{ repository_name }}::class)]
 #[ORM\Table(name: '{{ table_name }}')]
 {% endif %}
 class {{ entity_name }}
