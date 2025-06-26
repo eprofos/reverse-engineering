@@ -42,6 +42,7 @@ class EntityGenerator
                 'code'       => $entityCode,
                 'properties' => $entityData['properties'],
                 'relations'  => $entityData['relations'],
+                'has_lifecycle_callbacks' => $entityData['has_lifecycle_callbacks'],
             ];
 
             // Generate repository if requested
@@ -70,8 +71,11 @@ class EntityGenerator
 
         $namespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
         
+        // Check if any properties need lifecycle callbacks
+        $hasLifecycleCallbacks = $this->hasLifecycleCallbacks($properties);
+        
         // Generate base imports
-        $imports = $this->generateImports($metadata, $useAnnotations);
+        $imports = $this->generateImports($metadata, $useAnnotations, $hasLifecycleCallbacks);
         
         // Add repository import if repository is being generated
         $generateRepository = $options['generate_repository'] ?? $this->config['generate_repository'] ?? true;
@@ -91,6 +95,7 @@ class EntityGenerator
             'indexes'         => $metadata['indexes'],
             'imports'         => array_unique($imports),
             'constants'       => $this->generateConstants($properties),
+            'has_lifecycle_callbacks' => $hasLifecycleCallbacks,
         ];
     }
 
@@ -122,6 +127,7 @@ class EntityGenerator
                 'is_primary'     => in_array($column['name'], $primaryKey, true),
                 'getter_name'    => $this->generateGetterName($column['property_name']),
                 'setter_name'    => $this->generateSetterName($column['property_name']),
+                'needs_lifecycle_callback' => $column['needs_lifecycle_callback'] ?? false,
             ];
 
             $properties[] = $property;
@@ -159,7 +165,7 @@ class EntityGenerator
     /**
      * Generates necessary imports for the entity.
      */
-    private function generateImports(array $metadata, bool $useAnnotations): array
+    private function generateImports(array $metadata, bool $useAnnotations, bool $hasLifecycleCallbacks = false): array
     {
         $imports = [];
 
@@ -172,6 +178,11 @@ class EntityGenerator
                 $imports[] = 'DateTimeInterface';
                 break;
             }
+        }
+
+        // Add DateTime import if lifecycle callbacks are needed
+        if ($hasLifecycleCallbacks) {
+            $imports[] = 'DateTime';
         }
 
         return array_unique($imports);
@@ -266,5 +277,19 @@ class EntityGenerator
         }
 
         return $constants;
+    }
+
+    /**
+     * Checks if any properties need lifecycle callbacks.
+     */
+    private function hasLifecycleCallbacks(array $properties): bool
+    {
+        foreach ($properties as $property) {
+            if ($property['needs_lifecycle_callback'] ?? false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

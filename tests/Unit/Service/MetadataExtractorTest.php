@@ -341,4 +341,227 @@ class MetadataExtractorTest extends TestCase
             );
         }
     }
+
+    public function testNeedsLifecycleCallbackWithCurrentTimestampOnDatetime(): void
+    {
+        // Arrange
+        $tableName = 'test_lifecycle';
+        $tableDetails = [
+            'name' => 'test_lifecycle',
+            'columns' => [
+                [
+                    'name' => 'created_at',
+                    'type' => 'datetime',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => 'CURRENT_TIMESTAMP',
+                    'auto_increment' => false,
+                    'comment' => '',
+                ],
+            ],
+            'indexes' => [],
+            'foreign_keys' => [],
+            'primary_key' => [],
+        ];
+
+        $this->databaseAnalyzer
+            ->method('getTableDetails')
+            ->willReturn($tableDetails);
+
+        // Act
+        $result = $this->metadataExtractor->extractTableMetadata($tableName);
+
+        // Assert
+        $createdAtColumn = $result['columns'][0];
+        $this->assertTrue($createdAtColumn['needs_lifecycle_callback']);
+    }
+
+    public function testNeedsLifecycleCallbackWithCurrentTimestampOnTimestamp(): void
+    {
+        // Arrange
+        $tableName = 'test_lifecycle';
+        $tableDetails = [
+            'name' => 'test_lifecycle',
+            'columns' => [
+                [
+                    'name' => 'updated_at',
+                    'type' => 'timestamp',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => 'CURRENT_TIMESTAMP',
+                    'auto_increment' => false,
+                    'comment' => '',
+                ],
+            ],
+            'indexes' => [],
+            'foreign_keys' => [],
+            'primary_key' => [],
+        ];
+
+        $this->databaseAnalyzer
+            ->method('getTableDetails')
+            ->willReturn($tableDetails);
+
+        // Act
+        $result = $this->metadataExtractor->extractTableMetadata($tableName);
+
+        // Assert
+        $updatedAtColumn = $result['columns'][0];
+        $this->assertTrue($updatedAtColumn['needs_lifecycle_callback']);
+    }
+
+    public function testNeedsLifecycleCallbackWithNonCurrentTimestampDefault(): void
+    {
+        // Arrange
+        $tableName = 'test_lifecycle';
+        $tableDetails = [
+            'name' => 'test_lifecycle',
+            'columns' => [
+                [
+                    'name' => 'created_at',
+                    'type' => 'datetime',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => '2023-01-01 00:00:00',
+                    'auto_increment' => false,
+                    'comment' => '',
+                ],
+            ],
+            'indexes' => [],
+            'foreign_keys' => [],
+            'primary_key' => [],
+        ];
+
+        $this->databaseAnalyzer
+            ->method('getTableDetails')
+            ->willReturn($tableDetails);
+
+        // Act
+        $result = $this->metadataExtractor->extractTableMetadata($tableName);
+
+        // Assert
+        $createdAtColumn = $result['columns'][0];
+        $this->assertFalse($createdAtColumn['needs_lifecycle_callback']);
+    }
+
+    public function testNeedsLifecycleCallbackWithCurrentTimestampOnNonDatetimeColumn(): void
+    {
+        // Arrange
+        $tableName = 'test_lifecycle';
+        $tableDetails = [
+            'name' => 'test_lifecycle',
+            'columns' => [
+                [
+                    'name' => 'status',
+                    'type' => 'string',
+                    'nullable' => false,
+                    'length' => 255,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => 'CURRENT_TIMESTAMP',
+                    'auto_increment' => false,
+                    'comment' => '',
+                ],
+            ],
+            'indexes' => [],
+            'foreign_keys' => [],
+            'primary_key' => [],
+        ];
+
+        $this->databaseAnalyzer
+            ->method('getTableDetails')
+            ->willReturn($tableDetails);
+
+        // Act
+        $result = $this->metadataExtractor->extractTableMetadata($tableName);
+
+        // Assert
+        $statusColumn = $result['columns'][0];
+        $this->assertFalse($statusColumn['needs_lifecycle_callback']);
+    }
+
+    public function testNeedsLifecycleCallbackWithMixedColumns(): void
+    {
+        // Arrange
+        $tableName = 'test_mixed_lifecycle';
+        $tableDetails = [
+            'name' => 'test_mixed_lifecycle',
+            'columns' => [
+                [
+                    'name' => 'id',
+                    'type' => 'integer',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => true,
+                    'comment' => '',
+                ],
+                [
+                    'name' => 'created_at',
+                    'type' => 'datetime',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => 'CURRENT_TIMESTAMP',
+                    'auto_increment' => false,
+                    'comment' => '',
+                ],
+                [
+                    'name' => 'updated_at',
+                    'type' => 'timestamp',
+                    'nullable' => true,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => false,
+                    'comment' => '',
+                ],
+                [
+                    'name' => 'name',
+                    'type' => 'string',
+                    'nullable' => false,
+                    'length' => 255,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => false,
+                    'comment' => '',
+                ],
+            ],
+            'indexes' => [],
+            'foreign_keys' => [],
+            'primary_key' => ['id'],
+        ];
+
+        $this->databaseAnalyzer
+            ->method('getTableDetails')
+            ->willReturn($tableDetails);
+
+        // Act
+        $result = $this->metadataExtractor->extractTableMetadata($tableName);
+
+        // Assert
+        $this->assertCount(4, $result['columns']);
+        
+        // Check each column's lifecycle callback requirement
+        $columnsByName = [];
+        foreach ($result['columns'] as $column) {
+            $columnsByName[$column['name']] = $column;
+        }
+
+        $this->assertFalse($columnsByName['id']['needs_lifecycle_callback']);
+        $this->assertTrue($columnsByName['created_at']['needs_lifecycle_callback']);
+        $this->assertFalse($columnsByName['updated_at']['needs_lifecycle_callback']);
+        $this->assertFalse($columnsByName['name']['needs_lifecycle_callback']);
+    }
 }

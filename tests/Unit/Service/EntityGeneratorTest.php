@@ -641,4 +641,218 @@ class EntityGeneratorTest extends TestCase
         // Assert
         $this->assertIsArray($result);
     }
+
+    public function testHasLifecycleCallbacksWithCurrentTimestampProperties(): void
+    {
+        // Arrange
+        $tableName = 'test_lifecycle';
+        $metadata = [
+            'entity_name' => 'TestLifecycle',
+            'table_name' => 'test_lifecycle',
+            'repository_name' => 'TestLifecycleRepository',
+            'columns' => [
+                [
+                    'name' => 'id',
+                    'property_name' => 'id',
+                    'type' => 'int',
+                    'doctrine_type' => 'integer',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => true,
+                    'comment' => '',
+                    'is_foreign_key' => false,
+                    'needs_lifecycle_callback' => false,
+                ],
+                [
+                    'name' => 'created_at',
+                    'property_name' => 'createdAt',
+                    'type' => '\DateTimeInterface',
+                    'doctrine_type' => 'datetime',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => 'CURRENT_TIMESTAMP',
+                    'auto_increment' => false,
+                    'comment' => '',
+                    'is_foreign_key' => false,
+                    'needs_lifecycle_callback' => true,
+                ],
+            ],
+            'relations' => [],
+            'indexes' => [],
+            'primary_key' => ['id'],
+        ];
+
+        $expectedCode = '<?php class TestLifecycle {}';
+
+        $this->twig
+            ->expects($this->exactly(2))
+            ->method('render')
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    $this->assertTrue($data['has_lifecycle_callbacks']);
+                    $this->assertContains('DateTime', $data['imports']);
+                    return $expectedCode;
+                }
+
+                if ($template === 'repository.php.twig') {
+                    return '<?php class TestLifecycleRepository {}';
+                }
+
+                return '';
+            });
+
+        // Act
+        $result = $this->entityGenerator->generateEntity($tableName, $metadata);
+
+        // Assert
+        $this->assertTrue($result['has_lifecycle_callbacks']);
+        $this->assertCount(2, $result['properties']);
+        
+        // Check that the property with lifecycle callback is correctly marked
+        $createdAtProperty = null;
+        foreach ($result['properties'] as $property) {
+            if ($property['name'] === 'createdAt') {
+                $createdAtProperty = $property;
+                break;
+            }
+        }
+        
+        $this->assertNotNull($createdAtProperty);
+        $this->assertTrue($createdAtProperty['needs_lifecycle_callback']);
+    }
+
+    public function testHasLifecycleCallbacksWithoutCurrentTimestampProperties(): void
+    {
+        // Arrange
+        $tableName = 'test_no_lifecycle';
+        $metadata = [
+            'entity_name' => 'TestNoLifecycle',
+            'table_name' => 'test_no_lifecycle',
+            'repository_name' => 'TestNoLifecycleRepository',
+            'columns' => [
+                [
+                    'name' => 'id',
+                    'property_name' => 'id',
+                    'type' => 'int',
+                    'doctrine_type' => 'integer',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => true,
+                    'comment' => '',
+                    'is_foreign_key' => false,
+                    'needs_lifecycle_callback' => false,
+                ],
+                [
+                    'name' => 'name',
+                    'property_name' => 'name',
+                    'type' => 'string',
+                    'doctrine_type' => 'string',
+                    'nullable' => false,
+                    'length' => 255,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => false,
+                    'comment' => '',
+                    'is_foreign_key' => false,
+                    'needs_lifecycle_callback' => false,
+                ],
+            ],
+            'relations' => [],
+            'indexes' => [],
+            'primary_key' => ['id'],
+        ];
+
+        $expectedCode = '<?php class TestNoLifecycle {}';
+
+        $this->twig
+            ->expects($this->exactly(2))
+            ->method('render')
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    $this->assertFalse($data['has_lifecycle_callbacks']);
+                    $this->assertNotContains('DateTime', $data['imports']);
+                    return $expectedCode;
+                }
+
+                if ($template === 'repository.php.twig') {
+                    return '<?php class TestNoLifecycleRepository {}';
+                }
+
+                return '';
+            });
+
+        // Act
+        $result = $this->entityGenerator->generateEntity($tableName, $metadata);
+
+        // Assert
+        $this->assertFalse($result['has_lifecycle_callbacks']);
+    }
+
+    public function testGenerateImportsIncludesDateTimeForLifecycleCallbacks(): void
+    {
+        // Arrange
+        $tableName = 'test_datetime_import';
+        $metadata = [
+            'entity_name' => 'TestDateTimeImport',
+            'table_name' => 'test_datetime_import',
+            'repository_name' => 'TestDateTimeImportRepository',
+            'columns' => [
+                [
+                    'name' => 'created_at',
+                    'property_name' => 'createdAt',
+                    'type' => '\DateTimeInterface',
+                    'doctrine_type' => 'datetime',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => 'CURRENT_TIMESTAMP',
+                    'auto_increment' => false,
+                    'comment' => '',
+                    'is_foreign_key' => false,
+                    'needs_lifecycle_callback' => true,
+                ],
+            ],
+            'relations' => [],
+            'indexes' => [],
+            'primary_key' => [],
+        ];
+
+        $expectedCode = '<?php class TestDateTimeImport {}';
+
+        $this->twig
+            ->expects($this->exactly(2))
+            ->method('render')
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    $imports = $data['imports'];
+                    $this->assertContains('DateTimeInterface', $imports);
+                    $this->assertContains('DateTime', $imports);
+                    $this->assertContains('Doctrine\\ORM\\Mapping as ORM', $imports);
+                    $this->assertTrue($data['has_lifecycle_callbacks']);
+                    return $expectedCode;
+                }
+
+                if ($template === 'repository.php.twig') {
+                    return '<?php class TestDateTimeImportRepository {}';
+                }
+
+                return '';
+            });
+
+        // Act
+        $result = $this->entityGenerator->generateEntity($tableName, $metadata);
+
+        // Assert
+        $this->assertTrue($result['has_lifecycle_callbacks']);
+    }
 }

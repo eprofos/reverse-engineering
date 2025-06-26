@@ -16,10 +16,16 @@ use {{ import }};
 /**
  * @ORM\Entity(repositoryClass="{{ repository_name }}")
  * @ORM\Table(name="{{ table_name }}")
+{% if has_lifecycle_callbacks %}
+ * @ORM\HasLifecycleCallbacks
+{% endif %}
  */
 {% else %}
 #[ORM\Entity(repositoryClass: {{ repository_name }}::class)]
 #[ORM\Table(name: '{{ table_name }}')]
+{% if has_lifecycle_callbacks %}
+#[ORM\HasLifecycleCallbacks]
+{% endif %}
 {% endif %}
 class {{ entity_name }}
 {
@@ -132,4 +138,27 @@ class {{ entity_name }}
     }
 
 {% endfor %}
+{% if has_lifecycle_callbacks %}
+{% for property in properties %}
+{% if property.needs_lifecycle_callback %}
+    /**
+     * PrePersist lifecycle callback for {{ property.name }}
+     */
+{% if use_annotations %}
+    /**
+     * @ORM\PrePersist
+     */
+{% else %}
+    #[ORM\PrePersist]
+{% endif %}
+    public function prePersist{{ property.name|title }}(): void
+    {
+        if ($this->{{ property.name }} === null) {
+            $this->{{ property.name }} = new DateTime();
+        }
+    }
+
+{% endif %}
+{% endfor %}
+{% endif %}
 }

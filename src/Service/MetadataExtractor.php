@@ -95,6 +95,7 @@ class MetadataExtractor
                 'comment'        => $column['comment'],
                 'is_primary'     => $isPrimaryKey,
                 'is_foreign_key' => in_array($column['name'], $foreignKeyColumns, true),
+                'needs_lifecycle_callback' => $this->needsLifecycleCallback($column),
             ];
 
             // Add ENUM/SET information if available
@@ -397,5 +398,19 @@ class MetadataExtractor
         }
 
         return $setComment;
+    }
+
+    /**
+     * Determines if a column needs lifecycle callback for CURRENT_TIMESTAMP handling.
+     */
+    private function needsLifecycleCallback(array $column): bool
+    {
+        // Check if column has CURRENT_TIMESTAMP default and is a datetime/timestamp type
+        if ($column['default'] === 'CURRENT_TIMESTAMP') {
+            $doctrineType = $this->mapDatabaseTypeToDoctrineType($column['type']);
+            return in_array($doctrineType, ['datetime', 'timestamp'], true);
+        }
+
+        return false;
     }
 }
