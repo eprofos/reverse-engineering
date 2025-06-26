@@ -6,7 +6,9 @@ namespace App\Tests\Unit\Exception;
 
 use App\Exception\EntityGenerationException;
 use App\Exception\ReverseEngineeringException;
+use Exception;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 /**
  * Tests unitaires pour EntityGenerationException.
@@ -43,7 +45,7 @@ class EntityGenerationExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Template Twig invalide';
-        $code = 1001;
+        $code    = 1001;
 
         // Act
         $exception = new EntityGenerationException($message, $code);
@@ -57,8 +59,8 @@ class EntityGenerationExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message = 'Erreur de génération d\'entité';
-        $code = 500;
+        $message  = 'Erreur de génération d\'entité';
+        $code     = 500;
         $previous = new \Twig\Error\SyntaxError('Template syntax error');
 
         // Act
@@ -77,8 +79,8 @@ class EntityGenerationExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertInstanceOf(\Exception::class, $exception);
-        $this->assertInstanceOf(\Throwable::class, $exception);
+        $this->assertInstanceOf(Exception::class, $exception);
+        $this->assertInstanceOf(Throwable::class, $exception);
     }
 
     public function testExceptionCanBeThrown(): void
@@ -95,7 +97,7 @@ class EntityGenerationExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Entity generation failed';
-        $caught = false;
+        $caught  = false;
 
         // Act
         try {

@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Service\ReverseEngineeringService;
+use App\Exception\ReverseEngineeringException;
 use App\Service\DatabaseAnalyzer;
-use App\Service\MetadataExtractor;
 use App\Service\EntityGenerator;
 use App\Service\FileWriter;
-use App\Exception\ReverseEngineeringException;
-use PHPUnit\Framework\TestCase;
+use App\Service\MetadataExtractor;
+use App\Service\ReverseEngineeringService;
+use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Tests unitaires pour ReverseEngineeringService.
@@ -19,23 +20,27 @@ use PHPUnit\Framework\MockObject\MockObject;
 class ReverseEngineeringServiceTest extends TestCase
 {
     private ReverseEngineeringService $service;
+
     private DatabaseAnalyzer|MockObject $databaseAnalyzer;
+
     private MetadataExtractor|MockObject $metadataExtractor;
+
     private EntityGenerator|MockObject $entityGenerator;
+
     private FileWriter|MockObject $fileWriter;
 
     protected function setUp(): void
     {
-        $this->databaseAnalyzer = $this->createMock(DatabaseAnalyzer::class);
+        $this->databaseAnalyzer  = $this->createMock(DatabaseAnalyzer::class);
         $this->metadataExtractor = $this->createMock(MetadataExtractor::class);
-        $this->entityGenerator = $this->createMock(EntityGenerator::class);
-        $this->fileWriter = $this->createMock(FileWriter::class);
+        $this->entityGenerator   = $this->createMock(EntityGenerator::class);
+        $this->fileWriter        = $this->createMock(FileWriter::class);
 
         $this->service = new ReverseEngineeringService(
             $this->databaseAnalyzer,
             $this->metadataExtractor,
             $this->entityGenerator,
-            $this->fileWriter
+            $this->fileWriter,
         );
     }
 
@@ -43,35 +48,35 @@ class ReverseEngineeringServiceTest extends TestCase
     {
         // Arrange
         $options = [
-            'tables' => ['users', 'posts'],
+            'tables'  => ['users', 'posts'],
             'exclude' => [],
             'dry_run' => false,
-            'force' => false,
+            'force'   => false,
         ];
 
-        $tables = ['users', 'posts'];
+        $tables       = ['users', 'posts'];
         $userMetadata = [
             'entity_name' => 'User',
-            'table_name' => 'users',
+            'table_name'  => 'users',
         ];
         $postMetadata = [
             'entity_name' => 'Post',
-            'table_name' => 'posts',
+            'table_name'  => 'posts',
         ];
 
         $userEntity = [
-            'name' => 'User',
-            'table' => 'users',
-            'code' => '<?php class User {}',
+            'name'     => 'User',
+            'table'    => 'users',
+            'code'     => '<?php class User {}',
             'filename' => 'User.php',
         ];
         $postEntity = [
-            'name' => 'Post',
-            'table' => 'posts',
-            'code' => '<?php class Post {}',
-            'filename' => 'Post.php',
+            'name'       => 'Post',
+            'table'      => 'posts',
+            'code'       => '<?php class Post {}',
+            'filename'   => 'Post.php',
             'repository' => [
-                'name' => 'PostRepository',
+                'name'     => 'PostRepository',
                 'filename' => 'PostRepository.php',
             ],
         ];
@@ -104,7 +109,7 @@ class ReverseEngineeringServiceTest extends TestCase
             ->method('writeEntityFile')
             ->willReturnOnConsecutiveCalls(
                 '/path/to/User.php',
-                '/path/to/Post.php'
+                '/path/to/Post.php',
             );
 
         $this->fileWriter
@@ -128,10 +133,10 @@ class ReverseEngineeringServiceTest extends TestCase
     public function testGenerateEntitiesWithDryRun(): void
     {
         // Arrange
-        $options = ['dry_run' => true];
-        $tables = ['users'];
+        $options  = ['dry_run' => true];
+        $tables   = ['users'];
         $metadata = ['entity_name' => 'User'];
-        $entity = ['name' => 'User', 'table' => 'users'];
+        $entity   = ['name' => 'User', 'table' => 'users'];
 
         $this->databaseAnalyzer
             ->expects($this->once())
@@ -183,7 +188,7 @@ class ReverseEngineeringServiceTest extends TestCase
         $this->databaseAnalyzer
             ->expects($this->once())
             ->method('analyzeTables')
-            ->willThrowException(new \Exception('Database error'));
+            ->willThrowException(new Exception('Database error'));
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
@@ -204,7 +209,7 @@ class ReverseEngineeringServiceTest extends TestCase
         $this->metadataExtractor
             ->expects($this->once())
             ->method('extractTableMetadata')
-            ->willThrowException(new \Exception('Metadata error'));
+            ->willThrowException(new Exception('Metadata error'));
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
@@ -230,7 +235,7 @@ class ReverseEngineeringServiceTest extends TestCase
         $this->entityGenerator
             ->expects($this->once())
             ->method('generateEntity')
-            ->willThrowException(new \Exception('Generation error'));
+            ->willThrowException(new Exception('Generation error'));
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
@@ -244,7 +249,7 @@ class ReverseEngineeringServiceTest extends TestCase
     {
         // Arrange
         $options = ['dry_run' => false];
-        
+
         $this->databaseAnalyzer
             ->expects($this->once())
             ->method('analyzeTables')
@@ -263,7 +268,7 @@ class ReverseEngineeringServiceTest extends TestCase
         $this->fileWriter
             ->expects($this->once())
             ->method('writeEntityFile')
-            ->willThrowException(new \Exception('Write error'));
+            ->willThrowException(new Exception('Write error'));
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
@@ -307,7 +312,7 @@ class ReverseEngineeringServiceTest extends TestCase
     {
         // Arrange
         $expectedTables = ['users', 'posts', 'comments'];
-        
+
         $this->databaseAnalyzer
             ->expects($this->once())
             ->method('listTables')
@@ -323,11 +328,11 @@ class ReverseEngineeringServiceTest extends TestCase
     public function testGetTableInfo(): void
     {
         // Arrange
-        $tableName = 'users';
+        $tableName        = 'users';
         $expectedMetadata = [
             'entity_name' => 'User',
-            'table_name' => 'users',
-            'columns' => [],
+            'table_name'  => 'users',
+            'columns'     => [],
         ];
 
         $this->metadataExtractor
@@ -347,7 +352,7 @@ class ReverseEngineeringServiceTest extends TestCase
     {
         // Arrange
         $options = [
-            'tables' => ['users'],
+            'tables'  => ['users'],
             'exclude' => ['temp_table'],
         ];
 
@@ -384,8 +389,8 @@ class ReverseEngineeringServiceTest extends TestCase
         // Arrange
         $options = [
             'output_dir' => 'custom/entities',
-            'force' => true,
-            'namespace' => 'Custom\\Entity',
+            'force'      => true,
+            'namespace'  => 'Custom\\Entity',
         ];
 
         $this->databaseAnalyzer
@@ -410,7 +415,7 @@ class ReverseEngineeringServiceTest extends TestCase
             ->with(
                 ['name' => 'Product', 'filename' => 'Product.php'],
                 'custom/entities',
-                true
+                true,
             )
             ->willReturn('/path/to/Product.php');
 
@@ -425,10 +430,10 @@ class ReverseEngineeringServiceTest extends TestCase
     {
         // Arrange
         $entity = [
-            'name' => 'Category',
-            'filename' => 'Category.php',
+            'name'       => 'Category',
+            'filename'   => 'Category.php',
             'repository' => [
-                'name' => 'CategoryRepository',
+                'name'     => 'CategoryRepository',
                 'filename' => 'CategoryRepository.php',
             ],
         ];
@@ -470,7 +475,7 @@ class ReverseEngineeringServiceTest extends TestCase
     {
         // Arrange
         $entity = [
-            'name' => 'Log',
+            'name'     => 'Log',
             'filename' => 'Log.php',
             // Pas de repository
         ];

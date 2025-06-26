@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Command;
 
 use App\Command\ReverseGenerateCommand;
-use App\Service\ReverseEngineeringService;
 use App\Exception\ReverseEngineeringException;
-use PHPUnit\Framework\TestCase;
+use App\Service\ReverseEngineeringService;
+use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -19,17 +20,19 @@ use Symfony\Component\Console\Tester\CommandTester;
 class ReverseGenerateCommandTest extends TestCase
 {
     private ReverseGenerateCommand $command;
+
     private ReverseEngineeringService|MockObject $service;
+
     private CommandTester $commandTester;
 
     protected function setUp(): void
     {
         $this->service = $this->createMock(ReverseEngineeringService::class);
         $this->command = new ReverseGenerateCommand($this->service);
-        
+
         $application = new Application();
         $application->add($this->command);
-        
+
         $this->commandTester = new CommandTester($this->command);
     }
 
@@ -38,7 +41,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals('reverse:generate', $this->command->getName());
         $this->assertStringContainsString('Génère des entités Doctrine', $this->command->getDescription());
-        
+
         $definition = $this->command->getDefinition();
         $this->assertTrue($definition->hasOption('tables'));
         $this->assertTrue($definition->hasOption('exclude'));
@@ -64,20 +67,18 @@ class ReverseGenerateCommandTest extends TestCase
         $this->service
             ->expects($this->once())
             ->method('generateEntities')
-            ->with($this->callback(function ($options) {
-                return $options['tables'] === [] &&
-                       $options['exclude'] === [] &&
-                       $options['namespace'] === null &&
-                       $options['output_dir'] === null &&
-                       $options['force'] === false &&
-                       $options['dry_run'] === false;
-            }))
+            ->with($this->callback(fn ($options) => $options['tables'] === []
+                       && $options['exclude'] === []
+                       && $options['namespace'] === null
+                       && $options['output_dir'] === null
+                       && $options['force'] === false
+                       && $options['dry_run'] === false))
             ->willReturn([
                 'entities' => [
                     ['name' => 'User', 'table' => 'users', 'namespace' => 'App\\Entity'],
                     ['name' => 'Post', 'table' => 'posts', 'namespace' => 'App\\Entity'],
                 ],
-                'files' => ['/path/to/User.php', '/path/to/Post.php'],
+                'files'            => ['/path/to/User.php', '/path/to/Post.php'],
                 'tables_processed' => 2,
             ]);
 
@@ -111,14 +112,12 @@ class ReverseGenerateCommandTest extends TestCase
         $this->service
             ->expects($this->once())
             ->method('generateEntities')
-            ->with($this->callback(function ($options) {
-                return $options['tables'] === ['users', 'posts'];
-            }))
+            ->with($this->callback(fn ($options) => $options['tables'] === ['users', 'posts']))
             ->willReturn([
                 'entities' => [
                     ['name' => 'User', 'table' => 'users', 'namespace' => 'App\\Entity'],
                 ],
-                'files' => ['/path/to/User.php'],
+                'files'            => ['/path/to/User.php'],
                 'tables_processed' => 1,
             ]);
 
@@ -147,12 +146,10 @@ class ReverseGenerateCommandTest extends TestCase
         $this->service
             ->expects($this->once())
             ->method('generateEntities')
-            ->with($this->callback(function ($options) {
-                return $options['exclude'] === ['temp_table'];
-            }))
+            ->with($this->callback(fn ($options) => $options['exclude'] === ['temp_table']))
             ->willReturn([
-                'entities' => [],
-                'files' => [],
+                'entities'         => [],
+                'files'            => [],
                 'tables_processed' => 0,
             ]);
 
@@ -181,14 +178,12 @@ class ReverseGenerateCommandTest extends TestCase
         $this->service
             ->expects($this->once())
             ->method('generateEntities')
-            ->with($this->callback(function ($options) {
-                return $options['dry_run'] === true;
-            }))
+            ->with($this->callback(fn ($options) => $options['dry_run'] === true))
             ->willReturn([
                 'entities' => [
                     ['name' => 'User', 'table' => 'users', 'namespace' => 'App\\Entity'],
                 ],
-                'files' => [],
+                'files'            => [],
                 'tables_processed' => 1,
             ]);
 
@@ -221,22 +216,20 @@ class ReverseGenerateCommandTest extends TestCase
         $this->service
             ->expects($this->once())
             ->method('generateEntities')
-            ->with($this->callback(function ($options) {
-                return $options['namespace'] === 'Custom\\Entity' &&
-                       $options['output_dir'] === 'custom/entities' &&
-                       $options['force'] === true;
-            }))
+            ->with($this->callback(fn ($options) => $options['namespace'] === 'Custom\\Entity'
+                       && $options['output_dir'] === 'custom/entities'
+                       && $options['force'] === true))
             ->willReturn([
-                'entities' => [],
-                'files' => [],
+                'entities'         => [],
+                'files'            => [],
                 'tables_processed' => 0,
             ]);
 
         // Act
         $exitCode = $this->commandTester->execute([
-            '--namespace' => 'Custom\\Entity',
+            '--namespace'  => 'Custom\\Entity',
             '--output-dir' => 'custom/entities',
-            '--force' => true,
+            '--force'      => true,
         ]);
 
         // Assert
@@ -281,8 +274,8 @@ class ReverseGenerateCommandTest extends TestCase
             ->expects($this->once())
             ->method('generateEntities')
             ->willReturn([
-                'entities' => [],
-                'files' => [],
+                'entities'         => [],
+                'files'            => [],
                 'tables_processed' => 0,
             ]);
 
@@ -330,7 +323,7 @@ class ReverseGenerateCommandTest extends TestCase
         $this->service
             ->expects($this->once())
             ->method('validateDatabaseConnection')
-            ->willThrowException(new \Exception('Erreur inattendue'));
+            ->willThrowException(new Exception('Erreur inattendue'));
 
         // Act
         $exitCode = $this->commandTester->execute([]);
@@ -362,7 +355,7 @@ class ReverseGenerateCommandTest extends TestCase
 
         // Act
         $exitCode = $this->commandTester->execute([], [
-            'verbosity' => \Symfony\Component\Console\Output\OutputInterface::VERBOSITY_VERBOSE
+            'verbosity' => \Symfony\Component\Console\Output\OutputInterface::VERBOSITY_VERBOSE,
         ]);
 
         // Assert
@@ -388,8 +381,8 @@ class ReverseGenerateCommandTest extends TestCase
             ->expects($this->once())
             ->method('generateEntities')
             ->willReturn([
-                'entities' => [],
-                'files' => [],
+                'entities'         => [],
+                'files'            => [],
                 'tables_processed' => 0,
             ]);
 
@@ -408,7 +401,7 @@ class ReverseGenerateCommandTest extends TestCase
     {
         // Arrange
         $availableTables = array_fill(0, 15, 'table');
-        
+
         $this->service
             ->expects($this->once())
             ->method('validateDatabaseConnection')
@@ -423,8 +416,8 @@ class ReverseGenerateCommandTest extends TestCase
             ->expects($this->once())
             ->method('generateEntities')
             ->willReturn([
-                'entities' => [],
-                'files' => [],
+                'entities'         => [],
+                'files'            => [],
                 'tables_processed' => 0,
             ]);
 

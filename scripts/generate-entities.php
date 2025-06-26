@@ -6,9 +6,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Service\DatabaseAnalyzer;
-use App\Service\MetadataExtractor;
 use App\Service\EntityGenerator;
 use App\Service\FileWriter;
+use App\Service\MetadataExtractor;
 use App\Service\ReverseEngineeringService;
 use Doctrine\DBAL\DriverManager;
 use Twig\Environment;
@@ -21,16 +21,16 @@ use Twig\Loader\FilesystemLoader;
 
 // Configuration par défaut
 $defaultConfig = [
-    'host' => 'mysql',
-    'port' => 3306,
-    'dbname' => 'sakila',
-    'user' => 'sakila_user',
-    'password' => 'sakila_password',
-    'charset' => 'utf8mb4',
-    'namespace' => 'Sakila\\Entity',
+    'host'       => 'mysql',
+    'port'       => 3306,
+    'dbname'     => 'sakila',
+    'user'       => 'sakila_user',
+    'password'   => 'sakila_password',
+    'charset'    => 'utf8mb4',
+    'namespace'  => 'Sakila\\Entity',
     'output_dir' => 'generated/sakila',
-    'force' => false,
-    'dry_run' => false,
+    'force'      => false,
+    'dry_run'    => false,
 ];
 
 // Parsing des arguments
@@ -42,24 +42,24 @@ try {
     echo "   - Base de données: {$options['host']}:{$options['port']}/{$options['dbname']}\n";
     echo "   - Namespace: {$options['namespace']}\n";
     echo "   - Répertoire de sortie: {$options['output_dir']}\n";
-    echo "   - Mode dry-run: " . ($options['dry_run'] ? 'Oui' : 'Non') . "\n";
-    echo "   - Force: " . ($options['force'] ? 'Oui' : 'Non') . "\n\n";
+    echo '   - Mode dry-run: ' . ($options['dry_run'] ? 'Oui' : 'Non') . "\n";
+    echo '   - Force: ' . ($options['force'] ? 'Oui' : 'Non') . "\n\n";
 
     // Créer le répertoire de sortie
-    if (!$options['dry_run'] && !is_dir($options['output_dir'])) {
-        mkdir($options['output_dir'], 0755, true);
+    if (! $options['dry_run'] && ! is_dir($options['output_dir'])) {
+        mkdir($options['output_dir'], 0o755, true);
         echo "📁 Répertoire créé: {$options['output_dir']}\n";
     }
 
     // Configuration de la base de données
     $databaseConfig = [
-        'driver' => 'pdo_mysql',
-        'host' => $options['host'],
-        'port' => $options['port'],
-        'dbname' => $options['dbname'],
-        'user' => $options['user'],
+        'driver'   => 'pdo_mysql',
+        'host'     => $options['host'],
+        'port'     => $options['port'],
+        'dbname'   => $options['dbname'],
+        'user'     => $options['user'],
         'password' => $options['password'],
-        'charset' => $options['charset'],
+        'charset'  => $options['charset'],
     ];
 
     // Créer la connexion
@@ -69,31 +69,32 @@ try {
     echo "✅ Connexion établie avec succès\n\n";
 
     // Configurer les services
-    $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig, $connection);
+    $databaseAnalyzer  = new DatabaseAnalyzer($databaseConfig, $connection);
     $metadataExtractor = new MetadataExtractor($databaseAnalyzer);
 
     // Configurer Twig
     $loader = new FilesystemLoader(__DIR__ . '/../src/Resources/templates');
-    $twig = new Environment($loader);
+    $twig   = new Environment($loader);
 
     $entityGenerator = new EntityGenerator($twig);
-    $fileWriter = new FileWriter(__DIR__ . '/..');
+    $fileWriter      = new FileWriter(__DIR__ . '/..');
 
     $service = new ReverseEngineeringService(
         $databaseAnalyzer,
         $metadataExtractor,
         $entityGenerator,
-        $fileWriter
+        $fileWriter,
     );
 
     // Valider la connexion
-    if (!$service->validateDatabaseConnection()) {
-        throw new \Exception('Impossible de valider la connexion à la base de données');
+    if (! $service->validateDatabaseConnection()) {
+        throw new Exception('Impossible de valider la connexion à la base de données');
     }
 
     // Obtenir les tables disponibles
     $availableTables = $service->getAvailableTables();
-    echo "📋 Tables disponibles: " . count($availableTables) . "\n";
+    echo '📋 Tables disponibles: ' . count($availableTables) . "\n";
+
     foreach ($availableTables as $table) {
         echo "   - {$table}\n";
     }
@@ -102,48 +103,49 @@ try {
     // Générer les entités
     echo "⚙️  Génération des entités...\n";
     $startTime = microtime(true);
-    
+
     $result = $service->generateEntities([
         'output_dir' => $options['output_dir'],
-        'namespace' => $options['namespace'],
-        'force' => $options['force'],
-        'dry_run' => $options['dry_run'],
+        'namespace'  => $options['namespace'],
+        'force'      => $options['force'],
+        'dry_run'    => $options['dry_run'],
     ]);
 
-    $endTime = microtime(true);
+    $endTime       = microtime(true);
     $executionTime = round($endTime - $startTime, 3);
 
     // Afficher les résultats
     echo "\n🎉 Génération terminée avec succès !\n";
     echo "📊 Statistiques:\n";
     echo "   - Tables traitées: {$result['tables_processed']}\n";
-    echo "   - Entités générées: " . count($result['entities']) . "\n";
-    echo "   - Fichiers créés: " . count($result['files']) . "\n";
+    echo '   - Entités générées: ' . count($result['entities']) . "\n";
+    echo '   - Fichiers créés: ' . count($result['files']) . "\n";
     echo "   - Temps d'exécution: {$executionTime}s\n\n";
 
     if ($options['dry_run']) {
         echo "🔍 Mode dry-run - Aperçu des entités qui seraient générées:\n";
+
         foreach ($result['entities'] as $entity) {
             echo "   - {$entity['name']} (table: {$entity['table']}, namespace: {$entity['namespace']})\n";
         }
     } else {
         echo "📁 Fichiers générés:\n";
+
         foreach ($result['files'] as $file) {
             echo "   - {$file}\n";
         }
     }
 
     echo "\n✅ Génération d'entités terminée avec succès !\n";
-
-} catch (\Exception $e) {
+} catch (Exception $e) {
     echo "\n❌ Erreur lors de la génération: {$e->getMessage()}\n";
     echo "📍 Fichier: {$e->getFile()}:{$e->getLine()}\n";
-    
-    if (isset($argv) && in_array('--verbose', $argv)) {
+
+    if (isset($argv) && in_array('--verbose', $argv, true)) {
         echo "\n🔍 Trace complète:\n";
         echo $e->getTraceAsString() . "\n";
     }
-    
+
     exit(1);
 }
 
@@ -153,33 +155,35 @@ try {
 function parseArguments(array $argv, array $defaultConfig): array
 {
     $options = $defaultConfig;
-    
-    for ($i = 1; $i < count($argv); $i++) {
+
+    for ($i = 1; $i < count($argv); ++$i) {
         $arg = $argv[$i];
-        
+
         // Gérer les arguments avec = (ex: --namespace="App\Entity")
-        if (strpos($arg, '=') !== false) {
+        if (str_contains($arg, '=')) {
             [$key, $value] = explode('=', $arg, 2);
-            $arg = $key;
-            $nextValue = $value;
+            $arg           = $key;
+            $nextValue     = $value;
         } else {
             $nextValue = $argv[$i + 1] ?? null;
         }
-        
+
         switch ($arg) {
             case '--namespace':
                 if (isset($nextValue)) {
                     $options['namespace'] = $nextValue;
-                    if (strpos($argv[$i], '=') === false) {
-                        $i++; // Seulement si ce n'était pas un argument avec =
+
+                    if (! str_contains($argv[$i], '=')) {
+                        ++$i; // Seulement si ce n'était pas un argument avec =
                     }
                 }
                 break;
             case '--output-dir':
                 if (isset($nextValue)) {
                     $options['output_dir'] = $nextValue;
-                    if (strpos($argv[$i], '=') === false) {
-                        $i++; // Seulement si ce n'était pas un argument avec =
+
+                    if (! str_contains($argv[$i], '=')) {
+                        ++$i; // Seulement si ce n'était pas un argument avec =
                     }
                 }
                 break;
@@ -192,40 +196,45 @@ function parseArguments(array $argv, array $defaultConfig): array
             case '--host':
                 if (isset($nextValue)) {
                     $options['host'] = $nextValue;
-                    if (strpos($argv[$i], '=') === false) {
-                        $i++;
+
+                    if (! str_contains($argv[$i], '=')) {
+                        ++$i;
                     }
                 }
                 break;
             case '--port':
                 if (isset($nextValue)) {
-                    $options['port'] = (int)$nextValue;
-                    if (strpos($argv[$i], '=') === false) {
-                        $i++;
+                    $options['port'] = (int) $nextValue;
+
+                    if (! str_contains($argv[$i], '=')) {
+                        ++$i;
                     }
                 }
                 break;
             case '--dbname':
                 if (isset($nextValue)) {
                     $options['dbname'] = $nextValue;
-                    if (strpos($argv[$i], '=') === false) {
-                        $i++;
+
+                    if (! str_contains($argv[$i], '=')) {
+                        ++$i;
                     }
                 }
                 break;
             case '--user':
                 if (isset($nextValue)) {
                     $options['user'] = $nextValue;
-                    if (strpos($argv[$i], '=') === false) {
-                        $i++;
+
+                    if (! str_contains($argv[$i], '=')) {
+                        ++$i;
                     }
                 }
                 break;
             case '--password':
                 if (isset($nextValue)) {
                     $options['password'] = $nextValue;
-                    if (strpos($argv[$i], '=') === false) {
-                        $i++;
+
+                    if (! str_contains($argv[$i], '=')) {
+                        ++$i;
                     }
                 }
                 break;
@@ -234,7 +243,7 @@ function parseArguments(array $argv, array $defaultConfig): array
                 exit(0);
         }
     }
-    
+
     return $options;
 }
 

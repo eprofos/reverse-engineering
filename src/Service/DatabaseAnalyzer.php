@@ -7,7 +7,7 @@ namespace App\Service;
 use App\Exception\DatabaseConnectionException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
-use App\Service\MySQLTypeMapper;
+use Exception;
 
 /**
  * Service pour l'analyse de la structure de la base de données.
@@ -18,7 +18,7 @@ class DatabaseAnalyzer
 
     public function __construct(
         private readonly array $databaseConfig,
-        ?Connection $connection = null
+        ?Connection $connection = null,
     ) {
         $this->connection = $connection;
     }
@@ -26,7 +26,6 @@ class DatabaseAnalyzer
     /**
      * Teste la connexion à la base de données.
      *
-     * @return bool
      * @throws DatabaseConnectionException
      */
     public function testConnection(): bool
@@ -34,12 +33,13 @@ class DatabaseAnalyzer
         try {
             $connection = $this->getConnection();
             $connection->connect();
+
             return $connection->isConnected();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new DatabaseConnectionException(
                 'Impossible de se connecter à la base de données : ' . $e->getMessage(),
                 0,
-                $e
+                $e,
             );
         }
     }
@@ -47,25 +47,23 @@ class DatabaseAnalyzer
     /**
      * Récupère la liste de toutes les tables de la base de données.
      *
-     * @return array
      * @throws DatabaseConnectionException
      */
     public function listTables(): array
     {
         try {
-            $connection = $this->getConnection();
+            $connection    = $this->getConnection();
             $schemaManager = $connection->createSchemaManager();
-            
+
             $tables = $schemaManager->listTableNames();
-            
+
             // Filtrer les tables système selon le type de base de données
             return array_filter($tables, [$this, 'isUserTable']);
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new DatabaseConnectionException(
                 'Erreur lors de la récupération des tables : ' . $e->getMessage(),
                 0,
-                $e
+                $e,
             );
         }
     }
@@ -75,66 +73,64 @@ class DatabaseAnalyzer
      *
      * @param array $includeTables Tables à inclure (toutes si vide)
      * @param array $excludeTables Tables à exclure
-     * @return array
+     *
      * @throws DatabaseConnectionException
      */
     public function analyzeTables(array $includeTables = [], array $excludeTables = []): array
     {
         $allTables = $this->listTables();
-        
+
         // Si des tables spécifiques sont demandées
-        if (!empty($includeTables)) {
+        if (! empty($includeTables)) {
             $tables = array_intersect($allTables, $includeTables);
         } else {
             $tables = $allTables;
         }
-        
+
         // Exclure les tables spécifiées
-        if (!empty($excludeTables)) {
+        if (! empty($excludeTables)) {
             $tables = array_diff($tables, $excludeTables);
         }
-        
+
         return array_values($tables);
     }
 
     /**
      * Récupère les informations détaillées d'une table.
      *
-     * @param string $tableName
-     * @return array
      * @throws DatabaseConnectionException
      */
     public function getTableDetails(string $tableName): array
     {
         try {
-            $connection = $this->getConnection();
+            $connection    = $this->getConnection();
             $schemaManager = $connection->createSchemaManager();
-            
+
             // Essayer d'abord avec le SchemaManager standard
             try {
                 $table = $schemaManager->introspectTable($tableName);
-                
+
                 return [
-                    'name' => $table->getName(),
-                    'columns' => $this->getColumnsInfo($table),
-                    'indexes' => $this->getIndexesInfo($table),
+                    'name'         => $table->getName(),
+                    'columns'      => $this->getColumnsInfo($table),
+                    'indexes'      => $this->getIndexesInfo($table),
                     'foreign_keys' => $this->getForeignKeysInfo($table),
-                    'primary_key' => $table->getPrimaryKey()?->getColumns() ?? [],
+                    'primary_key'  => $table->getPrimaryKey()?->getColumns() ?? [],
                 ];
             } catch (\Doctrine\DBAL\Exception $doctrineException) {
                 // Si Doctrine échoue à cause des types ENUM/SET, utiliser notre méthode alternative
-                if (str_contains($doctrineException->getMessage(), 'Unknown database type enum') ||
-                    str_contains($doctrineException->getMessage(), 'Unknown database type set')) {
+                if (str_contains($doctrineException->getMessage(), 'Unknown database type enum')
+                    || str_contains($doctrineException->getMessage(), 'Unknown database type set')) {
                     return $this->getTableDetailsWithFallback($tableName);
                 }
+
                 throw $doctrineException;
             }
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new DatabaseConnectionException(
                 "Erreur lors de l'analyse de la table '{$tableName}' : " . $e->getMessage(),
                 0,
-                $e
+                $e,
             );
         }
     }
@@ -142,7 +138,6 @@ class DatabaseAnalyzer
     /**
      * Récupère ou crée la connexion à la base de données.
      *
-     * @return Connection
      * @throws DatabaseConnectionException
      */
     private function getConnection(): Connection
@@ -151,30 +146,26 @@ class DatabaseAnalyzer
             try {
                 // Enregistrer les types MySQL personnalisés
                 MySQLTypeMapper::registerCustomTypes();
-                
+
                 $this->connection = DriverManager::getConnection($this->databaseConfig);
-                
+
                 // Configurer la plateforme pour les types MySQL
                 $platform = $this->connection->getDatabasePlatform();
                 MySQLTypeMapper::configurePlatform($platform);
-                
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 throw new DatabaseConnectionException(
                     'Impossible de créer la connexion à la base de données : ' . $e->getMessage(),
                     0,
-                    $e
+                    $e,
                 );
             }
         }
-        
+
         return $this->connection;
     }
 
     /**
      * Vérifie si une table est une table utilisateur (non système).
-     *
-     * @param string $tableName
-     * @return bool
      */
     private function isUserTable(string $tableName): bool
     {
@@ -191,140 +182,128 @@ class DatabaseAnalyzer
             'sqlite_master',
             'sqlite_sequence',
         ];
-        
+
         foreach ($systemTables as $systemTable) {
             if (str_starts_with($tableName, $systemTable)) {
                 return false;
             }
         }
-        
+
         return true;
     }
 
     /**
      * Extrait les informations des colonnes.
-     *
-     * @param \Doctrine\DBAL\Schema\Table $table
-     * @return array
      */
     private function getColumnsInfo(\Doctrine\DBAL\Schema\Table $table): array
     {
         $columns = [];
-        
+
         // Obtenir les informations détaillées des colonnes via SHOW COLUMNS
         $detailedColumns = $this->getDetailedColumnInfo($table->getName());
-        
+
         foreach ($table->getColumns() as $column) {
-            $columnName = $column->getName();
+            $columnName   = $column->getName();
             $detailedInfo = $detailedColumns[$columnName] ?? [];
-            
+
             $columns[] = [
-                'name' => $columnName,
-                'type' => $column->getType()->getName(),
-                'raw_type' => $detailedInfo['Type'] ?? $column->getType()->getName(),
-                'length' => $column->getLength(),
-                'precision' => $column->getPrecision(),
-                'scale' => $column->getScale(),
-                'nullable' => !$column->getNotnull(),
-                'default' => $column->getDefault(),
+                'name'           => $columnName,
+                'type'           => $column->getType()->getName(),
+                'raw_type'       => $detailedInfo['Type'] ?? $column->getType()->getName(),
+                'length'         => $column->getLength(),
+                'precision'      => $column->getPrecision(),
+                'scale'          => $column->getScale(),
+                'nullable'       => ! $column->getNotnull(),
+                'default'        => $column->getDefault(),
                 'auto_increment' => $column->getAutoincrement(),
-                'comment' => $column->getComment(),
-                'enum_values' => $detailedInfo['enum_values'] ?? null,
-                'set_values' => $detailedInfo['set_values'] ?? null,
+                'comment'        => $column->getComment(),
+                'enum_values'    => $detailedInfo['enum_values'] ?? null,
+                'set_values'     => $detailedInfo['set_values'] ?? null,
             ];
         }
-        
+
         return $columns;
     }
 
     /**
      * Extrait les informations des index.
-     *
-     * @param \Doctrine\DBAL\Schema\Table $table
-     * @return array
      */
     private function getIndexesInfo(\Doctrine\DBAL\Schema\Table $table): array
     {
         $indexes = [];
-        
+
         foreach ($table->getIndexes() as $index) {
             $indexes[] = [
-                'name' => $index->getName(),
+                'name'    => $index->getName(),
                 'columns' => $index->getColumns(),
-                'unique' => $index->isUnique(),
+                'unique'  => $index->isUnique(),
                 'primary' => $index->isPrimary(),
             ];
         }
-        
+
         return $indexes;
     }
 
     /**
      * Extrait les informations des clés étrangères.
-     *
-     * @param \Doctrine\DBAL\Schema\Table $table
-     * @return array
      */
     private function getForeignKeysInfo(\Doctrine\DBAL\Schema\Table $table): array
     {
         $foreignKeys = [];
-        
+
         foreach ($table->getForeignKeys() as $foreignKey) {
             $foreignKeys[] = [
-                'name' => $foreignKey->getName(),
-                'local_columns' => $foreignKey->getLocalColumns(),
-                'foreign_table' => $foreignKey->getForeignTableName(),
+                'name'            => $foreignKey->getName(),
+                'local_columns'   => $foreignKey->getLocalColumns(),
+                'foreign_table'   => $foreignKey->getForeignTableName(),
                 'foreign_columns' => $foreignKey->getForeignColumns(),
-                'on_update' => $foreignKey->onUpdate() ?? 'RESTRICT',
-                'on_delete' => $foreignKey->onDelete() ?? 'RESTRICT',
+                'on_update'       => $foreignKey->onUpdate() ?? 'RESTRICT',
+                'on_delete'       => $foreignKey->onDelete() ?? 'RESTRICT',
             ];
         }
-        
+
         // Si aucune clé étrangère n'est trouvée via Doctrine, essayer la méthode fallback
         if (empty($foreignKeys)) {
             $foreignKeys = $this->getForeignKeysWithFallback($table->getName());
         }
-        
+
         return $foreignKeys;
     }
 
     /**
      * Obtient les informations détaillées des colonnes via SHOW COLUMNS.
-     *
-     * @param string $tableName
-     * @return array
      */
     private function getDetailedColumnInfo(string $tableName): array
     {
         try {
             $connection = $this->getConnection();
-            $sql = "SHOW COLUMNS FROM `{$tableName}`";
-            $result = $connection->executeQuery($sql);
-            
+            $sql        = "SHOW COLUMNS FROM `{$tableName}`";
+            $result     = $connection->executeQuery($sql);
+
             $columns = [];
+
             while ($row = $result->fetchAssociative()) {
                 $columnInfo = [
-                    'Field' => $row['Field'],
-                    'Type' => $row['Type'],
-                    'Null' => $row['Null'],
-                    'Key' => $row['Key'],
+                    'Field'   => $row['Field'],
+                    'Type'    => $row['Type'],
+                    'Null'    => $row['Null'],
+                    'Key'     => $row['Key'],
                     'Default' => $row['Default'],
-                    'Extra' => $row['Extra'],
+                    'Extra'   => $row['Extra'],
                 ];
-                
+
                 // Extraire les valeurs ENUM/SET
                 if (preg_match('/^enum\((.+)\)$/i', $row['Type'], $matches)) {
                     $columnInfo['enum_values'] = MySQLTypeMapper::extractEnumValues($row['Type']);
                 } elseif (preg_match('/^set\((.+)\)$/i', $row['Type'], $matches)) {
                     $columnInfo['set_values'] = MySQLTypeMapper::extractSetValues($row['Type']);
                 }
-                
+
                 $columns[$row['Field']] = $columnInfo;
             }
-            
+
             return $columns;
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // En cas d'erreur, retourner un tableau vide pour ne pas bloquer le processus
             return [];
         }
@@ -332,58 +311,57 @@ class DatabaseAnalyzer
 
     /**
      * Méthode de fallback pour obtenir les détails d'une table quand Doctrine échoue.
-     *
-     * @param string $tableName
-     * @return array
      */
     private function getTableDetailsWithFallback(string $tableName): array
     {
         $connection = $this->getConnection();
-        
+
         // Obtenir les informations des colonnes via SHOW COLUMNS
         $detailedColumns = $this->getDetailedColumnInfo($tableName);
-        
+
         // Construire les informations des colonnes
         $columns = [];
+
         foreach ($detailedColumns as $columnName => $columnInfo) {
             $type = $this->mapMySQLTypeToDoctrineType($columnInfo['Type']);
-            
+
             $columns[] = [
-                'name' => $columnName,
-                'type' => $type,
-                'raw_type' => $columnInfo['Type'],
-                'length' => $this->extractLength($columnInfo['Type']),
-                'precision' => null,
-                'scale' => null,
-                'nullable' => $columnInfo['Null'] === 'YES',
-                'default' => $columnInfo['Default'],
+                'name'           => $columnName,
+                'type'           => $type,
+                'raw_type'       => $columnInfo['Type'],
+                'length'         => $this->extractLength($columnInfo['Type']),
+                'precision'      => null,
+                'scale'          => null,
+                'nullable'       => $columnInfo['Null'] === 'YES',
+                'default'        => $columnInfo['Default'],
                 'auto_increment' => str_contains($columnInfo['Extra'], 'auto_increment'),
-                'comment' => '',
-                'enum_values' => $columnInfo['enum_values'] ?? null,
-                'set_values' => $columnInfo['set_values'] ?? null,
+                'comment'        => '',
+                'enum_values'    => $columnInfo['enum_values'] ?? null,
+                'set_values'     => $columnInfo['set_values'] ?? null,
             ];
         }
-        
+
         // Obtenir les clés primaires
         $primaryKey = [];
+
         foreach ($detailedColumns as $columnName => $columnInfo) {
             if ($columnInfo['Key'] === 'PRI') {
                 $primaryKey[] = $columnName;
             }
         }
-        
+
         // Obtenir les clés étrangères via INFORMATION_SCHEMA
         $foreignKeys = $this->getForeignKeysWithFallback($tableName);
-        
+
         // Obtenir les index via SHOW INDEX
         $indexes = $this->getIndexesWithFallback($tableName);
-        
+
         return [
-            'name' => $tableName,
-            'columns' => $columns,
-            'indexes' => $indexes,
+            'name'         => $tableName,
+            'columns'      => $columns,
+            'indexes'      => $indexes,
             'foreign_keys' => $foreignKeys,
-            'primary_key' => $primaryKey,
+            'primary_key'  => $primaryKey,
         ];
     }
 
@@ -394,8 +372,8 @@ class DatabaseAnalyzer
     {
         // Nettoyer le type en supprimant les modificateurs comme 'unsigned'
         $cleanType = preg_replace('/\s+(unsigned|signed|zerofill)/i', '', $mysqlType);
-        $baseType = strtolower(explode('(', $cleanType)[0]);
-        
+        $baseType  = strtolower(explode('(', $cleanType)[0]);
+
         return match ($baseType) {
             'tinyint', 'smallint', 'mediumint', 'int', 'integer' => 'integer',
             'bigint' => 'bigint',
@@ -424,6 +402,7 @@ class DatabaseAnalyzer
         if (preg_match('/\((\d+)\)/', $mysqlType, $matches)) {
             return (int) $matches[1];
         }
+
         return null;
     }
 
@@ -434,7 +413,7 @@ class DatabaseAnalyzer
     {
         try {
             $connection = $this->getConnection();
-            $sql = "
+            $sql        = '
                 SELECT
                     kcu.CONSTRAINT_NAME,
                     kcu.COLUMN_NAME,
@@ -450,31 +429,32 @@ class DatabaseAnalyzer
                 AND kcu.TABLE_NAME = ?
                 AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
                 ORDER BY kcu.CONSTRAINT_NAME, kcu.ORDINAL_POSITION
-            ";
-            
-            $result = $connection->executeQuery($sql, [$tableName]);
+            ';
+
+            $result      = $connection->executeQuery($sql, [$tableName]);
             $foreignKeys = [];
             $groupedKeys = [];
-            
+
             while ($row = $result->fetchAssociative()) {
                 $constraintName = $row['CONSTRAINT_NAME'];
-                if (!isset($groupedKeys[$constraintName])) {
+
+                if (! isset($groupedKeys[$constraintName])) {
                     $groupedKeys[$constraintName] = [
-                        'name' => $constraintName,
-                        'local_columns' => [],
-                        'foreign_table' => $row['REFERENCED_TABLE_NAME'],
+                        'name'            => $constraintName,
+                        'local_columns'   => [],
+                        'foreign_table'   => $row['REFERENCED_TABLE_NAME'],
                         'foreign_columns' => [],
-                        'on_update' => $row['UPDATE_RULE'] ?? 'RESTRICT',
-                        'on_delete' => $row['DELETE_RULE'] ?? 'RESTRICT',
+                        'on_update'       => $row['UPDATE_RULE'] ?? 'RESTRICT',
+                        'on_delete'       => $row['DELETE_RULE'] ?? 'RESTRICT',
                     ];
                 }
-                
-                $groupedKeys[$constraintName]['local_columns'][] = $row['COLUMN_NAME'];
+
+                $groupedKeys[$constraintName]['local_columns'][]   = $row['COLUMN_NAME'];
                 $groupedKeys[$constraintName]['foreign_columns'][] = $row['REFERENCED_COLUMN_NAME'];
             }
-            
+
             return array_values($groupedKeys);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
     }
@@ -486,31 +466,32 @@ class DatabaseAnalyzer
     {
         try {
             $connection = $this->getConnection();
-            $sql = "SHOW INDEX FROM `{$tableName}`";
-            $result = $connection->executeQuery($sql);
-            
-            $indexes = [];
+            $sql        = "SHOW INDEX FROM `{$tableName}`";
+            $result     = $connection->executeQuery($sql);
+
+            $indexes   = [];
             $indexData = [];
-            
+
             while ($row = $result->fetchAssociative()) {
                 $indexName = $row['Key_name'];
-                if (!isset($indexData[$indexName])) {
+
+                if (! isset($indexData[$indexName])) {
                     $indexData[$indexName] = [
-                        'name' => $indexName,
+                        'name'    => $indexName,
                         'columns' => [],
-                        'unique' => $row['Non_unique'] == 0,
+                        'unique'  => $row['Non_unique'] === 0,
                         'primary' => $indexName === 'PRIMARY',
                     ];
                 }
                 $indexData[$indexName]['columns'][] = $row['Column_name'];
             }
-            
+
             foreach ($indexData as $index) {
                 $indexes[] = $index;
             }
-            
+
             return $indexes;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
     }

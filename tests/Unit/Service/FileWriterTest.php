@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Service\FileWriter;
 use App\Exception\FileWriteException;
-use PHPUnit\Framework\TestCase;
+use App\Service\FileWriter;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
+use PHPUnit\Framework\TestCase;
+
+use function dirname;
 
 /**
  * Tests unitaires pour FileWriter.
@@ -16,15 +18,17 @@ use org\bovigo\vfs\vfsStreamDirectory;
 class FileWriterTest extends TestCase
 {
     private FileWriter $fileWriter;
+
     private vfsStreamDirectory $root;
+
     private string $projectDir;
 
     protected function setUp(): void
     {
         // Créer un système de fichiers virtuel
-        $this->root = vfsStream::setup('project');
+        $this->root       = vfsStream::setup('project');
         $this->projectDir = vfsStream::url('project');
-        
+
         $this->fileWriter = new FileWriter($this->projectDir);
     }
 
@@ -32,9 +36,9 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $entity = [
-            'name' => 'User',
+            'name'     => 'User',
             'filename' => 'User.php',
-            'code' => '<?php class User {}',
+            'code'     => '<?php class User {}',
         ];
 
         // Act
@@ -51,9 +55,9 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $entity = [
-            'name' => 'Product',
+            'name'     => 'Product',
             'filename' => 'Product.php',
-            'code' => '<?php class Product {}',
+            'code'     => '<?php class Product {}',
         ];
 
         // Act
@@ -69,9 +73,9 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $entity = [
-            'name' => 'Category',
+            'name'     => 'Category',
             'filename' => 'Category.php',
-            'code' => '<?php class Category {}',
+            'code'     => '<?php class Category {}',
         ];
 
         // Act
@@ -86,14 +90,14 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $entity = [
-            'name' => 'Order',
+            'name'     => 'Order',
             'filename' => 'Order.php',
-            'code' => '<?php class Order {}',
+            'code'     => '<?php class Order {}',
         ];
 
         // Créer le fichier d'abord
         $outputDir = $this->projectDir . '/src/Entity';
-        mkdir($outputDir, 0755, true);
+        mkdir($outputDir, 0o755, true);
         file_put_contents($outputDir . '/Order.php', 'existing content');
 
         // Assert
@@ -108,14 +112,14 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $entity = [
-            'name' => 'Comment',
+            'name'     => 'Comment',
             'filename' => 'Comment.php',
-            'code' => '<?php class Comment {}',
+            'code'     => '<?php class Comment {}',
         ];
 
         // Créer le fichier d'abord avec un contenu différent
         $outputDir = $this->projectDir . '/src/Entity';
-        mkdir($outputDir, 0755, true);
+        mkdir($outputDir, 0o755, true);
         file_put_contents($outputDir . '/Comment.php', 'old content');
 
         // Act
@@ -130,9 +134,9 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $repository = [
-            'name' => 'UserRepository',
-            'filename' => 'UserRepository.php',
-            'namespace' => 'App\\Repository',
+            'name'         => 'UserRepository',
+            'filename'     => 'UserRepository.php',
+            'namespace'    => 'App\\Repository',
             'entity_class' => 'App\\Entity\\User',
         ];
 
@@ -143,7 +147,7 @@ class FileWriterTest extends TestCase
         $expectedPath = $this->projectDir . '/src/Repository/UserRepository.php';
         $this->assertEquals($expectedPath, $filePath);
         $this->assertTrue(file_exists($filePath));
-        
+
         $content = file_get_contents($filePath);
         $this->assertStringContains('namespace App\\Repository;', $content);
         $this->assertStringContains('class UserRepository', $content);
@@ -154,9 +158,9 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $repository = [
-            'name' => 'ProductRepository',
-            'filename' => 'ProductRepository.php',
-            'namespace' => 'Custom\\Repository',
+            'name'         => 'ProductRepository',
+            'filename'     => 'ProductRepository.php',
+            'namespace'    => 'Custom\\Repository',
             'entity_class' => 'Custom\\Entity\\Product',
         ];
 
@@ -173,15 +177,15 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $repository = [
-            'name' => 'CategoryRepository',
-            'filename' => 'CategoryRepository.php',
-            'namespace' => 'App\\Repository',
+            'name'         => 'CategoryRepository',
+            'filename'     => 'CategoryRepository.php',
+            'namespace'    => 'App\\Repository',
             'entity_class' => 'App\\Entity\\Category',
         ];
 
         // Créer le fichier d'abord
         $outputDir = $this->projectDir . '/src/Repository';
-        mkdir($outputDir, 0755, true);
+        mkdir($outputDir, 0o755, true);
         file_put_contents($outputDir . '/CategoryRepository.php', 'existing content');
 
         // Assert
@@ -196,7 +200,7 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $directory = 'valid/directory';
-        mkdir($this->projectDir . '/' . $directory, 0755, true);
+        mkdir($this->projectDir . '/' . $directory, 0o755, true);
 
         // Act & Assert
         $this->assertTrue($this->fileWriter->validateOutputDirectory($directory));
@@ -207,7 +211,7 @@ class FileWriterTest extends TestCase
         // Arrange
         $filePath = 'not/a/directory.txt';
         $fullPath = $this->projectDir . '/' . $filePath;
-        mkdir(dirname($fullPath), 0755, true);
+        mkdir(dirname($fullPath), 0o755, true);
         file_put_contents($fullPath, 'content');
 
         // Assert
@@ -222,8 +226,8 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $directory = 'readonly/directory';
-        $fullPath = $this->projectDir . '/' . $directory;
-        mkdir($fullPath, 0444, true); // Lecture seule
+        $fullPath  = $this->projectDir . '/' . $directory;
+        mkdir($fullPath, 0o444, true); // Lecture seule
 
         // Assert
         $this->expectException(FileWriteException::class);
@@ -243,15 +247,15 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $repository = [
-            'name' => 'TestRepository',
-            'filename' => 'TestRepository.php',
-            'namespace' => 'App\\Repository',
+            'name'         => 'TestRepository',
+            'filename'     => 'TestRepository.php',
+            'namespace'    => 'App\\Repository',
             'entity_class' => 'App\\Entity\\Test',
         ];
 
         // Act
         $filePath = $this->fileWriter->writeRepositoryFile($repository);
-        $content = file_get_contents($filePath);
+        $content  = file_get_contents($filePath);
 
         // Assert
         $this->assertStringContains('<?php', $content);
@@ -272,13 +276,13 @@ class FileWriterTest extends TestCase
     public function testWriteEntityFileWithConfiguredOutputDir(): void
     {
         // Arrange
-        $config = ['output_dir' => 'configured/entities'];
+        $config     = ['output_dir' => 'configured/entities'];
         $fileWriter = new FileWriter($this->projectDir, $config);
-        
+
         $entity = [
-            'name' => 'ConfiguredEntity',
+            'name'     => 'ConfiguredEntity',
             'filename' => 'ConfiguredEntity.php',
-            'code' => '<?php class ConfiguredEntity {}',
+            'code'     => '<?php class ConfiguredEntity {}',
         ];
 
         // Act
@@ -294,17 +298,17 @@ class FileWriterTest extends TestCase
     {
         // Arrange - Créer un répertoire en lecture seule
         $readOnlyDir = $this->projectDir . '/readonly';
-        mkdir($readOnlyDir, 0444, true);
-        
+        mkdir($readOnlyDir, 0o444, true);
+
         $entity = [
-            'name' => 'FailEntity',
+            'name'     => 'FailEntity',
             'filename' => 'FailEntity.php',
-            'code' => '<?php class FailEntity {}',
+            'code'     => '<?php class FailEntity {}',
         ];
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage("Le répertoire");
+        $this->expectExceptionMessage('Le répertoire');
 
         // Act
         $this->fileWriter->writeEntityFile($entity, 'readonly');
@@ -314,18 +318,18 @@ class FileWriterTest extends TestCase
     {
         // Arrange - Créer un répertoire en lecture seule
         $readOnlyDir = $this->projectDir . '/readonly';
-        mkdir($readOnlyDir, 0444, true);
-        
+        mkdir($readOnlyDir, 0o444, true);
+
         $repository = [
-            'name' => 'FailRepository',
-            'filename' => 'FailRepository.php',
-            'namespace' => 'App\\Repository',
+            'name'         => 'FailRepository',
+            'filename'     => 'FailRepository.php',
+            'namespace'    => 'App\\Repository',
             'entity_class' => 'App\\Entity\\Fail',
         ];
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage("Le répertoire");
+        $this->expectExceptionMessage('Le répertoire');
 
         // Act
         $this->fileWriter->writeRepositoryFile($repository, 'readonly');
@@ -336,11 +340,11 @@ class FileWriterTest extends TestCase
         // Arrange - Créer un fichier avec le même nom que le répertoire à créer
         $conflictPath = $this->projectDir . '/conflict';
         file_put_contents($conflictPath, 'content');
-        
+
         $entity = [
-            'name' => 'ConflictEntity',
+            'name'     => 'ConflictEntity',
             'filename' => 'ConflictEntity.php',
-            'code' => '<?php class ConflictEntity {}',
+            'code'     => '<?php class ConflictEntity {}',
         ];
 
         // Assert
@@ -354,15 +358,15 @@ class FileWriterTest extends TestCase
     {
         // Arrange
         $repository = [
-            'name' => 'ComplexRepository',
-            'filename' => 'ComplexRepository.php',
-            'namespace' => 'Very\\Deep\\Namespace\\Repository',
+            'name'         => 'ComplexRepository',
+            'filename'     => 'ComplexRepository.php',
+            'namespace'    => 'Very\\Deep\\Namespace\\Repository',
             'entity_class' => 'Very\\Deep\\Namespace\\Entity\\ComplexEntity',
         ];
 
         // Act
         $filePath = $this->fileWriter->writeRepositoryFile($repository);
-        $content = file_get_contents($filePath);
+        $content  = file_get_contents($filePath);
 
         // Assert
         $this->assertStringContains('namespace Very\\Deep\\Namespace\\Repository;', $content);
@@ -377,7 +381,7 @@ class FileWriterTest extends TestCase
     {
         $this->assertTrue(
             str_contains($haystack, $needle),
-            "Failed asserting that '$haystack' contains '$needle'"
+            "Failed asserting that '{$haystack}' contains '{$needle}'",
         );
     }
 }

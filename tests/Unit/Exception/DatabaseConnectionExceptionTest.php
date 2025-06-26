@@ -6,7 +6,10 @@ namespace App\Tests\Unit\Exception;
 
 use App\Exception\DatabaseConnectionException;
 use App\Exception\ReverseEngineeringException;
+use Exception;
+use PDOException;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 /**
  * Tests unitaires pour DatabaseConnectionException.
@@ -43,7 +46,7 @@ class DatabaseConnectionExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Timeout de connexion';
-        $code = 2002;
+        $code    = 2002;
 
         // Act
         $exception = new DatabaseConnectionException($message, $code);
@@ -57,9 +60,9 @@ class DatabaseConnectionExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message = 'Erreur de connexion DBAL';
-        $code = 500;
-        $previous = new \PDOException('Connection refused');
+        $message  = 'Erreur de connexion DBAL';
+        $code     = 500;
+        $previous = new PDOException('Connection refused');
 
         // Act
         $exception = new DatabaseConnectionException($message, $code, $previous);
@@ -77,8 +80,8 @@ class DatabaseConnectionExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertInstanceOf(\Exception::class, $exception);
-        $this->assertInstanceOf(\Throwable::class, $exception);
+        $this->assertInstanceOf(Exception::class, $exception);
+        $this->assertInstanceOf(Throwable::class, $exception);
     }
 
     public function testExceptionCanBeThrown(): void
@@ -95,7 +98,7 @@ class DatabaseConnectionExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Database error';
-        $caught = false;
+        $caught  = false;
 
         // Act
         try {

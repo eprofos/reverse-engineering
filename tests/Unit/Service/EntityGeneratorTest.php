@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Service\EntityGenerator;
 use App\Exception\EntityGenerationException;
-use Twig\Environment;
-use PHPUnit\Framework\TestCase;
+use App\Service\EntityGenerator;
+use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Twig\Environment;
 
 /**
  * Tests unitaires pour EntityGenerator.
@@ -16,18 +17,20 @@ use PHPUnit\Framework\MockObject\MockObject;
 class EntityGeneratorTest extends TestCase
 {
     private EntityGenerator $entityGenerator;
+
     private Environment|MockObject $twig;
+
     private array $config;
 
     protected function setUp(): void
     {
-        $this->twig = $this->createMock(Environment::class);
+        $this->twig   = $this->createMock(Environment::class);
         $this->config = [
-            'namespace' => 'App\\Entity',
+            'namespace'           => 'App\\Entity',
             'generate_repository' => true,
-            'use_annotations' => false,
+            'use_annotations'     => false,
         ];
-        
+
         $this->entityGenerator = new EntityGenerator($this->twig, $this->config);
     }
 
@@ -35,56 +38,59 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'users';
-        $metadata = [
-            'entity_name' => 'User',
-            'table_name' => 'users',
+        $metadata  = [
+            'entity_name'     => 'User',
+            'table_name'      => 'users',
             'repository_name' => 'UserRepository',
-            'columns' => [
+            'columns'         => [
                 [
-                    'name' => 'id',
-                    'property_name' => 'id',
-                    'type' => 'int',
-                    'doctrine_type' => 'integer',
-                    'nullable' => false,
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'id',
+                    'property_name'  => 'id',
+                    'type'           => 'int',
+                    'doctrine_type'  => 'integer',
+                    'nullable'       => false,
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => true,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
                 [
-                    'name' => 'email',
-                    'property_name' => 'email',
-                    'type' => 'string',
-                    'doctrine_type' => 'string',
-                    'nullable' => false,
-                    'length' => 255,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'email',
+                    'property_name'  => 'email',
+                    'type'           => 'string',
+                    'doctrine_type'  => 'string',
+                    'nullable'       => false,
+                    'length'         => 255,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
             ],
-            'relations' => [],
-            'indexes' => [],
+            'relations'   => [],
+            'indexes'     => [],
             'primary_key' => ['id'],
         ];
 
         $expectedCode = '<?php class User {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class UserRepository {}';
                 }
+
                 return '';
             });
 
@@ -107,28 +113,31 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'products';
-        $metadata = [
-            'entity_name' => 'Product',
-            'table_name' => 'products',
+        $metadata  = [
+            'entity_name'     => 'Product',
+            'table_name'      => 'products',
             'repository_name' => 'ProductRepository',
-            'columns' => [],
-            'relations' => [],
-            'indexes' => [],
-            'primary_key' => [],
+            'columns'         => [],
+            'relations'       => [],
+            'indexes'         => [],
+            'primary_key'     => [],
         ];
 
-        $options = ['namespace' => 'Custom\\Entity'];
+        $options      = ['namespace' => 'Custom\\Entity'];
         $expectedCode = '<?php class Product {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class ProductRepository {}';
                 }
+
                 return '';
             });
 
@@ -143,19 +152,19 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'logs';
-        $metadata = [
-            'entity_name' => 'Log',
-            'table_name' => 'logs',
+        $metadata  = [
+            'entity_name'     => 'Log',
+            'table_name'      => 'logs',
             'repository_name' => 'LogRepository',
-            'columns' => [],
-            'relations' => [],
-            'indexes' => [],
-            'primary_key' => [],
+            'columns'         => [],
+            'relations'       => [],
+            'indexes'         => [],
+            'primary_key'     => [],
         ];
 
-        $options = ['generate_repository' => false];
+        $options      = ['generate_repository' => false];
         $expectedCode = '<?php class Log {}';
-        
+
         $this->twig
             ->expects($this->once())
             ->method('render')
@@ -173,68 +182,71 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'posts';
-        $metadata = [
-            'entity_name' => 'Post',
-            'table_name' => 'posts',
+        $metadata  = [
+            'entity_name'     => 'Post',
+            'table_name'      => 'posts',
             'repository_name' => 'PostRepository',
-            'columns' => [
+            'columns'         => [
                 [
-                    'name' => 'id',
-                    'property_name' => 'id',
-                    'type' => 'int',
-                    'doctrine_type' => 'integer',
-                    'nullable' => false,
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'id',
+                    'property_name'  => 'id',
+                    'type'           => 'int',
+                    'doctrine_type'  => 'integer',
+                    'nullable'       => false,
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => true,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
                 [
-                    'name' => 'user_id',
-                    'property_name' => 'userId',
-                    'type' => 'int',
-                    'doctrine_type' => 'integer',
-                    'nullable' => false,
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'user_id',
+                    'property_name'  => 'userId',
+                    'type'           => 'int',
+                    'doctrine_type'  => 'integer',
+                    'nullable'       => false,
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => true,
                 ],
             ],
             'relations' => [
                 [
-                    'type' => 'many_to_one',
-                    'property_name' => 'user',
-                    'target_entity' => 'User',
-                    'target_table' => 'users',
-                    'local_columns' => ['user_id'],
+                    'type'            => 'many_to_one',
+                    'property_name'   => 'user',
+                    'target_entity'   => 'User',
+                    'target_table'    => 'users',
+                    'local_columns'   => ['user_id'],
                     'foreign_columns' => ['id'],
-                    'on_delete' => 'CASCADE',
-                    'on_update' => null,
-                    'nullable' => false,
+                    'on_delete'       => 'CASCADE',
+                    'on_update'       => null,
+                    'nullable'        => false,
                 ],
             ],
-            'indexes' => [],
+            'indexes'     => [],
             'primary_key' => ['id'],
         ];
 
         $expectedCode = '<?php class Post {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class PostRepository {}';
                 }
+
                 return '';
             });
 
@@ -244,7 +256,7 @@ class EntityGeneratorTest extends TestCase
         // Assert
         $this->assertCount(1, $result['properties']); // Seul 'id' car 'user_id' est une FK
         $this->assertCount(1, $result['relations']);
-        
+
         $relation = $result['relations'][0];
         $this->assertEquals('many_to_one', $relation['type']);
         $this->assertEquals('user', $relation['property_name']);
@@ -257,43 +269,47 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'events';
-        $metadata = [
-            'entity_name' => 'Event',
-            'table_name' => 'events',
+        $metadata  = [
+            'entity_name'     => 'Event',
+            'table_name'      => 'events',
             'repository_name' => 'EventRepository',
-            'columns' => [
+            'columns'         => [
                 [
-                    'name' => 'created_at',
-                    'property_name' => 'createdAt',
-                    'type' => '\DateTimeInterface',
-                    'doctrine_type' => 'datetime',
-                    'nullable' => false,
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'created_at',
+                    'property_name'  => 'createdAt',
+                    'type'           => '\DateTimeInterface',
+                    'doctrine_type'  => 'datetime',
+                    'nullable'       => false,
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
             ],
-            'relations' => [],
-            'indexes' => [],
+            'relations'   => [],
+            'indexes'     => [],
             'primary_key' => [],
         ];
 
         $expectedCode = '<?php class Event {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     $this->assertContains('DateTimeInterface', $data['imports']);
+
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class EventRepository {}';
                 }
+
                 return '';
             });
 
@@ -308,29 +324,33 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'categories';
-        $metadata = [
-            'entity_name' => 'Category',
-            'table_name' => 'categories',
+        $metadata  = [
+            'entity_name'     => 'Category',
+            'table_name'      => 'categories',
             'repository_name' => 'CategoryRepository',
-            'columns' => [],
-            'relations' => [],
-            'indexes' => [],
-            'primary_key' => [],
+            'columns'         => [],
+            'relations'       => [],
+            'indexes'         => [],
+            'primary_key'     => [],
         ];
 
-        $options = ['use_annotations' => true];
+        $options      = ['use_annotations' => true];
         $expectedCode = '<?php class Category {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     $this->assertTrue($data['use_annotations']);
+
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class CategoryRepository {}';
                 }
+
                 return '';
             });
 
@@ -345,20 +365,20 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'invalid';
-        $metadata = [
-            'entity_name' => 'Invalid',
-            'table_name' => 'invalid',
+        $metadata  = [
+            'entity_name'     => 'Invalid',
+            'table_name'      => 'invalid',
             'repository_name' => 'InvalidRepository',
-            'columns' => [],
-            'relations' => [],
-            'indexes' => [],
-            'primary_key' => [],
+            'columns'         => [],
+            'relations'       => [],
+            'indexes'         => [],
+            'primary_key'     => [],
         ];
 
         $this->twig
             ->expects($this->once())
             ->method('render')
-            ->willThrowException(new \Exception('Template error'));
+            ->willThrowException(new Exception('Template error'));
 
         // Assert
         $this->expectException(EntityGenerationException::class);
@@ -372,70 +392,73 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'orders';
-        $metadata = [
-            'entity_name' => 'Order',
-            'table_name' => 'orders',
+        $metadata  = [
+            'entity_name'     => 'Order',
+            'table_name'      => 'orders',
             'repository_name' => 'OrderRepository',
-            'columns' => [
+            'columns'         => [
                 [
-                    'name' => 'id',
-                    'property_name' => 'id',
-                    'type' => 'int',
-                    'doctrine_type' => 'integer',
-                    'nullable' => false,
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'id',
+                    'property_name'  => 'id',
+                    'type'           => 'int',
+                    'doctrine_type'  => 'integer',
+                    'nullable'       => false,
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => true,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
                 [
-                    'name' => 'customer_id',
-                    'property_name' => 'customerId',
-                    'type' => 'int',
-                    'doctrine_type' => 'integer',
-                    'nullable' => false,
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'customer_id',
+                    'property_name'  => 'customerId',
+                    'type'           => 'int',
+                    'doctrine_type'  => 'integer',
+                    'nullable'       => false,
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => true, // Cette colonne doit être exclue
                 ],
                 [
-                    'name' => 'total',
-                    'property_name' => 'total',
-                    'type' => 'string',
-                    'doctrine_type' => 'decimal',
-                    'nullable' => false,
-                    'length' => null,
-                    'precision' => 10,
-                    'scale' => 2,
-                    'default' => null,
+                    'name'           => 'total',
+                    'property_name'  => 'total',
+                    'type'           => 'string',
+                    'doctrine_type'  => 'decimal',
+                    'nullable'       => false,
+                    'length'         => null,
+                    'precision'      => 10,
+                    'scale'          => 2,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
             ],
-            'relations' => [],
-            'indexes' => [],
+            'relations'   => [],
+            'indexes'     => [],
             'primary_key' => ['id'],
         ];
 
         $expectedCode = '<?php class Order {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class OrderRepository {}';
                 }
+
                 return '';
             });
 
@@ -444,7 +467,7 @@ class EntityGeneratorTest extends TestCase
 
         // Assert
         $this->assertCount(2, $result['properties']); // id et total, pas customer_id
-        
+
         $propertyNames = array_column($result['properties'], 'name');
         $this->assertContains('id', $propertyNames);
         $this->assertContains('total', $propertyNames);
@@ -455,42 +478,45 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'users';
-        $metadata = [
-            'entity_name' => 'User',
-            'table_name' => 'users',
+        $metadata  = [
+            'entity_name'     => 'User',
+            'table_name'      => 'users',
             'repository_name' => 'UserRepository',
-            'columns' => [
+            'columns'         => [
                 [
-                    'name' => 'first_name',
-                    'property_name' => 'firstName',
-                    'type' => 'string',
-                    'doctrine_type' => 'string',
-                    'nullable' => false,
-                    'length' => 255,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'first_name',
+                    'property_name'  => 'firstName',
+                    'type'           => 'string',
+                    'doctrine_type'  => 'string',
+                    'nullable'       => false,
+                    'length'         => 255,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
             ],
-            'relations' => [],
-            'indexes' => [],
+            'relations'   => [],
+            'indexes'     => [],
             'primary_key' => [],
         ];
 
         $expectedCode = '<?php class User {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class UserRepository {}';
                 }
+
                 return '';
             });
 
@@ -507,28 +533,31 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'products';
-        $metadata = [
-            'entity_name' => 'Product',
-            'table_name' => 'products',
+        $metadata  = [
+            'entity_name'     => 'Product',
+            'table_name'      => 'products',
             'repository_name' => 'ProductRepository',
-            'columns' => [],
-            'relations' => [],
-            'indexes' => [],
-            'primary_key' => [],
+            'columns'         => [],
+            'relations'       => [],
+            'indexes'         => [],
+            'primary_key'     => [],
         ];
 
-        $options = ['namespace' => 'Custom\\Entity'];
+        $options      = ['namespace' => 'Custom\\Entity'];
         $expectedCode = '<?php class Product {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class ProductRepository {}';
                 }
+
                 return '';
             });
 
@@ -547,58 +576,62 @@ class EntityGeneratorTest extends TestCase
     {
         // Arrange
         $tableName = 'articles';
-        $metadata = [
-            'entity_name' => 'Article',
-            'table_name' => 'articles',
+        $metadata  = [
+            'entity_name'     => 'Article',
+            'table_name'      => 'articles',
             'repository_name' => 'ArticleRepository',
-            'columns' => [
+            'columns'         => [
                 [
-                    'name' => 'published_at',
-                    'property_name' => 'publishedAt',
-                    'type' => '\DateTimeInterface',
-                    'doctrine_type' => 'datetime',
-                    'nullable' => true,
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'default' => null,
+                    'name'           => 'published_at',
+                    'property_name'  => 'publishedAt',
+                    'type'           => '\DateTimeInterface',
+                    'doctrine_type'  => 'datetime',
+                    'nullable'       => true,
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                     'is_foreign_key' => false,
                 ],
             ],
             'relations' => [
                 [
-                    'type' => 'many_to_one',
-                    'property_name' => 'author',
-                    'target_entity' => 'User',
-                    'local_columns' => ['author_id'],
+                    'type'            => 'many_to_one',
+                    'property_name'   => 'author',
+                    'target_entity'   => 'User',
+                    'local_columns'   => ['author_id'],
                     'foreign_columns' => ['id'],
-                    'on_delete' => null,
-                    'on_update' => null,
-                    'nullable' => true,
+                    'on_delete'       => null,
+                    'on_update'       => null,
+                    'nullable'        => true,
                 ],
             ],
-            'indexes' => [],
+            'indexes'     => [],
             'primary_key' => [],
         ];
 
-        $options = ['use_annotations' => false];
+        $options      = ['use_annotations' => false];
         $expectedCode = '<?php class Article {}';
-        
+
         $this->twig
             ->expects($this->exactly(2))
             ->method('render')
-            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
                 if ($template === 'entity.php.twig') {
                     $imports = $data['imports'];
                     $this->assertContains('DateTimeInterface', $imports);
                     $this->assertContains('Doctrine\\ORM\\Mapping\\ManyToOne', $imports);
                     $this->assertContains('Doctrine\\ORM\\Mapping\\JoinColumn', $imports);
+
                     return $expectedCode;
-                } elseif ($template === 'repository.php.twig') {
+                }
+
+                if ($template === 'repository.php.twig') {
                     return '<?php class ArticleRepository {}';
                 }
+
                 return '';
             });
 

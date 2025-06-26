@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Integration;
 
 use App\Service\DatabaseAnalyzer;
-use App\Service\MetadataExtractor;
 use App\Service\EntityGenerator;
 use App\Service\FileWriter;
+use App\Service\MetadataExtractor;
 use App\Service\ReverseEngineeringService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -21,7 +21,9 @@ use Twig\Loader\ArrayLoader;
 class ReverseEngineeringIntegrationTest extends TestCase
 {
     private Connection $connection;
+
     private ReverseEngineeringService $service;
+
     private string $tempDir;
 
     protected function setUp(): void
@@ -34,11 +36,11 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
         // Créer un répertoire temporaire pour les fichiers générés
         $this->tempDir = sys_get_temp_dir() . '/reverse_engineering_test_' . uniqid();
-        mkdir($this->tempDir, 0755, true);
+        mkdir($this->tempDir, 0o755, true);
 
         // Configurer les services
         $this->setupServices();
-        
+
         // Créer les tables de test
         $this->createTestTables();
     }
@@ -54,7 +56,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
         // Act - Générer les entités
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'namespace' => 'Test\\Entity',
+            'namespace'  => 'Test\\Entity',
         ]);
 
         // Assert - Vérifier le résultat
@@ -78,14 +80,14 @@ class ReverseEngineeringIntegrationTest extends TestCase
     {
         // Act - Générer seulement la table users
         $result = $this->service->generateEntities([
-            'tables' => ['users'],
+            'tables'     => ['users'],
             'output_dir' => $this->tempDir,
         ]);
 
         // Assert
         $this->assertEquals(1, $result['tables_processed']);
         $this->assertCount(1, $result['entities']);
-        
+
         $entity = $result['entities'][0];
         $this->assertEquals('User', $entity['name']);
         $this->assertEquals('users', $entity['table']);
@@ -95,13 +97,13 @@ class ReverseEngineeringIntegrationTest extends TestCase
     {
         // Act - Exclure la table logs
         $result = $this->service->generateEntities([
-            'exclude' => ['logs'],
+            'exclude'    => ['logs'],
             'output_dir' => $this->tempDir,
         ]);
 
         // Assert
         $this->assertEquals(2, $result['tables_processed']);
-        
+
         $tableNames = array_column($result['entities'], 'table');
         $this->assertContains('users', $tableNames);
         $this->assertContains('posts', $tableNames);
@@ -118,7 +120,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
         // Assert
         $this->assertEmpty($result['files']);
         $this->assertCount(3, $result['entities']);
-        
+
         // Vérifier qu'aucun fichier n'a été créé
         $files = glob($this->tempDir . '/*');
         $this->assertEmpty($files);
@@ -133,6 +135,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
         // Assert - Vérifier que les relations sont correctement détectées
         $postEntity = null;
+
         foreach ($result['entities'] as $entity) {
             if ($entity['name'] === 'Post') {
                 $postEntity = $entity;
@@ -143,7 +146,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
         $this->assertNotNull($postEntity);
         $this->assertArrayHasKey('relations', $postEntity);
         $this->assertCount(1, $postEntity['relations']);
-        
+
         $relation = $postEntity['relations'][0];
         $this->assertEquals('many_to_one', $relation['type']);
         $this->assertEquals('User', $relation['target_entity']);
@@ -155,13 +158,13 @@ class ReverseEngineeringIntegrationTest extends TestCase
         // Act
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'namespace' => 'Test\\Entity',
+            'namespace'  => 'Test\\Entity',
         ]);
 
         // Assert - Vérifier le contenu du fichier User.php
         $userFile = $this->tempDir . '/User.php';
         $this->assertFileExists($userFile);
-        
+
         $content = file_get_contents($userFile);
         $this->assertStringContains('<?php', $content);
         $this->assertStringContains('namespace Test\\Entity;', $content);
@@ -177,13 +180,13 @@ class ReverseEngineeringIntegrationTest extends TestCase
         // Act
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'namespace' => 'Test\\Entity',
+            'namespace'  => 'Test\\Entity',
         ]);
 
         // Assert - Vérifier le contenu du fichier UserRepository.php
         $repositoryFile = $this->tempDir . '/UserRepository.php';
         $this->assertFileExists($repositoryFile);
-        
+
         $content = file_get_contents($repositoryFile);
         $this->assertStringContains('<?php', $content);
         $this->assertStringContains('namespace Test\\Repository;', $content);
@@ -233,9 +236,9 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
         // Act - Générer avec force
         $result = $this->service->generateEntities([
-            'tables' => ['users'],
+            'tables'     => ['users'],
             'output_dir' => $this->tempDir,
-            'force' => true,
+            'force'      => true,
         ]);
 
         // Assert
@@ -262,19 +265,20 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
         // Act
         $result = $this->service->generateEntities([
-            'tables' => ['complex_types'],
+            'tables'     => ['complex_types'],
             'output_dir' => $this->tempDir,
         ]);
 
         // Assert
         $entity = $result['entities'][0];
         $this->assertEquals('ComplexType', $entity['name']);
-        
+
         $propertyTypes = [];
+
         foreach ($entity['properties'] as $property) {
             $propertyTypes[$property['name']] = $property['type'];
         }
-        
+
         $this->assertEquals('int', $propertyTypes['id']);
         $this->assertEquals('string', $propertyTypes['name']);
         $this->assertEquals('?string', $propertyTypes['price']); // DECIMAL mapped to string, nullable
@@ -286,27 +290,27 @@ class ReverseEngineeringIntegrationTest extends TestCase
     {
         $databaseConfig = [
             'driver' => 'pdo_sqlite',
-            'path' => ':memory:',
+            'path'   => ':memory:',
         ];
 
-        $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig, $this->connection);
+        $databaseAnalyzer  = new DatabaseAnalyzer($databaseConfig, $this->connection);
         $metadataExtractor = new MetadataExtractor($databaseAnalyzer);
 
         // Configurer Twig avec les templates
         $loader = new ArrayLoader([
-            'entity.php.twig' => $this->getEntityTemplate(),
+            'entity.php.twig'     => $this->getEntityTemplate(),
             'repository.php.twig' => $this->getRepositoryTemplate(),
         ]);
         $twig = new Environment($loader);
 
         $entityGenerator = new EntityGenerator($twig);
-        $fileWriter = new FileWriter('');
+        $fileWriter      = new FileWriter('');
 
         $this->service = new ReverseEngineeringService(
             $databaseAnalyzer,
             $metadataExtractor,
             $entityGenerator,
-            $fileWriter
+            $fileWriter,
         );
     }
 
@@ -360,11 +364,12 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
     private function removeDirectory(string $dir): void
     {
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return;
         }
 
         $files = array_diff(scandir($dir), ['.', '..']);
+
         foreach ($files as $file) {
             $path = $dir . '/' . $file;
             is_dir($path) ? $this->removeDirectory($path) : unlink($path);
@@ -439,7 +444,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     {
         $this->assertTrue(
             str_contains($haystack, $needle),
-            "Failed asserting that '$haystack' contains '$needle'"
+            "Failed asserting that '{$haystack}' contains '{$needle}'",
         );
     }
 
@@ -447,7 +452,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     {
         $this->assertFalse(
             str_contains($haystack, $needle),
-            "Failed asserting that '$haystack' does not contain '$needle'"
+            "Failed asserting that '{$haystack}' does not contain '{$needle}'",
         );
     }
 }

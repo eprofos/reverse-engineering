@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Performance;
 
 use App\Service\DatabaseAnalyzer;
-use App\Service\MetadataExtractor;
 use App\Service\EntityGenerator;
 use App\Service\FileWriter;
+use App\Service\MetadataExtractor;
 use App\Service\ReverseEngineeringService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -15,13 +15,17 @@ use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
+use function count;
+
 /**
  * Tests de performance pour le reverse engineering.
  */
 class ReverseEngineeringPerformanceTest extends TestCase
 {
     private Connection $connection;
+
     private ReverseEngineeringService $service;
+
     private string $tempDir;
 
     protected function setUp(): void
@@ -34,7 +38,7 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         // Créer un répertoire temporaire
         $this->tempDir = sys_get_temp_dir() . '/perf_test_' . uniqid();
-        mkdir($this->tempDir, 0755, true);
+        mkdir($this->tempDir, 0o755, true);
 
         $this->setupServices();
     }
@@ -52,23 +56,26 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         // Act - Mesurer le temps d'exécution
         $startTime = microtime(true);
-        
+
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'dry_run' => true, // Éviter l'écriture de fichiers pour se concentrer sur l'analyse
+            'dry_run'    => true, // Éviter l'écriture de fichiers pour se concentrer sur l'analyse
         ]);
-        
-        $endTime = microtime(true);
+
+        $endTime       = microtime(true);
         $executionTime = $endTime - $startTime;
 
         // Assert
         $this->assertEquals($tableCount, $result['tables_processed']);
         $this->assertCount($tableCount, $result['entities']);
-        
+
         // Le processus ne doit pas prendre plus de 10 secondes pour 50 tables
-        $this->assertLessThan(10.0, $executionTime, 
-            "Le traitement de {$tableCount} tables a pris {$executionTime}s, ce qui est trop lent");
-        
+        $this->assertLessThan(
+            10.0,
+            $executionTime,
+            "Le traitement de {$tableCount} tables a pris {$executionTime}s, ce qui est trop lent",
+        );
+
         // Afficher les métriques de performance
         $this->addToAssertionCount(1); // Pour éviter les warnings sur les tests sans assertions
     }
@@ -80,27 +87,29 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         // Act
         $startTime = microtime(true);
-        
+
         $result = $this->service->generateEntities([
-            'tables' => ['large_table'],
+            'tables'     => ['large_table'],
             'output_dir' => $this->tempDir,
-            'dry_run' => true,
+            'dry_run'    => true,
         ]);
-        
-        $endTime = microtime(true);
+
+        $endTime       = microtime(true);
         $executionTime = $endTime - $startTime;
 
         // Assert
         $this->assertEquals(1, $result['tables_processed']);
         $entity = $result['entities'][0];
-        
+
         // Vérifier qu'on a bien toutes les colonnes
         $this->assertGreaterThan(45, count($entity['properties'])); // 50 colonnes - quelques FK
-        
-        // Le traitement d'une grande table ne doit pas prendre plus de 2 secondes
-        $this->assertLessThan(2.0, $executionTime,
-            "Le traitement d'une grande table a pris {$executionTime}s, ce qui est trop lent");
 
+        // Le traitement d'une grande table ne doit pas prendre plus de 2 secondes
+        $this->assertLessThan(
+            2.0,
+            $executionTime,
+            "Le traitement d'une grande table a pris {$executionTime}s, ce qui est trop lent",
+        );
     }
 
     public function testPerformanceWithComplexRelations(): void
@@ -110,57 +119,62 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         // Act
         $startTime = microtime(true);
-        
+
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'dry_run' => true,
+            'dry_run'    => true,
         ]);
-        
-        $endTime = microtime(true);
+
+        $endTime       = microtime(true);
         $executionTime = $endTime - $startTime;
 
         // Assert
         $this->assertEquals(6, $result['tables_processed']); // 6 tables avec relations
-        
+
         // Vérifier que les relations sont détectées
         $totalRelations = 0;
+
         foreach ($result['entities'] as $entity) {
             $totalRelations += count($entity['relations']);
         }
         $this->assertGreaterThan(5, $totalRelations);
-        
-        // Le traitement ne doit pas prendre plus de 3 secondes
-        $this->assertLessThan(3.0, $executionTime,
-            "Le traitement des relations complexes a pris {$executionTime}s, ce qui est trop lent");
 
+        // Le traitement ne doit pas prendre plus de 3 secondes
+        $this->assertLessThan(
+            3.0,
+            $executionTime,
+            "Le traitement des relations complexes a pris {$executionTime}s, ce qui est trop lent",
+        );
     }
 
     public function testMemoryUsageWithManyEntities(): void
     {
         // Arrange
         $this->createManyTables(30);
-        
+
         // Act - Mesurer l'utilisation mémoire
         $memoryBefore = memory_get_usage(true);
-        
+
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'dry_run' => true,
+            'dry_run'    => true,
         ]);
-        
+
         $memoryAfter = memory_get_usage(true);
-        $memoryUsed = $memoryAfter - $memoryBefore;
+        $memoryUsed  = $memoryAfter - $memoryBefore;
 
         // Assert
         $this->assertEquals(30, $result['tables_processed']);
-        
-        // L'utilisation mémoire ne doit pas dépasser 50MB
-        $maxMemoryMB = 50;
-        $memoryUsedMB = $memoryUsed / 1024 / 1024;
-        
-        $this->assertLessThan($maxMemoryMB, $memoryUsedMB,
-            "L'utilisation mémoire ({$memoryUsedMB}MB) dépasse la limite de {$maxMemoryMB}MB");
 
+        // L'utilisation mémoire ne doit pas dépasser 50MB
+        $maxMemoryMB  = 50;
+        $memoryUsedMB = $memoryUsed / 1024 / 1024;
+
+        $this->assertLessThan(
+            $maxMemoryMB,
+            $memoryUsedMB,
+            "L'utilisation mémoire ({$memoryUsedMB}MB) dépasse la limite de {$maxMemoryMB}MB",
+        );
     }
 
     public function testFileGenerationPerformance(): void
@@ -170,28 +184,30 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         // Act - Tester la génération de fichiers réels
         $startTime = microtime(true);
-        
+
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'dry_run' => false, // Génération réelle de fichiers
+            'dry_run'    => false, // Génération réelle de fichiers
         ]);
-        
-        $endTime = microtime(true);
+
+        $endTime       = microtime(true);
         $executionTime = $endTime - $startTime;
 
         // Assert
         $this->assertEquals(20, $result['tables_processed']);
         $this->assertCount(40, $result['files']); // 20 entités + 20 repositories
-        
+
         // Vérifier que tous les fichiers existent
         foreach ($result['files'] as $file) {
             $this->assertFileExists($file);
         }
-        
-        // La génération de 40 fichiers ne doit pas prendre plus de 5 secondes
-        $this->assertLessThan(5.0, $executionTime,
-            "La génération de fichiers a pris {$executionTime}s, ce qui est trop lent");
 
+        // La génération de 40 fichiers ne doit pas prendre plus de 5 secondes
+        $this->assertLessThan(
+            5.0,
+            $executionTime,
+            "La génération de fichiers a pris {$executionTime}s, ce qui est trop lent",
+        );
     }
 
     public function testDatabaseAnalysisPerformance(): void
@@ -201,19 +217,21 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         // Act - Tester uniquement l'analyse de la base de données
         $startTime = microtime(true);
-        
+
         $tables = $this->service->getAvailableTables();
-        
-        $endTime = microtime(true);
+
+        $endTime       = microtime(true);
         $executionTime = $endTime - $startTime;
 
         // Assert
         $this->assertCount(100, $tables);
-        
-        // L'analyse de 100 tables ne doit pas prendre plus de 1 seconde
-        $this->assertLessThan(1.0, $executionTime,
-            "L'analyse de la base de données a pris {$executionTime}s, ce qui est trop lent");
 
+        // L'analyse de 100 tables ne doit pas prendre plus de 1 seconde
+        $this->assertLessThan(
+            1.0,
+            $executionTime,
+            "L'analyse de la base de données a pris {$executionTime}s, ce qui est trop lent",
+        );
     }
 
     private function setupServices(): void
@@ -224,30 +242,30 @@ class ReverseEngineeringPerformanceTest extends TestCase
         ];
 
         // Passer la connexion existante au DatabaseAnalyzer pour partager la même base de données
-        $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig, $this->connection);
+        $databaseAnalyzer  = new DatabaseAnalyzer($databaseConfig, $this->connection);
         $metadataExtractor = new MetadataExtractor($databaseAnalyzer);
 
         // Template minimal pour les tests de performance
         $loader = new ArrayLoader([
-            'entity.php.twig' => '<?php class {{ entity_name }} { /* properties */ }',
+            'entity.php.twig'     => '<?php class {{ entity_name }} { /* properties */ }',
             'repository.php.twig' => '<?php class {{ repository_name }} { /* repository */ }',
         ]);
         $twig = new Environment($loader);
 
         $entityGenerator = new EntityGenerator($twig);
-        $fileWriter = new FileWriter($this->tempDir);
+        $fileWriter      = new FileWriter($this->tempDir);
 
         $this->service = new ReverseEngineeringService(
             $databaseAnalyzer,
             $metadataExtractor,
             $entityGenerator,
-            $fileWriter
+            $fileWriter,
         );
     }
 
     private function createManyTables(int $count): void
     {
-        for ($i = 1; $i <= $count; $i++) {
+        for ($i = 1; $i <= $count; ++$i) {
             $tableName = "table_{$i}";
             $this->connection->executeStatement("
                 CREATE TABLE {$tableName} (
@@ -265,10 +283,10 @@ class ReverseEngineeringPerformanceTest extends TestCase
     private function createLargeTable(): void
     {
         $columns = ['id INTEGER PRIMARY KEY AUTOINCREMENT'];
-        
+
         // Créer 50 colonnes de différents types
-        for ($i = 1; $i <= 50; $i++) {
-            $type = match($i % 5) {
+        for ($i = 1; $i <= 50; ++$i) {
+            $type = match ($i % 5) {
                 0 => 'TEXT',
                 1 => 'INTEGER',
                 2 => 'DECIMAL(10,2)',
@@ -277,8 +295,8 @@ class ReverseEngineeringPerformanceTest extends TestCase
             };
             $columns[] = "column_{$i} {$type}";
         }
-        
-        $sql = "CREATE TABLE large_table (" . implode(', ', $columns) . ")";
+
+        $sql = 'CREATE TABLE large_table (' . implode(', ', $columns) . ')';
         $this->connection->executeStatement($sql);
     }
 
@@ -346,11 +364,12 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
     private function removeDirectory(string $dir): void
     {
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return;
         }
 
         $files = array_diff(scandir($dir), ['.', '..']);
+
         foreach ($files as $file) {
             $path = $dir . '/' . $file;
             is_dir($path) ? $this->removeDirectory($path) : unlink($path);

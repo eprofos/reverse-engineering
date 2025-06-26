@@ -14,36 +14,27 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
  */
 class ReverseEngineeringExtension extends Extension
 {
-    /**
-     * {@inheritdoc}
-     */
     public function load(array $configs, ContainerBuilder $container): void
     {
         $loader = new YamlFileLoader(
             $container,
-            new FileLocator(__DIR__ . '/../Resources/config')
+            new FileLocator(__DIR__ . '/../Resources/config'),
         );
-        
+
         $loader->load('services.yaml');
-        
+
         $configuration = $this->getConfiguration($configs, $container);
-        $config = $this->processConfiguration($configuration, $configs);
-        
+        $config        = $this->processConfiguration($configuration, $configs);
+
         // Définir les paramètres de configuration
         $container->setParameter('reverse_engineering.config', $config);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration
     {
         return new Configuration();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getAlias(): string
     {
         return 'reverse_engineering';

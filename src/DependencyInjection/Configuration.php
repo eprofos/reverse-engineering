@@ -12,13 +12,10 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 class Configuration implements ConfigurationInterface
 {
-    /**
-     * {@inheritdoc}
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('reverse_engineering');
-        $rootNode = $treeBuilder->getRootNode();
+        $rootNode    = $treeBuilder->getRootNode();
 
         $rootNode
             ->children()

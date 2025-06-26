@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Exception\MetadataExtractionException;
 use App\Service\DatabaseAnalyzer;
 use App\Service\MetadataExtractor;
-use App\Exception\MetadataExtractionException;
-use PHPUnit\Framework\TestCase;
+use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Tests unitaires pour MetadataExtractor.
@@ -16,71 +17,72 @@ use PHPUnit\Framework\MockObject\MockObject;
 class MetadataExtractorTest extends TestCase
 {
     private MetadataExtractor $metadataExtractor;
+
     private DatabaseAnalyzer|MockObject $databaseAnalyzer;
 
     protected function setUp(): void
     {
-        $this->databaseAnalyzer = $this->createMock(DatabaseAnalyzer::class);
+        $this->databaseAnalyzer  = $this->createMock(DatabaseAnalyzer::class);
         $this->metadataExtractor = new MetadataExtractor($this->databaseAnalyzer);
     }
 
     public function testExtractTableMetadataSuccess(): void
     {
         // Arrange
-        $tableName = 'users';
+        $tableName    = 'users';
         $tableDetails = [
-            'name' => 'users',
+            'name'    => 'users',
             'columns' => [
                 [
-                    'name' => 'id',
-                    'type' => 'integer',
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'nullable' => false,
-                    'default' => null,
+                    'name'           => 'id',
+                    'type'           => 'integer',
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'nullable'       => false,
+                    'default'        => null,
                     'auto_increment' => true,
-                    'comment' => 'Primary key',
+                    'comment'        => 'Primary key',
                 ],
                 [
-                    'name' => 'email',
-                    'type' => 'string',
-                    'length' => 255,
-                    'precision' => null,
-                    'scale' => null,
-                    'nullable' => false,
-                    'default' => null,
+                    'name'           => 'email',
+                    'type'           => 'string',
+                    'length'         => 255,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'nullable'       => false,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => 'User email',
+                    'comment'        => 'User email',
                 ],
                 [
-                    'name' => 'created_at',
-                    'type' => 'datetime',
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'nullable' => false,
-                    'default' => 'CURRENT_TIMESTAMP',
+                    'name'           => 'created_at',
+                    'type'           => 'datetime',
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'nullable'       => false,
+                    'default'        => 'CURRENT_TIMESTAMP',
                     'auto_increment' => false,
-                    'comment' => 'Creation date',
+                    'comment'        => 'Creation date',
                 ],
             ],
             'indexes' => [
                 [
-                    'name' => 'PRIMARY',
+                    'name'    => 'PRIMARY',
                     'columns' => ['id'],
-                    'unique' => true,
+                    'unique'  => true,
                     'primary' => true,
                 ],
                 [
-                    'name' => 'email_unique',
+                    'name'    => 'email_unique',
                     'columns' => ['email'],
-                    'unique' => true,
+                    'unique'  => true,
                     'primary' => false,
                 ],
             ],
             'foreign_keys' => [],
-            'primary_key' => ['id'],
+            'primary_key'  => ['id'],
         ];
 
         $this->databaseAnalyzer
@@ -99,7 +101,7 @@ class MetadataExtractorTest extends TestCase
         $this->assertEquals('UserRepository', $result['repository_name']);
         $this->assertCount(3, $result['columns']);
         $this->assertEquals(['id'], $result['primary_key']);
-        
+
         // Vérifier les colonnes
         $idColumn = $result['columns'][0];
         $this->assertEquals('id', $idColumn['property_name']);
@@ -123,53 +125,53 @@ class MetadataExtractorTest extends TestCase
     public function testExtractTableMetadataWithForeignKeys(): void
     {
         // Arrange
-        $tableName = 'posts';
+        $tableName    = 'posts';
         $tableDetails = [
-            'name' => 'posts',
+            'name'    => 'posts',
             'columns' => [
                 [
-                    'name' => 'id',
-                    'type' => 'integer',
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'nullable' => false,
-                    'default' => null,
+                    'name'           => 'id',
+                    'type'           => 'integer',
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'nullable'       => false,
+                    'default'        => null,
                     'auto_increment' => true,
-                    'comment' => '',
+                    'comment'        => '',
                 ],
                 [
-                    'name' => 'user_id',
-                    'type' => 'integer',
-                    'length' => null,
-                    'precision' => null,
-                    'scale' => null,
-                    'nullable' => false,
-                    'default' => null,
+                    'name'           => 'user_id',
+                    'type'           => 'integer',
+                    'length'         => null,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'nullable'       => false,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                 ],
                 [
-                    'name' => 'title',
-                    'type' => 'string',
-                    'length' => 255,
-                    'precision' => null,
-                    'scale' => null,
-                    'nullable' => false,
-                    'default' => null,
+                    'name'           => 'title',
+                    'type'           => 'string',
+                    'length'         => 255,
+                    'precision'      => null,
+                    'scale'          => null,
+                    'nullable'       => false,
+                    'default'        => null,
                     'auto_increment' => false,
-                    'comment' => '',
+                    'comment'        => '',
                 ],
             ],
-            'indexes' => [],
+            'indexes'      => [],
             'foreign_keys' => [
                 [
-                    'name' => 'fk_posts_user',
-                    'local_columns' => ['user_id'],
-                    'foreign_table' => 'users',
+                    'name'            => 'fk_posts_user',
+                    'local_columns'   => ['user_id'],
+                    'foreign_table'   => 'users',
                     'foreign_columns' => ['id'],
-                    'on_delete' => 'CASCADE',
-                    'on_update' => null,
+                    'on_delete'       => 'CASCADE',
+                    'on_update'       => null,
                 ],
             ],
             'primary_key' => ['id'],
@@ -186,7 +188,7 @@ class MetadataExtractorTest extends TestCase
 
         // Assert
         $this->assertCount(1, $result['relations']);
-        
+
         $relation = $result['relations'][0];
         $this->assertEquals('many_to_one', $relation['type']);
         $this->assertEquals('User', $relation['target_entity']);
@@ -198,7 +200,7 @@ class MetadataExtractorTest extends TestCase
         $this->assertFalse($relation['nullable']);
 
         // Vérifier que user_id est marqué comme clé étrangère
-        $userIdColumn = array_filter($result['columns'], fn($col) => $col['name'] === 'user_id');
+        $userIdColumn = array_filter($result['columns'], fn ($col) => $col['name'] === 'user_id');
         $this->assertCount(1, $userIdColumn);
         $userIdColumn = array_values($userIdColumn)[0];
         $this->assertTrue($userIdColumn['is_foreign_key']);
@@ -208,35 +210,38 @@ class MetadataExtractorTest extends TestCase
     {
         // Test avec différents formats de noms de tables
         $testCases = [
-            'users' => 'User',
-            'user_profiles' => 'UserProfile',
+            'users'              => 'User',
+            'user_profiles'      => 'UserProfile',
             'product_categories' => 'ProductCategory',
-            'order_items' => 'OrderItem',
-            'companies' => 'Company',
-            'categories' => 'Category',
+            'order_items'        => 'OrderItem',
+            'companies'          => 'Company',
+            'categories'         => 'Category',
         ];
 
         foreach ($testCases as $tableName => $expectedEntityName) {
             $this->databaseAnalyzer
                 ->method('getTableDetails')
                 ->willReturn([
-                    'name' => $tableName,
-                    'columns' => [],
-                    'indexes' => [],
+                    'name'         => $tableName,
+                    'columns'      => [],
+                    'indexes'      => [],
                     'foreign_keys' => [],
-                    'primary_key' => [],
+                    'primary_key'  => [],
                 ]);
 
             $result = $this->metadataExtractor->extractTableMetadata($tableName);
-            $this->assertEquals($expectedEntityName, $result['entity_name'], 
-                "Failed for table: $tableName");
+            $this->assertEquals(
+                $expectedEntityName,
+                $result['entity_name'],
+                "Failed for table: {$tableName}",
+            );
         }
     }
 
     public function testMapDatabaseTypesToPhp(): void
     {
         $tableDetails = [
-            'name' => 'test_types',
+            'name'    => 'test_types',
             'columns' => [
                 ['name' => 'int_col', 'type' => 'integer', 'nullable' => false, 'length' => null, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
                 ['name' => 'bigint_col', 'type' => 'bigint', 'nullable' => false, 'length' => null, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
@@ -249,9 +254,9 @@ class MetadataExtractorTest extends TestCase
                 ['name' => 'text_col', 'type' => 'text', 'nullable' => false, 'length' => null, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
                 ['name' => 'varchar_col', 'type' => 'string', 'nullable' => false, 'length' => 255, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
             ],
-            'indexes' => [],
+            'indexes'      => [],
             'foreign_keys' => [],
-            'primary_key' => [],
+            'primary_key'  => [],
         ];
 
         $this->databaseAnalyzer
@@ -261,23 +266,23 @@ class MetadataExtractorTest extends TestCase
         $result = $this->metadataExtractor->extractTableMetadata('test_types');
 
         $expectedTypes = [
-            'intCol' => 'int',
-            'bigintCol' => 'int',
-            'floatCol' => 'float',
-            'decimalCol' => 'string',
-            'boolCol' => 'bool',
-            'dateCol' => '\DateTimeInterface',
+            'intCol'      => 'int',
+            'bigintCol'   => 'int',
+            'floatCol'    => 'float',
+            'decimalCol'  => 'string',
+            'boolCol'     => 'bool',
+            'dateCol'     => '\DateTimeInterface',
             'datetimeCol' => '\DateTimeInterface',
-            'jsonCol' => 'array',
-            'textCol' => 'string',
-            'varcharCol' => 'string',
+            'jsonCol'     => 'array',
+            'textCol'     => 'string',
+            'varcharCol'  => 'string',
         ];
 
         foreach ($result['columns'] as $column) {
             $this->assertEquals(
-                $expectedTypes[$column['property_name']], 
+                $expectedTypes[$column['property_name']],
                 $column['type'],
-                "Failed for column: {$column['property_name']}"
+                "Failed for column: {$column['property_name']}",
             );
         }
     }
@@ -290,7 +295,7 @@ class MetadataExtractorTest extends TestCase
             ->expects($this->once())
             ->method('getTableDetails')
             ->with($tableName)
-            ->willThrowException(new \Exception('Table not found'));
+            ->willThrowException(new Exception('Table not found'));
 
         // Assert
         $this->expectException(MetadataExtractionException::class);
@@ -303,16 +308,16 @@ class MetadataExtractorTest extends TestCase
     public function testGeneratePropertyNameFromColumnName(): void
     {
         $tableDetails = [
-            'name' => 'test_properties',
+            'name'    => 'test_properties',
             'columns' => [
                 ['name' => 'user_id', 'type' => 'integer', 'nullable' => false, 'length' => null, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
                 ['name' => 'first_name', 'type' => 'string', 'nullable' => false, 'length' => null, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
                 ['name' => 'created_at', 'type' => 'datetime', 'nullable' => false, 'length' => null, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
                 ['name' => 'is_active', 'type' => 'boolean', 'nullable' => false, 'length' => null, 'precision' => null, 'scale' => null, 'default' => null, 'auto_increment' => false, 'comment' => ''],
             ],
-            'indexes' => [],
+            'indexes'      => [],
             'foreign_keys' => [],
-            'primary_key' => [],
+            'primary_key'  => [],
         ];
 
         $this->databaseAnalyzer
@@ -322,17 +327,17 @@ class MetadataExtractorTest extends TestCase
         $result = $this->metadataExtractor->extractTableMetadata('test_properties');
 
         $expectedPropertyNames = [
-            'user_id' => 'userId',
+            'user_id'    => 'userId',
             'first_name' => 'firstName',
             'created_at' => 'createdAt',
-            'is_active' => 'isActive',
+            'is_active'  => 'isActive',
         ];
 
         foreach ($result['columns'] as $column) {
             $this->assertEquals(
-                $expectedPropertyNames[$column['name']], 
+                $expectedPropertyNames[$column['name']],
                 $column['property_name'],
-                "Failed for column: {$column['name']}"
+                "Failed for column: {$column['name']}",
             );
         }
     }

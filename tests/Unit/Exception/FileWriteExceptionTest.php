@@ -6,7 +6,10 @@ namespace App\Tests\Unit\Exception;
 
 use App\Exception\FileWriteException;
 use App\Exception\ReverseEngineeringException;
+use Exception;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Throwable;
 
 /**
  * Tests unitaires pour FileWriteException.
@@ -43,7 +46,7 @@ class FileWriteExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Permissions insuffisantes';
-        $code = 403;
+        $code    = 403;
 
         // Act
         $exception = new FileWriteException($message, $code);
@@ -57,9 +60,9 @@ class FileWriteExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message = 'Erreur d\'écriture de fichier';
-        $code = 500;
-        $previous = new \RuntimeException('Disk full');
+        $message  = 'Erreur d\'écriture de fichier';
+        $code     = 500;
+        $previous = new RuntimeException('Disk full');
 
         // Act
         $exception = new FileWriteException($message, $code, $previous);
@@ -77,8 +80,8 @@ class FileWriteExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertInstanceOf(\Exception::class, $exception);
-        $this->assertInstanceOf(\Throwable::class, $exception);
+        $this->assertInstanceOf(Exception::class, $exception);
+        $this->assertInstanceOf(Throwable::class, $exception);
     }
 
     public function testExceptionCanBeThrown(): void
@@ -95,7 +98,7 @@ class FileWriteExceptionTest extends TestCase
     {
         // Arrange
         $message = 'File write failed';
-        $caught = false;
+        $caught  = false;
 
         // Act
         try {
@@ -114,7 +117,7 @@ class FileWriteExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Le répertoire /path/to/entities n\'est pas accessible en écriture';
-        $code = 403;
+        $code    = 403;
 
         // Act
         $exception = new FileWriteException($message, $code);
@@ -127,8 +130,8 @@ class FileWriteExceptionTest extends TestCase
     public function testExceptionWithDiskSpaceScenario(): void
     {
         // Arrange
-        $message = 'Espace disque insuffisant pour écrire le fichier';
-        $previous = new \RuntimeException('No space left on device');
+        $message  = 'Espace disque insuffisant pour écrire le fichier';
+        $previous = new RuntimeException('No space left on device');
 
         // Act
         $exception = new FileWriteException($message, 0, $previous);

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Exception;
 
 use App\Exception\ReverseEngineeringException;
+use Exception;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 /**
  * Tests unitaires pour ReverseEngineeringException.
@@ -18,7 +20,7 @@ class ReverseEngineeringExceptionTest extends TestCase
         $exception = new ReverseEngineeringException();
 
         // Assert
-        $this->assertInstanceOf(\Exception::class, $exception);
+        $this->assertInstanceOf(Exception::class, $exception);
         $this->assertEquals('', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
@@ -42,7 +44,7 @@ class ReverseEngineeringExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Erreur avec code';
-        $code = 500;
+        $code    = 500;
 
         // Act
         $exception = new ReverseEngineeringException($message, $code);
@@ -56,9 +58,9 @@ class ReverseEngineeringExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message = 'Erreur principale';
-        $code = 400;
-        $previous = new \Exception('Erreur précédente');
+        $message  = 'Erreur principale';
+        $code     = 400;
+        $previous = new Exception('Erreur précédente');
 
         // Act
         $exception = new ReverseEngineeringException($message, $code, $previous);
@@ -75,8 +77,8 @@ class ReverseEngineeringExceptionTest extends TestCase
         $exception = new ReverseEngineeringException();
 
         // Assert
-        $this->assertInstanceOf(\Exception::class, $exception);
-        $this->assertInstanceOf(\Throwable::class, $exception);
+        $this->assertInstanceOf(Exception::class, $exception);
+        $this->assertInstanceOf(Throwable::class, $exception);
     }
 
     public function testExceptionCanBeThrown(): void
@@ -94,7 +96,7 @@ class ReverseEngineeringExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Exception à capturer';
-        $caught = false;
+        $caught  = false;
 
         // Act
         try {

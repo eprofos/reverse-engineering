@@ -6,7 +6,9 @@ namespace App\Tests\Unit\Exception;
 
 use App\Exception\MetadataExtractionException;
 use App\Exception\ReverseEngineeringException;
+use Exception;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 /**
  * Tests unitaires pour MetadataExtractionException.
@@ -43,7 +45,7 @@ class MetadataExtractionExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Table non trouvée';
-        $code = 404;
+        $code    = 404;
 
         // Act
         $exception = new MetadataExtractionException($message, $code);
@@ -57,9 +59,9 @@ class MetadataExtractionExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message = 'Erreur d\'extraction de métadonnées';
-        $code = 500;
-        $previous = new \Exception('DBAL error');
+        $message  = 'Erreur d\'extraction de métadonnées';
+        $code     = 500;
+        $previous = new Exception('DBAL error');
 
         // Act
         $exception = new MetadataExtractionException($message, $code, $previous);
@@ -77,8 +79,8 @@ class MetadataExtractionExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertInstanceOf(\Exception::class, $exception);
-        $this->assertInstanceOf(\Throwable::class, $exception);
+        $this->assertInstanceOf(Exception::class, $exception);
+        $this->assertInstanceOf(Throwable::class, $exception);
     }
 
     public function testExceptionCanBeThrown(): void
@@ -95,7 +97,7 @@ class MetadataExtractionExceptionTest extends TestCase
     {
         // Arrange
         $message = 'Metadata extraction failed';
-        $caught = false;
+        $caught  = false;
 
         // Act
         try {

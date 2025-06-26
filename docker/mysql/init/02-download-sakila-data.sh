@@ -1,33 +1,33 @@
 #!/bin/bash
 
-# Script pour télécharger et installer les données Sakila
-# Ce script s'exécute automatiquement lors de l'initialisation du conteneur MySQL
+# Script to download and install Sakila data
+# This script runs automatically during MySQL container initialization
 
-echo "Téléchargement des données Sakila..."
+echo "Downloading Sakila data..."
 
-# URL des données Sakila
+# Sakila data URL
 SAKILA_DATA_URL="https://downloads.mysql.com/docs/sakila-data.sql"
 
-# Télécharger le fichier de données
+# Download the data file
 curl -L -o /tmp/sakila-data.sql "$SAKILA_DATA_URL" 2>/dev/null || {
-    echo "Échec du téléchargement, utilisation des données de base..."
+    echo "Download failed, using basic data..."
     
-    # Si le téléchargement échoue, créer des données de base
+    # If download fails, create basic data
     cat > /tmp/sakila-data.sql << 'EOF'
--- Données de base pour Sakila (version simplifiée)
+-- Basic data for Sakila (simplified version)
 USE sakila;
 
--- Insertion des langues
+-- Insert languages
 INSERT INTO language (name) VALUES 
 ('English'), ('Italian'), ('Japanese'), ('Mandarin'), ('French'), ('German');
 
--- Insertion des catégories
+-- Insert categories
 INSERT INTO category (name) VALUES 
 ('Action'), ('Animation'), ('Children'), ('Classics'), ('Comedy'), 
 ('Documentary'), ('Drama'), ('Family'), ('Foreign'), ('Games'), 
 ('Horror'), ('Music'), ('New'), ('Sci-Fi'), ('Sports'), ('Travel');
 
--- Insertion des pays
+-- Insert countries
 INSERT INTO country (country) VALUES 
 ('Afghanistan'), ('Algeria'), ('American Samoa'), ('Angola'), ('Anguilla'),
 ('Argentina'), ('Armenia'), ('Australia'), ('Austria'), ('Azerbaijan'),
@@ -52,7 +52,7 @@ INSERT INTO country (country) VALUES
 ('Ukraine'), ('United Arab Emirates'), ('United Kingdom'), ('United States'), ('Venezuela'),
 ('Vietnam'), ('Virgin Islands, U.S.'), ('Yemen'), ('Yugoslavia'), ('Zambia');
 
--- Insertion de quelques villes
+-- Insert some cities
 INSERT INTO city (city, country_id) VALUES 
 ('A Corua (La Corua)', 87), ('Abha', 82), ('Abu Dhabi', 101), ('Acua', 60), ('Adana', 97),
 ('Addis Abeba', 31), ('Aden', 107), ('Agadir', 62), ('Ahmadnagar', 44), ('Akishima', 50),
@@ -61,7 +61,7 @@ INSERT INTO city (city, country_id) VALUES
 ('Alvorada', 15), ('Ambattur', 44), ('Amersfoort', 67), ('Amroha', 44), ('Amsterdam', 67),
 ('Angra dos Reis', 15), ('Anpolis', 15), ('Antofagasta', 23), ('Aparecida de Goinia', 15), ('Apeldoorn', 67);
 
--- Insertion de quelques adresses
+-- Insert some addresses
 INSERT INTO address (address, district, city_id, postal_code, phone) VALUES 
 ('47 MySakila Drive', 'Alberta', 1, '', ''), ('28 MySQL Boulevard', 'QLD', 2, '', ''),
 ('23 Workhaven Lane', 'Alberta', 1, '', ''), ('1411 Lillydale Drive', 'QLD', 2, '', ''),
@@ -69,19 +69,19 @@ INSERT INTO address (address, district, city_id, postal_code, phone) VALUES
 ('692 Joliet Street', 'Attika', 5, '83579', '448477190408'), ('1566 Inegl Manor', 'Mandalay', 6, '53561', '705814003527'),
 ('53 Idfu Parkway', 'Nantou', 7, '42399', '10655648674'), ('1795 Santiago de Compostela Way', 'Texas', 8, '18743', '860452626434');
 
--- Insertion de quelques magasins
+-- Insert some stores
 INSERT INTO store (manager_staff_id, address_id) VALUES (1, 1), (2, 2);
 
--- Insertion du personnel
+-- Insert staff
 INSERT INTO staff (first_name, last_name, address_id, email, store_id, active, username, password) VALUES 
 ('Mike', 'Hillyer', 3, 'Mike.Hillyer@sakilastaff.com', 1, 1, 'Mike', '8cb2237d0679ca88db6464eac60da96345513964'),
 ('Jon', 'Stephens', 4, 'Jon.Stephens@sakilastaff.com', 2, 1, 'Jon', '8cb2237d0679ca88db6464eac60da96345513964');
 
--- Mise à jour des magasins avec les managers
+-- Update stores with managers
 UPDATE store SET manager_staff_id = 1 WHERE store_id = 1;
 UPDATE store SET manager_staff_id = 2 WHERE store_id = 2;
 
--- Insertion de quelques clients
+-- Insert some customers
 INSERT INTO customer (store_id, first_name, last_name, email, address_id, active, create_date) VALUES 
 (1, 'MARY', 'SMITH', 'MARY.SMITH@sakilacustomer.org', 5, 1, '2006-02-14 22:04:36'),
 (1, 'PATRICIA', 'JOHNSON', 'PATRICIA.JOHNSON@sakilacustomer.org', 6, 1, '2006-02-14 22:04:36'),
@@ -89,12 +89,12 @@ INSERT INTO customer (store_id, first_name, last_name, email, address_id, active
 (2, 'BARBARA', 'JONES', 'BARBARA.JONES@sakilacustomer.org', 8, 1, '2006-02-14 22:04:36'),
 (2, 'ELIZABETH', 'BROWN', 'ELIZABETH.BROWN@sakilacustomer.org', 9, 1, '2006-02-14 22:04:36');
 
--- Insertion de quelques acteurs
+-- Insert some actors
 INSERT INTO actor (first_name, last_name) VALUES 
 ('PENELOPE', 'GUINESS'), ('NICK', 'WAHLBERG'), ('ED', 'CHASE'), ('JENNIFER', 'DAVIS'), ('JOHNNY', 'LOLLOBRIGIDA'),
 ('BETTE', 'NICHOLSON'), ('GRACE', 'MOSTEL'), ('MATTHEW', 'JOHANSSON'), ('JOE', 'SWANK'), ('CHRISTIAN', 'GABLE');
 
--- Insertion de quelques films
+-- Insert some films
 INSERT INTO film (title, description, release_year, language_id, rental_duration, rental_rate, length, replacement_cost, rating) VALUES 
 ('ACADEMY DINOSAUR', 'A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies', 2006, 1, 6, 0.99, 86, 20.99, 'PG'),
 ('ACE GOLDFINGER', 'A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China', 2006, 1, 3, 4.99, 48, 12.99, 'G'),
@@ -102,7 +102,7 @@ INSERT INTO film (title, description, release_year, language_id, rental_duration
 ('AFFAIR PREJUDICE', 'A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey in A Shark Tank', 2006, 1, 5, 2.99, 117, 26.99, 'G'),
 ('AFRICAN EGG', 'A Fast-Paced Documentary of a Pastry Chef And a Dentist who must Pursue a Forensic Psychologist in The Gulf of Mexico', 2006, 1, 6, 2.99, 130, 22.99, 'G');
 
--- Insertion de quelques inventaires
+-- Insert some inventories
 INSERT INTO inventory (film_id, store_id) VALUES 
 (1, 1), (1, 1), (1, 1), (1, 1), (1, 2), (1, 2), (1, 2), (1, 2),
 (2, 1), (2, 1), (2, 1), (2, 2), (2, 2), (2, 2),
@@ -110,16 +110,16 @@ INSERT INTO inventory (film_id, store_id) VALUES
 (4, 1), (4, 1), (4, 2), (4, 2),
 (5, 1), (5, 1), (5, 2), (5, 2);
 
--- Insertion de quelques relations film-acteur
+-- Insert some film-actor relations
 INSERT INTO film_actor (actor_id, film_id) VALUES 
 (1, 1), (1, 23), (1, 25), (1, 106), (1, 140), (1, 166), (1, 277), (1, 361), (1, 438), (1, 499),
 (2, 3), (2, 31), (2, 47), (2, 105), (2, 132), (2, 145), (2, 226), (2, 249), (2, 314), (2, 321);
 
--- Insertion de quelques relations film-catégorie
+-- Insert some film-category relations
 INSERT INTO film_category (film_id, category_id) VALUES 
 (1, 6), (2, 11), (3, 6), (4, 11), (5, 8);
 
--- Insertion dans film_text
+-- Insert into film_text
 INSERT INTO film_text (film_id, title, description) VALUES 
 (1, 'ACADEMY DINOSAUR', 'A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies'),
 (2, 'ACE GOLDFINGER', 'A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China'),
@@ -127,7 +127,7 @@ INSERT INTO film_text (film_id, title, description) VALUES
 (4, 'AFFAIR PREJUDICE', 'A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey in A Shark Tank'),
 (5, 'AFRICAN EGG', 'A Fast-Paced Documentary of a Pastry Chef And a Dentist who must Pursue a Forensic Psychologist in The Gulf of Mexico');
 
--- Insertion de quelques locations
+-- Insert some rentals
 INSERT INTO rental (rental_date, inventory_id, customer_id, return_date, staff_id) VALUES 
 ('2005-05-24 22:53:30', 367, 130, '2005-05-26 22:04:30', 1),
 ('2005-05-24 22:54:33', 1525, 459, '2005-05-28 19:40:33', 1),
@@ -135,7 +135,7 @@ INSERT INTO rental (rental_date, inventory_id, customer_id, return_date, staff_i
 ('2005-05-24 23:04:41', 2452, 333, '2005-06-03 01:43:41', 2),
 ('2005-05-24 23:05:21', 2079, 222, '2005-06-02 04:33:21', 1);
 
--- Insertion de quelques paiements
+-- Insert some payments
 INSERT INTO payment (customer_id, staff_id, rental_id, amount, payment_date) VALUES 
 (130, 1, 1, 2.99, '2005-05-24 22:53:30'),
 (459, 1, 2, 0.99, '2005-05-24 22:54:33'),
@@ -146,7 +146,7 @@ INSERT INTO payment (customer_id, staff_id, rental_id, amount, payment_date) VAL
 EOF
 }
 
-echo "Installation des données Sakila..."
+echo "Installing Sakila data..."
 mysql -u root -p"$MYSQL_ROOT_PASSWORD" sakila < /tmp/sakila-data.sql
 
-echo "Données Sakila installées avec succès!"
+echo "Sakila data installed successfully!"

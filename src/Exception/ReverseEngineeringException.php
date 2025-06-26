@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Exception;
 
+use Exception;
+use Throwable;
+
 /**
  * Exception de base pour le bundle ReverseEngineering.
  */
-class ReverseEngineeringException extends \Exception
+class ReverseEngineeringException extends Exception
 {
     public function __construct(
         string $message = '',
         int $code = 0,
-        ?\Throwable $previous = null
+        ?Throwable $previous = null,
     ) {
         parent::__construct($message, $code, $previous);
     }
