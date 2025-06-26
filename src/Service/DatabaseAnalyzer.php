@@ -16,8 +16,10 @@ class DatabaseAnalyzer
     private ?Connection $connection = null;
 
     public function __construct(
-        private readonly array $databaseConfig
+        private readonly array $databaseConfig,
+        ?Connection $connection = null
     ) {
+        $this->connection = $connection;
     }
 
     /**

@@ -10,7 +10,7 @@ namespace App\Exception;
 class MetadataExtractionException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Erreur lors de l\'extraction des métadonnées',
+        string $message = 'Erreur lors de l\'extraction de métadonnées',
         int $code = 0,
         ?\Throwable $previous = null
     ) {

@@ -37,7 +37,7 @@ class ReverseGenerateCommandTest extends TestCase
     {
         // Assert
         $this->assertEquals('reverse:generate', $this->command->getName());
-        $this->assertStringContains('Génère des entités Doctrine', $this->command->getDescription());
+        $this->assertStringContainsString('Génère des entités Doctrine', $this->command->getDescription());
         
         $definition = $this->command->getDefinition();
         $this->assertTrue($definition->hasOption('tables'));
@@ -87,12 +87,12 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Reverse Engineering', $output);
-        $this->assertStringContains('Connexion à la base de données validée', $output);
-        $this->assertStringContains('2 table(s) trouvée(s)', $output);
-        $this->assertStringContains('2 entité(s) générée(s)', $output);
-        $this->assertStringContains('/path/to/User.php', $output);
-        $this->assertStringContains('/path/to/Post.php', $output);
+        $this->assertStringContainsString('Reverse Engineering', $output);
+        $this->assertStringContainsString('Connexion à la base de données validée', $output);
+        $this->assertStringContainsString('2 table(s) trouvée(s)', $output);
+        $this->assertStringContainsString('2 entité(s) générée(s)', $output);
+        $this->assertStringContainsString('/path/to/User.php', $output);
+        $this->assertStringContainsString('/path/to/Post.php', $output);
     }
 
     public function testExecuteWithSpecificTables(): void
@@ -200,9 +200,9 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Aperçu des entités qui seraient générées', $output);
-        $this->assertStringContains('Mode dry-run activé', $output);
-        $this->assertStringContains('User (table: users, namespace: App\\Entity)', $output);
+        $this->assertStringContainsString('Aperçu des entités qui seraient générées', $output);
+        $this->assertStringContainsString('Mode dry-run activé', $output);
+        $this->assertStringContainsString('User (table: users, namespace: App\\Entity)', $output);
     }
 
     public function testExecuteWithCustomOptions(): void
@@ -261,7 +261,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Impossible de se connecter à la base de données', $output);
+        $this->assertStringContainsString('Impossible de se connecter à la base de données', $output);
     }
 
     public function testExecuteHandlesInvalidTables(): void
@@ -294,7 +294,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Les tables suivantes n\'existent pas : invalid_table', $output);
+        $this->assertStringContainsString('Les tables suivantes n\'existent pas : invalid_table', $output);
     }
 
     public function testExecuteHandlesReverseEngineeringException(): void
@@ -321,7 +321,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Erreur lors de la génération : Erreur de génération', $output);
+        $this->assertStringContainsString('Erreur lors de la génération : Erreur de génération', $output);
     }
 
     public function testExecuteHandlesGenericException(): void
@@ -338,7 +338,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Erreur lors de la génération : Erreur inattendue', $output);
+        $this->assertStringContainsString('Erreur lors de la génération : Erreur inattendue', $output);
     }
 
     public function testExecuteShowsVerboseErrorTrace(): void
@@ -361,12 +361,12 @@ class ReverseGenerateCommandTest extends TestCase
             ->willThrowException($exception);
 
         // Act
-        $exitCode = $this->commandTester->execute([], ['verbosity' => CommandTester::VERBOSITY_VERBOSE]);
+        $exitCode = $this->commandTester->execute([], ['verbosity' => 2]); // VERBOSITY_VERBOSE = 2
 
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Trace de l\'erreur', $output);
+        $this->assertStringContainsString('Trace de l\'erreur', $output);
     }
 
     public function testExecuteWithMultipleInvalidTables(): void
@@ -399,7 +399,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('Les tables suivantes n\'existent pas : invalid1, invalid2', $output);
+        $this->assertStringContainsString('Les tables suivantes n\'existent pas : invalid1, invalid2', $output);
     }
 
     public function testExecuteDisplaysCorrectTableCount(): void
@@ -432,6 +432,6 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContains('15 table(s) trouvée(s)', $output);
+        $this->assertStringContainsString('15 table(s) trouvée(s)', $output);
     }
 }

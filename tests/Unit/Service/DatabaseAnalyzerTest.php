@@ -26,15 +26,23 @@ class DatabaseAnalyzerTest extends TestCase
 {
     private DatabaseAnalyzer $databaseAnalyzer;
     private array $databaseConfig;
+    private Connection $connection;
 
     protected function setUp(): void
     {
         $this->databaseConfig = [
             'driver' => 'pdo_sqlite',
-            'memory' => true,
+            'path' => ':memory:',
         ];
         
-        $this->databaseAnalyzer = new DatabaseAnalyzer($this->databaseConfig);
+        // Créer une connexion partagée pour tous les tests
+        $this->connection = DriverManager::getConnection($this->databaseConfig);
+        $this->databaseAnalyzer = new DatabaseAnalyzer($this->databaseConfig, $this->connection);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->connection->close();
     }
 
     public function testTestConnectionSuccess(): void
@@ -67,28 +75,26 @@ class DatabaseAnalyzerTest extends TestCase
     public function testListTablesWithRealDatabase(): void
     {
         // Créer une table de test
-        $connection = DriverManager::getConnection($this->databaseConfig);
-        $connection->executeStatement('CREATE TABLE test_users (id INTEGER PRIMARY KEY, name TEXT)');
-        $connection->executeStatement('CREATE TABLE test_posts (id INTEGER PRIMARY KEY, title TEXT)');
+        $this->connection->executeStatement('CREATE TABLE test_users (id INTEGER PRIMARY KEY, name TEXT)');
+        $this->connection->executeStatement('CREATE TABLE test_posts (id INTEGER PRIMARY KEY, title TEXT)');
         
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
-        $tables = $analyzer->listTables();
+        $tables = $this->databaseAnalyzer->listTables();
         
         $this->assertIsArray($tables);
         $this->assertContains('test_users', $tables);
         $this->assertContains('test_posts', $tables);
         
         // Nettoyer
-        $connection->executeStatement('DROP TABLE test_users');
-        $connection->executeStatement('DROP TABLE test_posts');
+        $this->connection->executeStatement('DROP TABLE test_users');
+        $this->connection->executeStatement('DROP TABLE test_posts');
     }
 
     public function testListTablesFiltersSystemTables(): void
     {
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
-        $tables = $analyzer->listTables();
+        $tables = $this->databaseAnalyzer->listTables();
         
         // Vérifier qu'aucune table système n'est retournée
+        $this->assertIsArray($tables);
         foreach ($tables as $table) {
             $this->assertFalse(str_starts_with($table, 'sqlite_'));
             $this->assertFalse(str_starts_with($table, 'information_schema'));
@@ -99,15 +105,12 @@ class DatabaseAnalyzerTest extends TestCase
     public function testAnalyzeTablesWithIncludeFilter(): void
     {
         // Créer des tables de test
-        $connection = DriverManager::getConnection($this->databaseConfig);
-        $connection->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY)');
-        $connection->executeStatement('CREATE TABLE posts (id INTEGER PRIMARY KEY)');
-        $connection->executeStatement('CREATE TABLE comments (id INTEGER PRIMARY KEY)');
-        
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
+        $this->connection->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+        $this->connection->executeStatement('CREATE TABLE posts (id INTEGER PRIMARY KEY)');
+        $this->connection->executeStatement('CREATE TABLE comments (id INTEGER PRIMARY KEY)');
         
         // Tester avec filtre d'inclusion
-        $result = $analyzer->analyzeTables(['users', 'posts']);
+        $result = $this->databaseAnalyzer->analyzeTables(['users', 'posts']);
         
         $this->assertCount(2, $result);
         $this->assertContains('users', $result);
@@ -115,38 +118,34 @@ class DatabaseAnalyzerTest extends TestCase
         $this->assertNotContains('comments', $result);
         
         // Nettoyer
-        $connection->executeStatement('DROP TABLE users');
-        $connection->executeStatement('DROP TABLE posts');
-        $connection->executeStatement('DROP TABLE comments');
+        $this->connection->executeStatement('DROP TABLE users');
+        $this->connection->executeStatement('DROP TABLE posts');
+        $this->connection->executeStatement('DROP TABLE comments');
     }
 
     public function testAnalyzeTablesWithExcludeFilter(): void
     {
         // Créer des tables de test
-        $connection = DriverManager::getConnection($this->databaseConfig);
-        $connection->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY)');
-        $connection->executeStatement('CREATE TABLE posts (id INTEGER PRIMARY KEY)');
-        $connection->executeStatement('CREATE TABLE temp_table (id INTEGER PRIMARY KEY)');
-        
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
+        $this->connection->executeStatement('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+        $this->connection->executeStatement('CREATE TABLE posts (id INTEGER PRIMARY KEY)');
+        $this->connection->executeStatement('CREATE TABLE temp_table (id INTEGER PRIMARY KEY)');
         
         // Tester avec filtre d'exclusion
-        $result = $analyzer->analyzeTables([], ['temp_table']);
+        $result = $this->databaseAnalyzer->analyzeTables([], ['temp_table']);
         
         $this->assertContains('users', $result);
         $this->assertContains('posts', $result);
         $this->assertNotContains('temp_table', $result);
         
         // Nettoyer
-        $connection->executeStatement('DROP TABLE users');
-        $connection->executeStatement('DROP TABLE posts');
-        $connection->executeStatement('DROP TABLE temp_table');
+        $this->connection->executeStatement('DROP TABLE users');
+        $this->connection->executeStatement('DROP TABLE posts');
+        $this->connection->executeStatement('DROP TABLE temp_table');
     }
 
     public function testGetTableDetailsWithComplexTable(): void
     {
         // Créer une table complexe avec différents types de colonnes
-        $connection = DriverManager::getConnection($this->databaseConfig);
         $sql = "
             CREATE TABLE complex_table (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -159,13 +158,12 @@ class DatabaseAnalyzerTest extends TestCase
                 description TEXT
             )
         ";
-        $connection->executeStatement($sql);
+        $this->connection->executeStatement($sql);
         
         // Créer un index
-        $connection->executeStatement('CREATE INDEX idx_email ON complex_table(email)');
+        $this->connection->executeStatement('CREATE INDEX idx_email ON complex_table(email)');
         
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
-        $details = $analyzer->getTableDetails('complex_table');
+        $details = $this->databaseAnalyzer->getTableDetails('complex_table');
         
         // Vérifier la structure de base
         $this->assertEquals('complex_table', $details['name']);
@@ -184,22 +182,20 @@ class DatabaseAnalyzerTest extends TestCase
         $this->assertGreaterThan(0, count($details['indexes']));
         
         // Nettoyer
-        $connection->executeStatement('DROP TABLE complex_table');
+        $this->connection->executeStatement('DROP TABLE complex_table');
     }
 
     public function testGetTableDetailsWithForeignKeys(): void
     {
         // Créer des tables avec clés étrangères
-        $connection = DriverManager::getConnection($this->databaseConfig);
-        
-        $connection->executeStatement('
+        $this->connection->executeStatement('
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL
             )
         ');
         
-        $connection->executeStatement('
+        $this->connection->executeStatement('
             CREATE TABLE posts (
                 id INTEGER PRIMARY KEY,
                 title TEXT NOT NULL,
@@ -208,8 +204,7 @@ class DatabaseAnalyzerTest extends TestCase
             )
         ');
         
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
-        $details = $analyzer->getTableDetails('posts');
+        $details = $this->databaseAnalyzer->getTableDetails('posts');
         
         // Vérifier les clés étrangères
         $this->assertIsArray($details['foreign_keys']);
@@ -225,8 +220,8 @@ class DatabaseAnalyzerTest extends TestCase
         }
         
         // Nettoyer
-        $connection->executeStatement('DROP TABLE posts');
-        $connection->executeStatement('DROP TABLE users');
+        $this->connection->executeStatement('DROP TABLE posts');
+        $this->connection->executeStatement('DROP TABLE users');
     }
 
     public function testGetTableDetailsThrowsExceptionForInvalidTable(): void
@@ -270,8 +265,7 @@ class DatabaseAnalyzerTest extends TestCase
     public function testGetColumnsInfoExtractsCorrectInformation(): void
     {
         // Créer une table avec différents types de colonnes
-        $connection = DriverManager::getConnection($this->databaseConfig);
-        $connection->executeStatement('
+        $this->connection->executeStatement('
             CREATE TABLE test_columns (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -281,8 +275,7 @@ class DatabaseAnalyzerTest extends TestCase
             )
         ');
         
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
-        $details = $analyzer->getTableDetails('test_columns');
+        $details = $this->databaseAnalyzer->getTableDetails('test_columns');
         
         $columns = $details['columns'];
         $this->assertIsArray($columns);
@@ -299,7 +292,7 @@ class DatabaseAnalyzerTest extends TestCase
         }
         
         // Nettoyer
-        $connection->executeStatement('DROP TABLE test_columns');
+        $this->connection->executeStatement('DROP TABLE test_columns');
     }
 
     public function testListTablesThrowsExceptionOnConnectionError(): void
@@ -333,8 +326,7 @@ class DatabaseAnalyzerTest extends TestCase
     public function testGetTableDetailsWithIndexes(): void
     {
         // Créer une table avec plusieurs index
-        $connection = DriverManager::getConnection($this->databaseConfig);
-        $connection->executeStatement('
+        $this->connection->executeStatement('
             CREATE TABLE indexed_table (
                 id INTEGER PRIMARY KEY,
                 email TEXT UNIQUE,
@@ -343,11 +335,10 @@ class DatabaseAnalyzerTest extends TestCase
             )
         ');
         
-        $connection->executeStatement('CREATE INDEX idx_name ON indexed_table(name)');
-        $connection->executeStatement('CREATE INDEX idx_category ON indexed_table(category_id)');
+        $this->connection->executeStatement('CREATE INDEX idx_name ON indexed_table(name)');
+        $this->connection->executeStatement('CREATE INDEX idx_category ON indexed_table(category_id)');
         
-        $analyzer = new DatabaseAnalyzer($this->databaseConfig);
-        $details = $analyzer->getTableDetails('indexed_table');
+        $details = $this->databaseAnalyzer->getTableDetails('indexed_table');
         
         $indexes = $details['indexes'];
         $this->assertIsArray($indexes);
@@ -362,6 +353,6 @@ class DatabaseAnalyzerTest extends TestCase
         }
         
         // Nettoyer
-        $connection->executeStatement('DROP TABLE indexed_table');
+        $this->connection->executeStatement('DROP TABLE indexed_table');
     }
 }

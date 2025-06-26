@@ -30,7 +30,13 @@ class FileWriter
     {
         try {
             $outputDir = $outputDir ?? $this->config['output_dir'] ?? 'src/Entity';
-            $fullOutputDir = $this->projectDir . '/' . ltrim($outputDir, '/');
+            
+            // Si le chemin est absolu, l'utiliser tel quel, sinon le combiner avec projectDir
+            if (str_starts_with($outputDir, '/')) {
+                $fullOutputDir = $outputDir;
+            } else {
+                $fullOutputDir = $this->projectDir . '/' . ltrim($outputDir, '/');
+            }
             
             // Créer le répertoire s'il n'existe pas
             $this->ensureDirectoryExists($fullOutputDir);
@@ -81,7 +87,13 @@ class FileWriter
     {
         try {
             $outputDir = $outputDir ?? 'src/Repository';
-            $fullOutputDir = $this->projectDir . '/' . ltrim($outputDir, '/');
+            
+            // Si le chemin est absolu, l'utiliser tel quel, sinon le combiner avec projectDir
+            if (str_starts_with($outputDir, '/')) {
+                $fullOutputDir = $outputDir;
+            } else {
+                $fullOutputDir = $this->projectDir . '/' . ltrim($outputDir, '/');
+            }
             
             // Créer le répertoire s'il n'existe pas
             $this->ensureDirectoryExists($fullOutputDir);

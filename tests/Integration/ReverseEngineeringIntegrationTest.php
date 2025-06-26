@@ -255,7 +255,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
                 price DECIMAL(10,2),
                 is_active BOOLEAN DEFAULT 1,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                metadata JSON,
+                metadata TEXT,
                 description TEXT
             )
         ');
@@ -286,10 +286,10 @@ class ReverseEngineeringIntegrationTest extends TestCase
     {
         $databaseConfig = [
             'driver' => 'pdo_sqlite',
-            'memory' => true,
+            'path' => ':memory:',
         ];
 
-        $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig);
+        $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig, $this->connection);
         $metadataExtractor = new MetadataExtractor($databaseAnalyzer);
 
         // Configurer Twig avec un template simple
@@ -299,7 +299,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
         $twig = new Environment($loader);
 
         $entityGenerator = new EntityGenerator($twig);
-        $fileWriter = new FileWriter($this->tempDir);
+        $fileWriter = new FileWriter('');
 
         $this->service = new ReverseEngineeringService(
             $databaseAnalyzer,

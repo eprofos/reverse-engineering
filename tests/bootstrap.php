@@ -13,6 +13,6 @@ if (file_exists(dirname(__DIR__).'/config/bootstrap.php')) {
 }
 
 // Configuration spécifique aux tests
-if ($_SERVER['APP_DEBUG']) {
+if (isset($_SERVER['APP_DEBUG']) && $_SERVER['APP_DEBUG']) {
     umask(0000);
 }

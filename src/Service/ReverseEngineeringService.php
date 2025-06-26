@@ -75,7 +75,7 @@ class ReverseEngineeringService
                     if (isset($entity['repository'])) {
                         $repositoryPath = $this->fileWriter->writeRepositoryFile(
                             $entity['repository'],
-                            null,
+                            $options['output_dir'] ?? null,
                             $options['force'] ?? false
                         );
                         $files[] = $repositoryPath;

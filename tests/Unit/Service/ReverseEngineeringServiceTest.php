@@ -100,7 +100,7 @@ class ReverseEngineeringServiceTest extends TestCase
             ]);
 
         $this->fileWriter
-            ->expects($this->exactly(3))
+            ->expects($this->exactly(2))
             ->method('writeEntityFile')
             ->willReturnOnConsecutiveCalls(
                 '/path/to/User.php',
