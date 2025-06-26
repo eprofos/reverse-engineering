@@ -75,7 +75,7 @@ class {{ entity_name }}
     #[ORM\Column(type: '{{ property.doctrine_type }}'{% if property.length %}, length: {{ property.length }}{% endif %}{% if property.nullable %}, nullable: true{% endif %}{% if property.default is not null %}, options: ['default' => '{{ property.default }}']{% endif %})]
 {% endif %}
 {% endif %}
-    private {{ property.type }} ${{ property.name }}{% if property.default is not null and property.type == 'string' %} = '{{ property.default }}'{% elseif property.default is not null %} = {{ property.default }}{% elseif property.nullable and not property.is_primary %} = null{% endif %};
+    private {{ property.type }} ${{ property.name }}{% if property.default is not null and property.type == 'string' %} = '{{ property.default }}'{% elseif property.default is not null and property.default != 'CURRENT_TIMESTAMP' and property.default != 'G' %} = {{ property.default }}{% elseif property.nullable and not property.is_primary %} = null{% endif %};
 
 {% endfor %}
 {% for relation in relations %}

@@ -158,7 +158,8 @@ generate_entities() {
     # Créer le répertoire de sortie
     mkdir -p "$output_dir"
     
-    docker-compose exec php bin/console reverse:generate \
+    # Utiliser le script PHP dédié au lieu de bin/console
+    docker-compose exec php php scripts/generate-entities.php \
         --namespace="$namespace" \
         --output-dir="$output_dir" \
         --force
@@ -170,10 +171,167 @@ generate_entities() {
         # Compter les fichiers générés
         local file_count=$(find "$output_dir" -name "*.php" | wc -l)
         log_info "Fichiers générés: $file_count"
+        
+        # Valider la syntaxe PHP des fichiers générés
+        log_info "Validation de la syntaxe PHP..."
+        local syntax_errors=0
+        for file in $(find "$output_dir" -name "*.php"); do
+            if ! docker-compose exec -T php php -l "$file" > /dev/null 2>&1; then
+                log_warning "Erreur de syntaxe dans: $file"
+                ((syntax_errors++))
+            fi
+        done
+        
+        if [ $syntax_errors -eq 0 ]; then
+            log_success "Syntaxe PHP validée pour tous les fichiers"
+        else
+            log_warning "$syntax_errors fichier(s) avec des erreurs de syntaxe"
+        fi
     else
         log_error "Échec de la génération des entités"
         exit 1
     fi
+}
+
+# Générer des entités et les copier vers l'hôte local
+generate_and_copy() {
+    local local_output_dir="${1:-./generated-entities}"
+    local namespace="${2:-Sakila\\\\Entity}"
+    local container_output_dir="generated/sakila"
+    
+    log_info "Génération et copie automatique des entités..."
+    log_info "Répertoire de destination local: $local_output_dir"
+    log_info "Namespace: $namespace"
+    
+    if ! docker-compose ps | grep -q "reverse_engineering_mysql.*Up"; then
+        log_error "L'environnement Docker n'est pas démarré"
+        log_info "Utilisez: $0 start"
+        exit 1
+    fi
+    
+    # Créer le répertoire de destination local
+    mkdir -p "$local_output_dir"
+    log_info "Répertoire local créé: $local_output_dir"
+    
+    # Nettoyer le répertoire de génération dans le conteneur
+    log_info "Nettoyage du répertoire de génération dans le conteneur..."
+    docker-compose exec php rm -rf "$container_output_dir"
+    docker-compose exec php mkdir -p "$container_output_dir"
+    
+    # Mesurer le temps de génération
+    local start_time=$(date +%s)
+    
+    # Générer les entités dans le conteneur
+    log_info "Génération des entités dans le conteneur Docker..."
+    docker-compose exec php php scripts/generate-entities.php \
+        --namespace="$namespace" \
+        --output-dir="$container_output_dir" \
+        --force
+    
+    if [ $? -ne 0 ]; then
+        log_error "Échec de la génération des entités"
+        exit 1
+    fi
+    
+    local end_time=$(date +%s)
+    local generation_time=$((end_time - start_time))
+    
+    log_success "Entités générées avec succès en ${generation_time}s"
+    
+    # Obtenir la liste des fichiers générés dans le conteneur
+    log_info "Récupération de la liste des fichiers générés..."
+    local container_files=$(docker-compose exec -T php find "$container_output_dir" -name "*.php" -type f)
+    
+    if [ -z "$container_files" ]; then
+        log_error "Aucun fichier PHP généré trouvé dans le conteneur"
+        exit 1
+    fi
+    
+    # Compter les fichiers
+    local file_count=$(echo "$container_files" | wc -l)
+    log_info "Fichiers à copier: $file_count"
+    
+    # Copier les fichiers du conteneur vers l'hôte
+    log_info "Copie des fichiers du conteneur vers l'hôte local..."
+    
+    # Copier tout le répertoire en une fois
+    docker cp "reverse_engineering_php:/var/www/html/$container_output_dir/." "$local_output_dir/"
+    
+    if [ $? -eq 0 ]; then
+        log_success "Fichiers copiés avec succès vers $local_output_dir"
+    else
+        log_error "Échec de la copie des fichiers"
+        exit 1
+    fi
+    
+    # Corriger les permissions des fichiers copiés
+    log_info "Correction des permissions des fichiers..."
+    chmod -R 644 "$local_output_dir"/*.php 2>/dev/null || true
+    find "$local_output_dir" -type d -exec chmod 755 {} \; 2>/dev/null || true
+    
+    # Valider la syntaxe PHP des fichiers copiés
+    log_info "Validation de la syntaxe PHP des fichiers copiés..."
+    local syntax_errors=0
+    local validated_files=0
+    
+    # Compter les fichiers copiés
+    validated_files=$(find "$local_output_dir" -name "*.php" -type f | wc -l)
+    
+    # Validation simplifiée avec timeout
+    if command -v php &> /dev/null; then
+        local php_files=($(find "$local_output_dir" -name "*.php" -type f))
+        for file in "${php_files[@]}"; do
+            if ! timeout 5 php -l "$file" > /dev/null 2>&1; then
+                log_warning "Erreur de syntaxe dans: $(basename "$file")"
+                ((syntax_errors++))
+            fi
+        done
+    fi
+    
+    # Calculer la taille totale des fichiers
+    local total_size=$(du -sh "$local_output_dir" 2>/dev/null | cut -f1)
+    
+    # Nettoyer les fichiers temporaires dans le conteneur
+    log_info "Nettoyage des fichiers temporaires dans le conteneur..."
+    docker-compose exec php rm -rf "$container_output_dir"
+    
+    # Afficher le résumé final
+    echo ""
+    log_success "🎉 Génération et copie terminées avec succès !"
+    echo ""
+    log_info "📊 Résumé des opérations:"
+    log_info "   - Temps de génération: ${generation_time}s"
+    log_info "   - Fichiers générés: $file_count"
+    log_info "   - Fichiers copiés: $validated_files"
+    log_info "   - Taille totale: ${total_size:-N/A}"
+    log_info "   - Répertoire de destination: $local_output_dir"
+    log_info "   - Namespace utilisé: $namespace"
+    
+    if command -v php &> /dev/null; then
+        if [ $syntax_errors -eq 0 ]; then
+            log_success "   - Validation syntaxe: ✅ Tous les fichiers sont valides"
+        else
+            log_warning "   - Validation syntaxe: ⚠️  $syntax_errors erreur(s) détectée(s)"
+        fi
+    else
+        log_info "   - Validation syntaxe: ⏭️  PHP non disponible sur l'hôte"
+    fi
+    
+    echo ""
+    log_info "📁 Fichiers générés:"
+    for file in $(find "$local_output_dir" -name "*.php" -type f | sort); do
+        local filename=$(basename "$file")
+        local filesize=$(ls -lh "$file" 2>/dev/null | awk '{print $5}')
+        log_info "   - $filename (${filesize:-N/A})"
+    done
+    
+    echo ""
+    log_info "💡 Pour utiliser ces entités dans votre projet Symfony:"
+    log_info "   1. Copiez les fichiers vers src/Entity/ de votre projet"
+    log_info "   2. Ajustez le namespace selon votre configuration"
+    log_info "   3. Exécutez 'php bin/console doctrine:schema:validate'"
+    
+    log_success "Opération terminée avec succès !"
 }
 
 # Afficher les logs
@@ -207,24 +365,32 @@ show_status() {
 
 # Afficher l'aide
 show_help() {
-    echo "Usage: $0 [command]"
+    echo "Usage: $0 [command] [options]"
     echo ""
     echo "Commandes disponibles:"
-    echo "  start           Démarrer l'environnement Docker"
-    echo "  stop            Arrêter l'environnement Docker"
-    echo "  clean           Nettoyer complètement l'environnement"
-    echo "  test-sakila     Exécuter les tests d'intégration Sakila"
-    echo "  test-all        Exécuter tous les tests"
-    echo "  generate        Générer des entités depuis Sakila"
-    echo "  logs [service]  Afficher les logs (défaut: mysql)"
-    echo "  shell-php       Ouvrir une session dans le conteneur PHP"
-    echo "  shell-mysql     Ouvrir une session MySQL"
-    echo "  status          Afficher le statut des conteneurs"
-    echo "  help            Afficher cette aide"
+    echo "  start                    Démarrer l'environnement Docker"
+    echo "  stop                     Arrêter l'environnement Docker"
+    echo "  clean                    Nettoyer complètement l'environnement"
+    echo "  test-sakila              Exécuter les tests d'intégration Sakila"
+    echo "  test-all                 Exécuter tous les tests"
+    echo "  generate                 Générer des entités depuis Sakila (dans le conteneur)"
+    echo "  generate-and-copy [dir] [namespace]  Générer et copier les entités vers l'hôte local"
+    echo "  logs [service]           Afficher les logs (défaut: mysql)"
+    echo "  shell-php                Ouvrir une session dans le conteneur PHP"
+    echo "  shell-mysql              Ouvrir une session MySQL"
+    echo "  status                   Afficher le statut des conteneurs"
+    echo "  help                     Afficher cette aide"
+    echo ""
+    echo "Options pour generate-and-copy:"
+    echo "  [dir]        Répertoire de destination local (défaut: ./generated-entities)"
+    echo "  [namespace]  Namespace pour les entités (défaut: Sakila\\Entity)"
     echo ""
     echo "Exemples:"
     echo "  $0 start && $0 test-sakila"
     echo "  $0 generate"
+    echo "  $0 generate-and-copy"
+    echo "  $0 generate-and-copy ./my-entities"
+    echo "  $0 generate-and-copy ./my-entities \"MyApp\\\\Entity\""
     echo "  $0 logs mysql"
 }
 
@@ -250,6 +416,9 @@ main() {
             ;;
         "generate")
             generate_entities
+            ;;
+        "generate-and-copy")
+            generate_and_copy "$2" "$3"
             ;;
         "logs")
             show_logs "$2"

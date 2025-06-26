@@ -27,6 +27,9 @@ Ce répertoire contient la configuration Docker pour tester le bundle avec la ba
 ```bash
 # Depuis la racine du projet
 docker-compose up -d
+
+# Ou utiliser le script utilitaire
+./docker-test.sh start
 ```
 
 ### 2. Vérifier que MySQL est prêt
@@ -37,16 +40,31 @@ docker-compose ps
 
 # Vérifier les logs MySQL
 docker-compose logs mysql
+
+# Ou utiliser le script utilitaire
+./docker-test.sh status
 ```
 
-### 3. Exécuter les tests avec Sakila
+### 3. Générer et récupérer les entités Sakila
+
+```bash
+# Génération et copie automatique (recommandé)
+./docker-test.sh generate-and-copy
+
+# Les entités seront disponibles dans ./generated-entities/
+```
+
+### 4. Exécuter les tests avec Sakila
 
 ```bash
 # Tests d'intégration Sakila uniquement
 docker-compose exec php vendor/bin/phpunit tests/Integration/SakilaIntegrationTest.php
 
+# Ou utiliser le script utilitaire
+./docker-test.sh test-sakila
+
 # Tous les tests
-docker-compose exec php vendor/bin/phpunit
+./docker-test.sh test-all
 ```
 
 ## 📊 Base de données Sakila
@@ -101,17 +119,205 @@ docker-compose exec php vendor/bin/phpunit tests/Integration/SakilaIntegrationTe
 ```
 
 ### Génération manuelle d'entités
+
+#### Génération dans le conteneur uniquement
 ```bash
-# Générer toutes les entités Sakila
-docker-compose exec php bin/console reverse:generate \
+# Générer toutes les entités Sakila dans le conteneur
+docker-compose exec php php scripts/generate-entities.php \
     --namespace="Sakila\\Entity" \
     --output-dir="generated/sakila"
 
-# Générer des tables spécifiques
-docker-compose exec php bin/console reverse:generate \
-    --tables=actor --tables=film --tables=customer \
-    --namespace="Sakila\\Entity"
+# Ou utiliser le script utilitaire
+./docker-test.sh generate
 ```
+
+#### Génération et copie automatique vers l'hôte local
+```bash
+# Génération et copie automatique (recommandé)
+./docker-test.sh generate-and-copy
+
+# Avec répertoire de destination personnalisé
+./docker-test.sh generate-and-copy ./my-entities
+
+# Avec répertoire et namespace personnalisés
+./docker-test.sh generate-and-copy ./src/Entity "MyApp\\Entity"
+```
+
+#### Avantages de la commande `generate-and-copy`
+- ✅ Génération automatique dans le conteneur Docker
+- ✅ Copie automatique des fichiers vers l'hôte local
+- ✅ Validation de la syntaxe PHP des fichiers copiés
+- ✅ Nettoyage automatique des fichiers temporaires
+- ✅ Statistiques détaillées (temps, taille, nombre de fichiers)
+- ✅ Correction automatique des permissions
+- ✅ Résumé complet des opérations
+
+## 🔄 Commande `generate-and-copy` - Guide complet
+
+### Description
+La commande `generate-and-copy` automatise complètement le processus de génération d'entités depuis la base de données Sakila et leur récupération sur l'hôte local. Cette commande combine la génération dans le conteneur Docker avec la copie automatique des fichiers générés.
+
+### Syntaxe
+```bash
+./docker-test.sh generate-and-copy [répertoire_destination] [namespace]
+```
+
+### Paramètres
+- **`répertoire_destination`** (optionnel) : Répertoire local où copier les entités générées
+  - Défaut : `./generated-entities`
+  - Exemple : `./src/Entity`, `./my-entities`
+
+- **`namespace`** (optionnel) : Namespace PHP pour les entités générées
+  - Défaut : `Sakila\\Entity`
+  - Exemple : `MyApp\\Entity`, `App\\Entity\\Sakila`
+
+### Exemples d'utilisation
+
+#### Utilisation basique
+```bash
+# Génération avec paramètres par défaut
+./docker-test.sh generate-and-copy
+
+# Résultat : Entités dans ./generated-entities/ avec namespace Sakila\Entity
+```
+
+#### Répertoire personnalisé
+```bash
+# Spécifier un répertoire de destination
+./docker-test.sh generate-and-copy ./my-entities
+
+# Résultat : Entités dans ./my-entities/ avec namespace Sakila\Entity
+```
+
+#### Répertoire et namespace personnalisés
+```bash
+# Spécifier répertoire et namespace
+./docker-test.sh generate-and-copy ./src/Entity "MyApp\\Entity"
+
+# Résultat : Entités dans ./src/Entity/ avec namespace MyApp\Entity
+```
+
+### Processus détaillé
+
+1. **Vérification de l'environnement**
+   - Contrôle que Docker et Docker Compose sont installés
+   - Vérification que l'environnement MySQL est démarré
+
+2. **Préparation**
+   - Création du répertoire de destination local
+   - Nettoyage du répertoire de génération dans le conteneur
+
+3. **Génération des entités**
+   - Exécution du script de génération dans le conteneur PHP
+   - Mesure du temps d'exécution
+   - Validation de la génération
+
+4. **Copie des fichiers**
+   - Utilisation de `docker cp` pour copier les fichiers
+   - Préservation de la structure des répertoires
+   - Correction automatique des permissions
+
+5. **Validation et nettoyage**
+   - Validation de la syntaxe PHP (si PHP disponible sur l'hôte)
+   - Nettoyage des fichiers temporaires dans le conteneur
+   - Génération du rapport final
+
+### Structure des fichiers générés
+
+```
+generated-entities/          # Répertoire de destination
+├── Actor.php               # Entité Actor
+├── ActorRepository.php     # Repository Actor
+├── Film.php                # Entité Film
+├── FilmRepository.php      # Repository Film
+├── Customer.php            # Entité Customer
+├── CustomerRepository.php  # Repository Customer
+└── ...                     # Autres entités et repositories
+```
+
+### Informations affichées
+
+La commande affiche un rapport détaillé incluant :
+
+- **Temps de génération** : Durée de la génération des entités
+- **Nombre de fichiers** : Entités et repositories générés
+- **Taille totale** : Espace disque utilisé par les fichiers
+- **Validation syntaxe** : Résultat de la validation PHP
+- **Liste des fichiers** : Détail de chaque fichier généré avec sa taille
+
+### Exemple de sortie
+
+```bash
+$ ./docker-test.sh generate-and-copy ./my-entities "MyApp\\Entity"
+
+[INFO] Génération et copie automatique des entités...
+[INFO] Répertoire de destination local: ./my-entities
+[INFO] Namespace: MyApp\Entity
+[INFO] Répertoire local créé: ./my-entities
+[INFO] Nettoyage du répertoire de génération dans le conteneur...
+[INFO] Génération des entités dans le conteneur Docker...
+[SUCCESS] Entités générées avec succès en 12s
+[INFO] Récupération de la liste des fichiers générés...
+[INFO] Fichiers à copier: 32
+[INFO] Copie des fichiers du conteneur vers l'hôte local...
+[SUCCESS] Fichiers copiés avec succès vers ./my-entities
+[INFO] Correction des permissions des fichiers...
+[INFO] Validation de la syntaxe PHP des fichiers copiés...
+[INFO] Nettoyage des fichiers temporaires dans le conteneur...
+
+[SUCCESS] 🎉 Génération et copie terminées avec succès !
+
+[INFO] 📊 Résumé des opérations:
+[INFO]    - Temps de génération: 12s
+[INFO]    - Fichiers générés: 32
+[INFO]    - Fichiers copiés: 32
+[INFO]    - Taille totale: 156K
+[INFO]    - Répertoire de destination: ./my-entities
+[INFO]    - Namespace utilisé: MyApp\Entity
+[SUCCESS]    - Validation syntaxe: ✅ Tous les fichiers sont valides
+
+[INFO] 📁 Fichiers générés:
+[INFO]    - Actor.php (2.1K)
+[INFO]    - ActorRepository.php (1.2K)
+[INFO]    - Film.php (4.8K)
+[INFO]    - FilmRepository.php (1.2K)
+[INFO]    - ...
+
+[INFO] 💡 Pour utiliser ces entités dans votre projet Symfony:
+[INFO]    1. Copiez les fichiers vers src/Entity/ de votre projet
+[INFO]    2. Ajustez le namespace selon votre configuration
+[INFO]    3. Exécutez 'php bin/console doctrine:schema:validate'
+
+[SUCCESS] Opération terminée avec succès !
+```
+
+### Intégration dans un projet Symfony
+
+Après génération, pour utiliser les entités dans votre projet :
+
+1. **Copier les fichiers**
+   ```bash
+   cp ./generated-entities/*.php /path/to/your/symfony/project/src/Entity/
+   ```
+
+2. **Ajuster le namespace** (si nécessaire)
+   ```php
+   // Remplacer dans tous les fichiers
+   namespace Sakila\Entity;
+   // Par
+   namespace App\Entity;
+   ```
+
+3. **Valider avec Doctrine**
+   ```bash
+   cd /path/to/your/symfony/project
+   php bin/console doctrine:schema:validate
+   ```
+
+4. **Générer les migrations** (si nécessaire)
+   ```bash
+   php bin/console doctrine:migrations:diff
+   ```
 
 ## 🔧 Configuration
 

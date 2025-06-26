@@ -134,11 +134,21 @@ class MetadataExtractor
     private function extractRelations(array $tableDetails, array $allTables = []): array
     {
         $relations = [];
+        $usedPropertyNames = [];
         
         // Relations basées sur les clés étrangères (ManyToOne)
         foreach ($tableDetails['foreign_keys'] as $foreignKey) {
             $targetTable = $foreignKey['foreign_table'];
             $targetEntity = $this->generateEntityName($targetTable);
+            $localColumn = $foreignKey['local_columns'][0]; // Prendre la première colonne locale
+            
+            // Générer un nom de propriété unique
+            $propertyName = $this->generateUniqueRelationPropertyName(
+                $targetTable,
+                $localColumn,
+                $usedPropertyNames
+            );
+            $usedPropertyNames[] = $propertyName;
             
             $relations[] = [
                 'type' => 'many_to_one',
@@ -146,7 +156,7 @@ class MetadataExtractor
                 'target_table' => $targetTable,
                 'local_columns' => $foreignKey['local_columns'],
                 'foreign_columns' => $foreignKey['foreign_columns'],
-                'property_name' => $this->generateRelationPropertyName($targetTable),
+                'property_name' => $propertyName,
                 'on_delete' => $foreignKey['on_delete'],
                 'on_update' => $foreignKey['on_update'],
                 'nullable' => $this->isRelationNullable($foreignKey['local_columns'], $tableDetails['columns']),
@@ -231,6 +241,73 @@ class MetadataExtractor
     {
         $entityName = $this->generateEntityName($tableName);
         return lcfirst($entityName);
+    }
+
+    /**
+     * Génère un nom de propriété de relation unique en tenant compte des conflits.
+     *
+     * @param string $targetTable
+     * @param string $localColumn
+     * @param array $usedPropertyNames
+     * @return string
+     */
+    private function generateUniqueRelationPropertyName(string $targetTable, string $localColumn, array $usedPropertyNames): string
+    {
+        // Nom de base basé sur la table cible
+        $basePropertyName = $this->generateRelationPropertyName($targetTable);
+        
+        // Si le nom de base n'est pas utilisé, le retourner
+        if (!in_array($basePropertyName, $usedPropertyNames)) {
+            return $basePropertyName;
+        }
+        
+        // Sinon, générer un nom basé sur la colonne locale
+        $columnBasedName = $this->generatePropertyNameFromColumn($localColumn, $targetTable);
+        
+        // Si ce nom n'est pas utilisé, le retourner
+        if (!in_array($columnBasedName, $usedPropertyNames)) {
+            return $columnBasedName;
+        }
+        
+        // En dernier recours, ajouter un suffixe numérique
+        $counter = 2;
+        $uniqueName = $basePropertyName . $counter;
+        while (in_array($uniqueName, $usedPropertyNames)) {
+            $counter++;
+            $uniqueName = $basePropertyName . $counter;
+        }
+        
+        return $uniqueName;
+    }
+
+    /**
+     * Génère un nom de propriété basé sur la colonne locale et la table cible.
+     *
+     * @param string $localColumn
+     * @param string $targetTable
+     * @return string
+     */
+    private function generatePropertyNameFromColumn(string $localColumn, string $targetTable): string
+    {
+        // Supprimer le suffixe '_id' de la colonne locale
+        $columnWithoutId = preg_replace('/_id$/', '', $localColumn);
+        
+        // Si la colonne contient le nom de la table cible, utiliser la colonne directement
+        $targetEntityLower = strtolower($this->generateEntityName($targetTable));
+        if (strpos(strtolower($columnWithoutId), $targetEntityLower) !== false) {
+            return $this->generatePropertyName($columnWithoutId);
+        }
+        
+        // Sinon, combiner la colonne avec l'entité cible
+        $propertyName = $this->generatePropertyName($columnWithoutId);
+        $targetEntity = $this->generateEntityName($targetTable);
+        
+        // Si la propriété ne contient pas déjà le nom de l'entité, l'ajouter
+        if (stripos($propertyName, $targetEntity) === false) {
+            $propertyName .= $targetEntity;
+        }
+        
+        return $propertyName;
     }
 
     /**
