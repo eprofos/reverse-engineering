@@ -141,3 +141,12 @@ bower_components/
 
 # Local scripts
 /scripts/local/
+
+# Docker
+/.env.docker.local
+/docker/data/
+docker-compose.override.yml
+
+# Sakila test files
+/sakila_backup.sql
+/sakila-*.sql

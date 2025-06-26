@@ -8,6 +8,7 @@ use App\Service\DatabaseAnalyzer;
 use App\Service\MetadataExtractor;
 use App\Service\EntityGenerator;
 use App\Service\FileWriter;
+use App\Service\MySQLTypeMapper;
 use App\Exception\ReverseEngineeringException;
 
 /**
@@ -22,6 +23,8 @@ class ReverseEngineeringService
         private readonly FileWriter $fileWriter,
         private readonly array $config = []
     ) {
+        // Enregistrer les types MySQL personnalisés dès l'initialisation
+        MySQLTypeMapper::registerCustomTypes();
     }
 
     /**

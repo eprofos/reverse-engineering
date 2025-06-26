@@ -28,7 +28,7 @@ class MetadataExtractor
     {
         try {
             $tableDetails = $this->databaseAnalyzer->getTableDetails($tableName);
-            $processedColumns = $this->processColumns($tableDetails['columns'], $tableDetails['foreign_keys']);
+            $processedColumns = $this->processColumns($tableDetails['columns'], $tableDetails['foreign_keys'], $tableDetails['primary_key']);
             
             return [
                 'table_name' => $tableName,
@@ -54,9 +54,10 @@ class MetadataExtractor
      *
      * @param array $columns
      * @param array $foreignKeys
+     * @param array $primaryKey
      * @return array
      */
-    private function processColumns(array $columns, array $foreignKeys = []): array
+    private function processColumns(array $columns, array $foreignKeys = [], array $primaryKey = []): array
     {
         $processedColumns = [];
         $foreignKeyColumns = [];
@@ -69,10 +70,25 @@ class MetadataExtractor
         }
         
         foreach ($columns as $column) {
-            $processedColumns[] = [
+            // Utiliser le type brut si disponible, sinon le type Doctrine
+            $typeToMap = $column['raw_type'] ?? $column['type'];
+            $basePhpType = $this->mapDatabaseTypeToPhp($typeToMap);
+            
+            // Ajouter le préfixe ? pour les types nullable (sauf bool et clés primaires)
+            $phpType = $basePhpType;
+            $isPrimaryKey = in_array($column['name'], $primaryKey);
+            
+            // Les clés primaires et colonnes NOT NULL ne doivent pas être nullable
+            // Exception : les types DateTime peuvent être nullable même s'ils ne sont pas explicitement NULL
+            if ($column['nullable'] && !$isPrimaryKey && $basePhpType !== 'bool') {
+                // Gérer les types avec namespace (commençant par \)
+                $phpType = '?' . $basePhpType;
+            }
+            
+            $processedColumn = [
                 'name' => $column['name'],
                 'property_name' => $this->generatePropertyName($column['name']),
-                'type' => $this->mapDatabaseTypeToPhp($column['type']),
+                'type' => $phpType,
                 'doctrine_type' => $this->mapDatabaseTypeToDoctrineType($column['type']),
                 'nullable' => $column['nullable'],
                 'length' => $column['length'],
@@ -81,9 +97,28 @@ class MetadataExtractor
                 'default' => $column['default'],
                 'auto_increment' => $column['auto_increment'],
                 'comment' => $column['comment'],
-                'is_primary' => false, // Sera mis à jour plus tard
+                'is_primary' => $isPrimaryKey,
                 'is_foreign_key' => in_array($column['name'], $foreignKeyColumns),
             ];
+            
+            // Ajouter les informations ENUM/SET si disponibles
+            if (isset($column['enum_values'])) {
+                $processedColumn['enum_values'] = $column['enum_values'];
+                $processedColumn['comment'] = $this->enhanceCommentWithEnumValues(
+                    $column['comment'],
+                    $column['enum_values']
+                );
+            }
+            
+            if (isset($column['set_values'])) {
+                $processedColumn['set_values'] = $column['set_values'];
+                $processedColumn['comment'] = $this->enhanceCommentWithSetValues(
+                    $column['comment'],
+                    $column['set_values']
+                );
+            }
+            
+            $processedColumns[] = $processedColumn;
         }
         
         return $processedColumns;
@@ -217,14 +252,22 @@ class MetadataExtractor
      */
     private function mapDatabaseTypeToPhp(string $databaseType): string
     {
-        return match (strtolower($databaseType)) {
+        // Nettoyer le type en supprimant les modificateurs comme 'unsigned'
+        $cleanType = preg_replace('/\s+(unsigned|signed|zerofill)/i', '', $databaseType);
+        // Extraire le type de base (sans les paramètres)
+        $baseType = strtolower(explode('(', $cleanType)[0]);
+        
+        return match ($baseType) {
             'int', 'integer' => 'int',
             'bigint' => 'int',
             'smallint' => 'int',
+            'mediumint' => 'int',
             'tinyint' => 'int',
+            'year' => 'int',
             'float', 'double', 'real' => 'float',
             'decimal', 'numeric' => 'string',
             'boolean', 'bool' => 'bool',
+            'bit' => 'bool',
             'date', 'datetime', 'timestamp' => '\DateTimeInterface',
             'time' => '\DateTimeInterface',
             'json' => 'array',
@@ -233,6 +276,8 @@ class MetadataExtractor
             'blob', 'longblob', 'mediumblob', 'tinyblob' => 'string',
             'binary', 'varbinary' => 'string',
             'uuid' => 'string',
+            'enum' => 'string',
+            'set' => 'string',
             default => 'string',
         };
     }
@@ -262,6 +307,8 @@ class MetadataExtractor
             'blob', 'longblob', 'mediumblob', 'tinyblob' => 'blob',
             'binary', 'varbinary' => 'binary',
             'uuid' => 'uuid',
+            'enum' => 'string',
+            'set' => 'string',
             default => 'string',
         };
     }
@@ -284,5 +331,41 @@ class MetadataExtractor
         }
         
         return false;
+    }
+
+    /**
+     * Améliore le commentaire d'une colonne avec les valeurs ENUM.
+     *
+     * @param string|null $originalComment
+     * @param array $enumValues
+     * @return string
+     */
+    private function enhanceCommentWithEnumValues(?string $originalComment, array $enumValues): string
+    {
+        $enumComment = 'Valeurs possibles: ' . implode(', ', array_map(fn($v) => "'{$v}'", $enumValues));
+        
+        if ($originalComment) {
+            return $originalComment . ' - ' . $enumComment;
+        }
+        
+        return $enumComment;
+    }
+
+    /**
+     * Améliore le commentaire d'une colonne avec les valeurs SET.
+     *
+     * @param string|null $originalComment
+     * @param array $setValues
+     * @return string
+     */
+    private function enhanceCommentWithSetValues(?string $originalComment, array $setValues): string
+    {
+        $setComment = 'Valeurs SET possibles: ' . implode(', ', array_map(fn($v) => "'{$v}'", $setValues));
+        
+        if ($originalComment) {
+            return $originalComment . ' - ' . $setComment;
+        }
+        
+        return $setComment;
     }
 }

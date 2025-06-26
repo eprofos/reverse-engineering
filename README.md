@@ -67,6 +67,44 @@ return [
 | SQLite     | 3.25+   | pdo_sqlite | ✅ Complet |
 | MariaDB    | 10.3+   | pdo_mysql  | ✅ Complet |
 
+## 🐳 Environnement Docker avec Sakila
+
+Pour des tests plus réalistes, un environnement Docker complet avec la base de données Sakila est disponible :
+
+### Démarrage rapide avec Docker
+
+```bash
+# Démarrer l'environnement Docker
+docker-compose up -d
+
+# Attendre que MySQL soit prêt (30-60 secondes)
+docker-compose logs -f mysql
+
+# Exécuter les tests d'intégration Sakila
+docker-compose exec php vendor/bin/phpunit tests/Integration/SakilaIntegrationTest.php
+
+# Générer des entités depuis Sakila
+docker-compose exec php bin/console reverse:generate \
+    --namespace="Sakila\\Entity" \
+    --output-dir="generated/sakila"
+```
+
+### Accès aux services
+
+- **MySQL** : `localhost:3306` (sakila_user/sakila_password)
+- **phpMyAdmin** : http://localhost:8080
+- **Base de données** : `sakila` (15+ tables avec relations complexes)
+
+### Tests disponibles
+
+La base Sakila permet de tester :
+- **Relations complexes** : OneToMany, ManyToOne, ManyToMany
+- **Types de données variés** : DECIMAL, ENUM, SET, YEAR, BLOB
+- **Contraintes avancées** : Clés composites, index multiples
+- **Performance** : Base de données réaliste avec données
+
+Voir [`docker/README.md`](docker/README.md) pour la documentation complète.
+
 ## ⚙️ Configuration
 
 Ajoutez la configuration dans votre fichier `config/packages/reverse_engineering.yaml` :

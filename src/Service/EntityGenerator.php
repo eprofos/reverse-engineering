@@ -70,16 +70,19 @@ class EntityGenerator
     {
         $useAnnotations = $options['use_annotations'] ?? $this->config['use_annotations'] ?? false;
         
+        $properties = $this->prepareProperties($metadata['columns'], $metadata['primary_key']);
+        
         return [
             'entity_name' => $metadata['entity_name'],
             'table_name' => $metadata['table_name'],
             'namespace' => $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity',
             'repository_name' => $metadata['repository_name'],
             'use_annotations' => $useAnnotations,
-            'properties' => $this->prepareProperties($metadata['columns'], $metadata['primary_key']),
+            'properties' => $properties,
             'relations' => $this->prepareRelations($metadata['relations']),
             'indexes' => $metadata['indexes'],
             'imports' => $this->generateImports($metadata, $useAnnotations),
+            'constants' => $this->generateConstants($properties),
         ];
     }
 
@@ -226,11 +229,22 @@ class EntityGenerator
         $namespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
         $repositoryNamespace = str_replace('\\Entity', '\\Repository', $namespace);
         
+        $repositoryData = [
+            'repository_name' => $metadata['repository_name'],
+            'entity_name' => $metadata['entity_name'],
+            'namespace' => $repositoryNamespace,
+            'entity_namespace' => $namespace,
+        ];
+        
+        $repositoryCode = $this->twig->render('repository.php.twig', $repositoryData);
+        
         return [
             'name' => $metadata['repository_name'],
             'namespace' => $repositoryNamespace,
             'filename' => $metadata['repository_name'] . '.php',
             'entity_class' => $namespace . '\\' . $metadata['entity_name'],
+            'entity_namespace' => $namespace,
+            'code' => $repositoryCode,
         ];
     }
 
@@ -254,5 +268,38 @@ class EntityGenerator
     private function generateSetterName(string $propertyName): string
     {
         return 'set' . ucfirst($propertyName);
+    }
+
+    /**
+     * Génère les constantes pour les types ENUM/SET.
+     *
+     * @param array $properties
+     * @return array
+     */
+    private function generateConstants(array $properties): array
+    {
+        $constants = [];
+        
+        foreach ($properties as $property) {
+            // Générer des constantes pour les ENUM
+            if (isset($property['enum_values']) && !empty($property['enum_values'])) {
+                $enumConstants = \App\Service\MySQLTypeMapper::generateEnumConstants(
+                    $property['enum_values'],
+                    $property['name']
+                );
+                $constants = array_merge($constants, $enumConstants);
+            }
+            
+            // Générer des constantes pour les SET
+            if (isset($property['set_values']) && !empty($property['set_values'])) {
+                $setConstants = \App\Service\MySQLTypeMapper::generateSetConstants(
+                    $property['set_values'],
+                    $property['name']
+                );
+                $constants = array_merge($constants, $setConstants);
+            }
+        }
+        
+        return $constants;
     }
 }

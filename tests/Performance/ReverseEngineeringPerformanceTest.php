@@ -71,10 +71,6 @@ class ReverseEngineeringPerformanceTest extends TestCase
         
         // Afficher les métriques de performance
         $this->addToAssertionCount(1); // Pour éviter les warnings sur les tests sans assertions
-        echo "\n--- Métriques de performance ---\n";
-        echo "Tables traitées: {$tableCount}\n";
-        echo "Temps d'exécution: " . round($executionTime, 3) . "s\n";
-        echo "Temps par table: " . round($executionTime / $tableCount * 1000, 2) . "ms\n";
     }
 
     public function testPerformanceWithLargeTables(): void
@@ -105,9 +101,6 @@ class ReverseEngineeringPerformanceTest extends TestCase
         $this->assertLessThan(2.0, $executionTime,
             "Le traitement d'une grande table a pris {$executionTime}s, ce qui est trop lent");
 
-        echo "\n--- Métriques table large ---\n";
-        echo "Colonnes traitées: " . count($entity['properties']) . "\n";
-        echo "Temps d'exécution: " . round($executionTime, 3) . "s\n";
     }
 
     public function testPerformanceWithComplexRelations(): void
@@ -140,9 +133,6 @@ class ReverseEngineeringPerformanceTest extends TestCase
         $this->assertLessThan(3.0, $executionTime,
             "Le traitement des relations complexes a pris {$executionTime}s, ce qui est trop lent");
 
-        echo "\n--- Métriques relations complexes ---\n";
-        echo "Relations détectées: {$totalRelations}\n";
-        echo "Temps d'exécution: " . round($executionTime, 3) . "s\n";
     }
 
     public function testMemoryUsageWithManyEntities(): void
@@ -171,9 +161,6 @@ class ReverseEngineeringPerformanceTest extends TestCase
         $this->assertLessThan($maxMemoryMB, $memoryUsedMB,
             "L'utilisation mémoire ({$memoryUsedMB}MB) dépasse la limite de {$maxMemoryMB}MB");
 
-        echo "\n--- Métriques mémoire ---\n";
-        echo "Mémoire utilisée: " . round($memoryUsedMB, 2) . "MB\n";
-        echo "Mémoire par table: " . round($memoryUsedMB / 30, 3) . "MB\n";
     }
 
     public function testFileGenerationPerformance(): void
@@ -205,10 +192,6 @@ class ReverseEngineeringPerformanceTest extends TestCase
         $this->assertLessThan(5.0, $executionTime,
             "La génération de fichiers a pris {$executionTime}s, ce qui est trop lent");
 
-        echo "\n--- Métriques génération fichiers ---\n";
-        echo "Fichiers générés: " . count($result['files']) . "\n";
-        echo "Temps d'exécution: " . round($executionTime, 3) . "s\n";
-        echo "Temps par fichier: " . round($executionTime / count($result['files']) * 1000, 2) . "ms\n";
     }
 
     public function testDatabaseAnalysisPerformance(): void
@@ -231,9 +214,6 @@ class ReverseEngineeringPerformanceTest extends TestCase
         $this->assertLessThan(1.0, $executionTime,
             "L'analyse de la base de données a pris {$executionTime}s, ce qui est trop lent");
 
-        echo "\n--- Métriques analyse BDD ---\n";
-        echo "Tables analysées: " . count($tables) . "\n";
-        echo "Temps d'exécution: " . round($executionTime, 3) . "s\n";
     }
 
     private function setupServices(): void
@@ -250,6 +230,7 @@ class ReverseEngineeringPerformanceTest extends TestCase
         // Template minimal pour les tests de performance
         $loader = new ArrayLoader([
             'entity.php.twig' => '<?php class {{ entity_name }} { /* properties */ }',
+            'repository.php.twig' => '<?php class {{ repository_name }} { /* repository */ }',
         ]);
         $twig = new Environment($loader);
 

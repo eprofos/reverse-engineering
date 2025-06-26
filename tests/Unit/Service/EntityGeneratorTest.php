@@ -77,10 +77,16 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class User {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->with('entity.php.twig', $this->isType('array'))
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class UserRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata);
@@ -115,9 +121,16 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class Product {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class ProductRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata, $options);
@@ -146,6 +159,7 @@ class EntityGeneratorTest extends TestCase
         $this->twig
             ->expects($this->once())
             ->method('render')
+            ->with('entity.php.twig', $this->anything())
             ->willReturn($expectedCode);
 
         // Act
@@ -213,9 +227,16 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class Post {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class PostRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata);
@@ -264,12 +285,17 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class Event {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->with('entity.php.twig', $this->callback(function ($data) {
-                return in_array('DateTimeInterface', $data['imports']);
-            }))
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    $this->assertContains('DateTimeInterface', $data['imports']);
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class EventRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata);
@@ -296,12 +322,17 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class Category {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->with('entity.php.twig', $this->callback(function ($data) {
-                return $data['use_annotations'] === true;
-            }))
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    $this->assertTrue($data['use_annotations']);
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class CategoryRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata, $options);
@@ -397,9 +428,16 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class Order {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class OrderRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata);
@@ -445,9 +483,16 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class User {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class UserRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata);
@@ -476,9 +521,16 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class Product {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class ProductRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata, $options);
@@ -535,15 +587,20 @@ class EntityGeneratorTest extends TestCase
         $expectedCode = '<?php class Article {}';
         
         $this->twig
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('render')
-            ->with('entity.php.twig', $this->callback(function ($data) {
-                $imports = $data['imports'];
-                return in_array('DateTimeInterface', $imports) &&
-                       in_array('Doctrine\\ORM\\Mapping\\ManyToOne', $imports) &&
-                       in_array('Doctrine\\ORM\\Mapping\\JoinColumn', $imports);
-            }))
-            ->willReturn($expectedCode);
+            ->willReturnCallback(function($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    $imports = $data['imports'];
+                    $this->assertContains('DateTimeInterface', $imports);
+                    $this->assertContains('Doctrine\\ORM\\Mapping\\ManyToOne', $imports);
+                    $this->assertContains('Doctrine\\ORM\\Mapping\\JoinColumn', $imports);
+                    return $expectedCode;
+                } elseif ($template === 'repository.php.twig') {
+                    return '<?php class ArticleRepository {}';
+                }
+                return '';
+            });
 
         // Act
         $result = $this->entityGenerator->generateEntity($tableName, $metadata, $options);

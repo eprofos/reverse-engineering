@@ -23,9 +23,32 @@ use {{ import }};
 {% endif %}
 class {{ entity_name }}
 {
+{% if constants is defined and constants is not empty %}
+{% for constant_name, constant_value in constants %}
+    /**
+     * Constante pour la valeur '{{ constant_value }}'
+     */
+    public const {{ constant_name }} = '{{ constant_value }}';
+
+{% endfor %}
+{% endif %}
 {% for property in properties %}
     /**
      * {{ property.comment ? property.comment : 'Propriété ' ~ property.name }}
+{% if property.enum_values is defined %}
+     *
+     * Constantes ENUM disponibles:
+{% for enum_value in property.enum_values %}
+     * - {{ enum_value }}
+{% endfor %}
+{% endif %}
+{% if property.set_values is defined %}
+     *
+     * Valeurs SET disponibles:
+{% for set_value in property.set_values %}
+     * - {{ set_value }}
+{% endfor %}
+{% endif %}
      */
 {% if use_annotations %}
 {% if property.is_primary %}
@@ -52,7 +75,7 @@ class {{ entity_name }}
     #[ORM\Column(type: '{{ property.doctrine_type }}'{% if property.length %}, length: {{ property.length }}{% endif %}{% if property.nullable %}, nullable: true{% endif %}{% if property.default is not null %}, options: ['default' => '{{ property.default }}']{% endif %})]
 {% endif %}
 {% endif %}
-    private {% if property.nullable and property.type != 'bool' %}?{% endif %}{{ property.type }} ${{ property.name }}{% if property.default is not null and property.type == 'string' %} = '{{ property.default }}'{% elseif property.default is not null %} = {{ property.default }}{% elseif property.nullable %} = null{% endif %};
+    private {{ property.type }} ${{ property.name }}{% if property.default is not null and property.type == 'string' %} = '{{ property.default }}'{% elseif property.default is not null %} = {{ property.default }}{% elseif property.nullable and not property.is_primary %} = null{% endif %};
 
 {% endfor %}
 {% for relation in relations %}
@@ -75,7 +98,7 @@ class {{ entity_name }}
     /**
      * Getter pour {{ property.name }}
      */
-    public function {{ property.getter_name }}(): {% if property.nullable and property.type != 'bool' %}?{% endif %}{{ property.type }}
+    public function {{ property.getter_name }}(): {{ property.type }}
     {
         return $this->{{ property.name }};
     }
@@ -83,7 +106,7 @@ class {{ entity_name }}
     /**
      * Setter pour {{ property.name }}
      */
-    public function {{ property.setter_name }}({% if property.nullable and property.type != 'bool' %}?{% endif %}{{ property.type }} ${{ property.name }}): static
+    public function {{ property.setter_name }}({{ property.type }} ${{ property.name }}): static
     {
         $this->{{ property.name }} = ${{ property.name }};
         return $this;

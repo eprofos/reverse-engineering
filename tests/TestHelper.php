@@ -333,4 +333,102 @@ class {{ entity_name }}
         
         return $mock;
     }
+
+    /**
+     * Crée une connexion à la base de données Docker Sakila.
+     */
+    public static function createDockerSakilaConnection(): ?Connection
+    {
+        if (!self::isDockerSakilaAvailable()) {
+            return null;
+        }
+
+        try {
+            return DriverManager::getConnection([
+                'driver' => 'pdo_mysql',
+                'host' => 'localhost',
+                'port' => 3306,
+                'dbname' => 'sakila',
+                'user' => 'sakila_user',
+                'password' => 'sakila_password',
+                'charset' => 'utf8mb4',
+            ]);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Vérifie si Docker et le conteneur MySQL Sakila sont disponibles.
+     */
+    public static function isDockerSakilaAvailable(): bool
+    {
+        $output = [];
+        $returnCode = 0;
+        exec('docker ps --filter "name=reverse_engineering_mysql" --format "{{.Names}}" 2>/dev/null', $output, $returnCode);
+        
+        return $returnCode === 0 && in_array('reverse_engineering_mysql', $output);
+    }
+
+    /**
+     * Démarre l'environnement Docker pour les tests.
+     */
+    public static function startDockerEnvironment(): bool
+    {
+        if (self::isDockerSakilaAvailable()) {
+            return true;
+        }
+
+        $output = [];
+        $returnCode = 0;
+        exec('docker-compose up -d mysql 2>/dev/null', $output, $returnCode);
+        
+        if ($returnCode !== 0) {
+            return false;
+        }
+
+        // Attendre que MySQL soit prêt
+        $maxAttempts = 30;
+        $attempt = 0;
+        
+        while ($attempt < $maxAttempts) {
+            sleep(2);
+            $connection = self::createDockerSakilaConnection();
+            if ($connection !== null) {
+                try {
+                    $connection->executeQuery('SELECT 1');
+                    return true;
+                } catch (\Exception $e) {
+                    // Continuer à attendre
+                }
+            }
+            $attempt++;
+        }
+
+        return false;
+    }
+
+    /**
+     * Arrête l'environnement Docker.
+     */
+    public static function stopDockerEnvironment(): void
+    {
+        exec('docker-compose down 2>/dev/null');
+    }
+
+    /**
+     * Configuration de base de données pour les tests Docker.
+     */
+    public static function getDockerDatabaseConfig(): array
+    {
+        return [
+            'driver' => 'pdo_mysql',
+            'host' => 'localhost',
+            'port' => 3306,
+            'dbname' => 'sakila',
+            'user' => 'sakila_user',
+            'password' => 'sakila_password',
+            'charset' => 'utf8mb4',
+        ];
+    }
 }

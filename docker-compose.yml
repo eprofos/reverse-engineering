@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: reverse_engineering_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: sakila
+      MYSQL_USER: sakila_user
+      MYSQL_PASSWORD: sakila_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - ./docker/mysql/conf:/etc/mysql/conf.d
+    networks:
+      - reverse_engineering_network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: reverse_engineering_php
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/conf/php.ini:/usr/local/etc/php/php.ini
+    working_dir: /var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - reverse_engineering_network
+    environment:
+      - DATABASE_URL=mysql://sakila_user:sakila_password@mysql:3306/sakila
+      - APP_ENV=test
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: reverse_engineering_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: sakila_user
+      PMA_PASSWORD: sakila_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "8080:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - reverse_engineering_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  reverse_engineering_network:
+    driver: bridge

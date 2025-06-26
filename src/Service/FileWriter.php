@@ -107,8 +107,8 @@ class FileWriter
                 );
             }
             
-            // Générer le code du repository
-            $repositoryCode = $this->generateRepositoryCode($repository);
+            // Utiliser le code du repository s'il est fourni, sinon le générer
+            $repositoryCode = $repository['code'] ?? $this->generateRepositoryCode($repository);
             
             // Écrire le fichier
             $bytesWritten = file_put_contents($filePath, $repositoryCode);

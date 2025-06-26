@@ -277,9 +277,9 @@ class ReverseEngineeringIntegrationTest extends TestCase
         
         $this->assertEquals('int', $propertyTypes['id']);
         $this->assertEquals('string', $propertyTypes['name']);
-        $this->assertEquals('string', $propertyTypes['price']); // DECIMAL mapped to string
+        $this->assertEquals('?string', $propertyTypes['price']); // DECIMAL mapped to string, nullable
         $this->assertEquals('bool', $propertyTypes['isActive']);
-        $this->assertEquals('\DateTimeInterface', $propertyTypes['createdAt']);
+        $this->assertEquals('?\DateTimeInterface', $propertyTypes['createdAt']);
     }
 
     private function setupServices(): void
@@ -292,9 +292,10 @@ class ReverseEngineeringIntegrationTest extends TestCase
         $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig, $this->connection);
         $metadataExtractor = new MetadataExtractor($databaseAnalyzer);
 
-        // Configurer Twig avec un template simple
+        // Configurer Twig avec les templates
         $loader = new ArrayLoader([
             'entity.php.twig' => $this->getEntityTemplate(),
+            'repository.php.twig' => $this->getRepositoryTemplate(),
         ]);
         $twig = new Environment($loader);
 
@@ -405,6 +406,31 @@ class {{ entity_name }}
     }
 
 {% endfor %}
+}
+';
+    }
+
+    private function getRepositoryTemplate(): string
+    {
+        return '<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ entity_namespace }}\{{ entity_name }};
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * Repository pour l\'entité {{ entity_name }}.
+ */
+class {{ repository_name }} extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, {{ entity_name }}::class);
+    }
 }
 ';
     }

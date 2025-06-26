@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ entity_namespace }}\{{ entity_name }};
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * Repository pour l'entité {{ entity_name }}.
+ * 
+ * @extends ServiceEntityRepository<{{ entity_name }}>
+ */
+class {{ repository_name }} extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, {{ entity_name }}::class);
+    }
+
+    /**
+     * Trouve une entité par son ID.
+     */
+    public function find($id, $lockMode = null, $lockVersion = null): ?{{ entity_name }}
+    {
+        return parent::find($id, $lockMode, $lockVersion);
+    }
+
+    /**
+     * Trouve toutes les entités.
+     *
+     * @return {{ entity_name }}[]
+     */
+    public function findAll(): array
+    {
+        return parent::findAll();
+    }
+
+    /**
+     * Trouve des entités selon des critères.
+     *
+     * @return {{ entity_name }}[]
+     */
+    public function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array
+    {
+        return parent::findBy($criteria, $orderBy, $limit, $offset);
+    }
+
+    /**
+     * Trouve une entité selon des critères.
+     */
+    public function findOneBy(array $criteria, array $orderBy = null): ?{{ entity_name }}
+    {
+        return parent::findOneBy($criteria, $orderBy);
+    }
+
+    /**
+     * Sauvegarde une entité.
+     */
+    public function save({{ entity_name }} $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    /**
+     * Supprime une entité.
+     */
+    public function remove({{ entity_name }} $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+}
