@@ -33,10 +33,12 @@ class EntityGenerator
             $entityData = $this->prepareEntityData($metadata, $options);
             $entityCode = $this->generateEntityCode($entityData);
             
+            $namespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
+            
             $result = [
                 'name' => $metadata['entity_name'],
                 'table' => $tableName,
-                'namespace' => $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity',
+                'namespace' => $namespace,
                 'filename' => $metadata['entity_name'] . '.php',
                 'code' => $entityCode,
                 'properties' => $entityData['properties'],
@@ -72,14 +74,16 @@ class EntityGenerator
         
         $properties = $this->prepareProperties($metadata['columns'], $metadata['primary_key']);
         
+        $namespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
+        
         return [
             'entity_name' => $metadata['entity_name'],
             'table_name' => $metadata['table_name'],
-            'namespace' => $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity',
+            'namespace' => $namespace,
             'repository_name' => $metadata['repository_name'],
             'use_annotations' => $useAnnotations,
             'properties' => $properties,
-            'relations' => $this->prepareRelations($metadata['relations']),
+            'relations' => $this->prepareRelations($metadata['relations'], $namespace),
             'indexes' => $metadata['indexes'],
             'imports' => $this->generateImports($metadata, $useAnnotations),
             'constants' => $this->generateConstants($properties),
@@ -130,9 +134,10 @@ class EntityGenerator
      * Prépare les relations de l'entité.
      *
      * @param array $relations
+     * @param string $namespace
      * @return array
      */
-    private function prepareRelations(array $relations): array
+    private function prepareRelations(array $relations, string $namespace): array
     {
         $preparedRelations = [];
         
@@ -226,14 +231,14 @@ class EntityGenerator
      */
     private function generateRepository(array $metadata, array $options): array
     {
-        $namespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
-        $repositoryNamespace = str_replace('\\Entity', '\\Repository', $namespace);
+        $entityNamespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
+        $repositoryNamespace = str_replace('\\Entity', '\\Repository', $entityNamespace);
         
         $repositoryData = [
             'repository_name' => $metadata['repository_name'],
             'entity_name' => $metadata['entity_name'],
             'namespace' => $repositoryNamespace,
-            'entity_namespace' => $namespace,
+            'entity_namespace' => $entityNamespace,
         ];
         
         $repositoryCode = $this->twig->render('repository.php.twig', $repositoryData);
@@ -242,8 +247,8 @@ class EntityGenerator
             'name' => $metadata['repository_name'],
             'namespace' => $repositoryNamespace,
             'filename' => $metadata['repository_name'] . '.php',
-            'entity_class' => $namespace . '\\' . $metadata['entity_name'],
-            'entity_namespace' => $namespace,
+            'entity_class' => $entityNamespace . '\\' . $metadata['entity_name'],
+            'entity_namespace' => $entityNamespace,
             'code' => $repositoryCode,
         ];
     }

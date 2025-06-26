@@ -157,12 +157,31 @@ function parseArguments(array $argv, array $defaultConfig): array
     for ($i = 1; $i < count($argv); $i++) {
         $arg = $argv[$i];
         
+        // Gérer les arguments avec = (ex: --namespace="App\Entity")
+        if (strpos($arg, '=') !== false) {
+            [$key, $value] = explode('=', $arg, 2);
+            $arg = $key;
+            $nextValue = $value;
+        } else {
+            $nextValue = $argv[$i + 1] ?? null;
+        }
+        
         switch ($arg) {
             case '--namespace':
-                $options['namespace'] = $argv[++$i] ?? $defaultConfig['namespace'];
+                if (isset($nextValue)) {
+                    $options['namespace'] = $nextValue;
+                    if (strpos($argv[$i], '=') === false) {
+                        $i++; // Seulement si ce n'était pas un argument avec =
+                    }
+                }
                 break;
             case '--output-dir':
-                $options['output_dir'] = $argv[++$i] ?? $defaultConfig['output_dir'];
+                if (isset($nextValue)) {
+                    $options['output_dir'] = $nextValue;
+                    if (strpos($argv[$i], '=') === false) {
+                        $i++; // Seulement si ce n'était pas un argument avec =
+                    }
+                }
                 break;
             case '--force':
                 $options['force'] = true;
@@ -171,19 +190,44 @@ function parseArguments(array $argv, array $defaultConfig): array
                 $options['dry_run'] = true;
                 break;
             case '--host':
-                $options['host'] = $argv[++$i] ?? $defaultConfig['host'];
+                if (isset($nextValue)) {
+                    $options['host'] = $nextValue;
+                    if (strpos($argv[$i], '=') === false) {
+                        $i++;
+                    }
+                }
                 break;
             case '--port':
-                $options['port'] = (int)($argv[++$i] ?? $defaultConfig['port']);
+                if (isset($nextValue)) {
+                    $options['port'] = (int)$nextValue;
+                    if (strpos($argv[$i], '=') === false) {
+                        $i++;
+                    }
+                }
                 break;
             case '--dbname':
-                $options['dbname'] = $argv[++$i] ?? $defaultConfig['dbname'];
+                if (isset($nextValue)) {
+                    $options['dbname'] = $nextValue;
+                    if (strpos($argv[$i], '=') === false) {
+                        $i++;
+                    }
+                }
                 break;
             case '--user':
-                $options['user'] = $argv[++$i] ?? $defaultConfig['user'];
+                if (isset($nextValue)) {
+                    $options['user'] = $nextValue;
+                    if (strpos($argv[$i], '=') === false) {
+                        $i++;
+                    }
+                }
                 break;
             case '--password':
-                $options['password'] = $argv[++$i] ?? $defaultConfig['password'];
+                if (isset($nextValue)) {
+                    $options['password'] = $nextValue;
+                    if (strpos($argv[$i], '=') === false) {
+                        $i++;
+                    }
+                }
                 break;
             case '--help':
                 showHelp();

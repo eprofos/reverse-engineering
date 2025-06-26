@@ -196,12 +196,14 @@ generate_entities() {
 # Générer des entités et les copier vers l'hôte local
 generate_and_copy() {
     local local_output_dir="${1:-./generated-entities}"
-    local namespace="${2:-Sakila\\\\Entity}"
+    local namespace="${2:-Sakila\\Entity}"
     local container_output_dir="generated/sakila"
     
     log_info "Génération et copie automatique des entités..."
     log_info "Répertoire de destination local: $local_output_dir"
-    log_info "Namespace: $namespace"
+    # Afficher le namespace en échappant correctement les backslashes pour l'affichage
+    local display_namespace=$(echo "$namespace" | sed 's/\\/\\\\/g')
+    log_info "Namespace: $display_namespace"
     
     if ! docker-compose ps | grep -q "reverse_engineering_mysql.*Up"; then
         log_error "L'environnement Docker n'est pas démarré"
@@ -305,7 +307,7 @@ generate_and_copy() {
     log_info "   - Fichiers copiés: $validated_files"
     log_info "   - Taille totale: ${total_size:-N/A}"
     log_info "   - Répertoire de destination: $local_output_dir"
-    log_info "   - Namespace utilisé: $namespace"
+    log_info "   - Namespace utilisé: $display_namespace"
     
     if command -v php &> /dev/null; then
         if [ $syntax_errors -eq 0 ]; then
