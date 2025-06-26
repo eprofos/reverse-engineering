@@ -361,7 +361,9 @@ class ReverseGenerateCommandTest extends TestCase
             ->willThrowException($exception);
 
         // Act
-        $exitCode = $this->commandTester->execute([], ['verbosity' => 2]); // VERBOSITY_VERBOSE = 2
+        $exitCode = $this->commandTester->execute([], [
+            'verbosity' => \Symfony\Component\Console\Output\OutputInterface::VERBOSITY_VERBOSE
+        ]);
 
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);

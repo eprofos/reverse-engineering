@@ -243,7 +243,8 @@ class ReverseEngineeringPerformanceTest extends TestCase
             'memory' => true,
         ];
 
-        $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig);
+        // Passer la connexion existante au DatabaseAnalyzer pour partager la même base de données
+        $databaseAnalyzer = new DatabaseAnalyzer($databaseConfig, $this->connection);
         $metadataExtractor = new MetadataExtractor($databaseAnalyzer);
 
         // Template minimal pour les tests de performance
