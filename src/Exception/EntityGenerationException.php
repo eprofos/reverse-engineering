@@ -12,7 +12,7 @@ use Throwable;
 class EntityGenerationException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Error during entity generation',
+        string $message = 'Entity generation failed',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

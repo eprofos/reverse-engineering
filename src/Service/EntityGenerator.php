@@ -52,7 +52,7 @@ class EntityGenerator
             return $result;
         } catch (Exception $e) {
             throw new EntityGenerationException(
-                "Error generating entity for table '{$tableName}': " . $e->getMessage(),
+                "Entity generation failed for table '{$tableName}': " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -195,7 +195,7 @@ class EntityGenerator
             return $this->twig->render('entity.php.twig', $entityData);
         } catch (Exception $e) {
             throw new EntityGenerationException(
-                'Error rendering entity template: ' . $e->getMessage(),
+                'Entity template rendering failed: ' . $e->getMessage(),
                 0,
                 $e,
             );

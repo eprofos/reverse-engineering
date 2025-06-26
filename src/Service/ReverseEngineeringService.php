@@ -37,14 +37,14 @@ class ReverseEngineeringService
     public function generateEntities(array $options = []): array
     {
         try {
-            // 1. Analyser la base de données
+            // 1. Analyze the database
             $tables = $this->databaseAnalyzer->analyzeTables(
                 $options['tables'] ?? [],
                 $options['exclude'] ?? [],
             );
 
             if (empty($tables)) {
-                throw new ReverseEngineeringException('No tables found to process.');
+                throw new ReverseEngineeringException('No tables found to process');
             }
 
             // 2. Extract metadata
@@ -96,7 +96,7 @@ class ReverseEngineeringService
             ];
         } catch (Exception $e) {
             throw new ReverseEngineeringException(
-                'Error during entity generation: ' . $e->getMessage(),
+                'Entity generation failed: ' . $e->getMessage(),
                 0,
                 $e,
             );

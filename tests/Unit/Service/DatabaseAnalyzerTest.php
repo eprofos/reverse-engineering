@@ -66,7 +66,7 @@ class DatabaseAnalyzerTest extends TestCase
         $analyzer = new DatabaseAnalyzer($invalidConfig);
 
         $this->expectException(DatabaseConnectionException::class);
-        $this->expectExceptionMessage('Unable to connect to database');
+        $this->expectExceptionMessage('Database connection failed:');
 
         $analyzer->testConnection();
     }
@@ -229,7 +229,7 @@ class DatabaseAnalyzerTest extends TestCase
         $analyzer = new DatabaseAnalyzer($this->databaseConfig);
 
         $this->expectException(DatabaseConnectionException::class);
-        $this->expectExceptionMessage("Error analyzing table 'non_existent_table'");
+        $this->expectExceptionMessage("Failed to analyze table 'non_existent_table':");
 
         $analyzer->getTableDetails('non_existent_table');
     }
@@ -307,7 +307,7 @@ class DatabaseAnalyzerTest extends TestCase
         $analyzer = new DatabaseAnalyzer($invalidConfig);
 
         $this->expectException(DatabaseConnectionException::class);
-        $this->expectExceptionMessage('Error retrieving tables');
+        $this->expectExceptionMessage('Failed to retrieve tables:');
 
         $analyzer->listTables();
     }

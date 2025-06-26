@@ -12,7 +12,7 @@ use Throwable;
 class DatabaseConnectionException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Database connection error',
+        string $message = 'Database connection failed',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

@@ -43,7 +43,7 @@ class MetadataExtractor
             ];
         } catch (Exception $e) {
             throw new MetadataExtractionException(
-                "Error extracting metadata from table '{$tableName}': " . $e->getMessage(),
+                "Metadata extraction failed for table '{$tableName}': " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -132,7 +132,7 @@ class MetadataExtractor
         foreach ($tableDetails['foreign_keys'] as $foreignKey) {
             $targetTable  = $foreignKey['foreign_table'];
             $targetEntity = $this->generateEntityName($targetTable);
-            $localColumn  = $foreignKey['local_columns'][0]; // Prendre la première colonne locale
+            $localColumn  = $foreignKey['local_columns'][0]; // Take the first local column
 
             // Generate unique property name
             $propertyName = $this->generateUniqueRelationPropertyName(

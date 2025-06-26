@@ -176,7 +176,7 @@ class ReverseEngineeringServiceTest extends TestCase
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
-        $this->expectExceptionMessage('Aucune table trouvée à traiter.');
+        $this->expectExceptionMessage('No tables found to process');
 
         // Act
         $this->service->generateEntities();
@@ -192,7 +192,7 @@ class ReverseEngineeringServiceTest extends TestCase
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
-        $this->expectExceptionMessage('Erreur lors de la génération des entités');
+        $this->expectExceptionMessage('Entity generation failed:');
 
         // Act
         $this->service->generateEntities();
@@ -213,7 +213,7 @@ class ReverseEngineeringServiceTest extends TestCase
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
-        $this->expectExceptionMessage('Erreur lors de la génération des entités');
+        $this->expectExceptionMessage('Entity generation failed:');
 
         // Act
         $this->service->generateEntities();
@@ -239,7 +239,7 @@ class ReverseEngineeringServiceTest extends TestCase
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
-        $this->expectExceptionMessage('Error during entity generation');
+        $this->expectExceptionMessage('Entity generation failed:');
 
         // Act
         $this->service->generateEntities();
@@ -272,7 +272,7 @@ class ReverseEngineeringServiceTest extends TestCase
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
-        $this->expectExceptionMessage('Erreur lors de la génération des entités');
+        $this->expectExceptionMessage('Entity generation failed:');
 
         // Act
         $this->service->generateEntities($options);

@@ -8,7 +8,7 @@ use Exception;
 use Throwable;
 
 /**
- * Exception de base pour le bundle ReverseEngineering.
+ * Base exception for the ReverseEngineering bundle.
  */
 class ReverseEngineeringException extends Exception
 {

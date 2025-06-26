@@ -87,7 +87,7 @@ class ReverseGenerateCommand extends Command
             $io->section('🔍 Validating database connection...');
 
             if (! $this->reverseEngineeringService->validateDatabaseConnection()) {
-                $io->error('❌ Unable to connect to database');
+                $io->error('❌ Database connection failed');
 
                 return Command::FAILURE;
             }
@@ -152,7 +152,7 @@ class ReverseGenerateCommand extends Command
 
             return Command::SUCCESS;
         } catch (Exception $e) {
-            $io->error('❌ Error during generation: ' . $e->getMessage());
+            $io->error('❌ Generation failed: ' . $e->getMessage());
 
             if ($output->isVerbose()) {
                 $io->section('🐛 Error trace:');

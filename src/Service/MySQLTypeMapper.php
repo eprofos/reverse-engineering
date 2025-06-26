@@ -9,48 +9,48 @@ use Doctrine\DBAL\Types\StringType;
 use Doctrine\DBAL\Types\Type;
 
 /**
- * Service pour mapper les types MySQL spéciaux vers des types Doctrine supportés.
+ * Service for mapping special MySQL types to supported Doctrine types.
  */
 class MySQLTypeMapper
 {
     /**
-     * Enregistre les types MySQL personnalisés.
+     * Registers custom MySQL types.
      */
     public static function registerCustomTypes(): void
     {
-        // Enregistrer le type ENUM comme STRING
+        // Register ENUM type as STRING
         if (! Type::hasType('enum')) {
             Type::addType('enum', StringType::class);
         }
 
-        // Enregistrer le type SET comme STRING
+        // Register SET type as STRING
         if (! Type::hasType('set')) {
             Type::addType('set', StringType::class);
         }
     }
 
     /**
-     * Configure la plateforme pour mapper les types MySQL.
+     * Configures the platform to map MySQL types.
      */
     public static function configurePlatform(AbstractPlatform $platform): void
     {
-        // Mapper ENUM vers STRING
+        // Map ENUM to STRING
         $platform->registerDoctrineTypeMapping('enum', 'string');
 
-        // Mapper SET vers STRING
+        // Map SET to STRING
         $platform->registerDoctrineTypeMapping('set', 'string');
 
-        // Autres mappings MySQL utiles
+        // Other useful MySQL mappings
         $platform->registerDoctrineTypeMapping('year', 'integer');
         $platform->registerDoctrineTypeMapping('bit', 'boolean');
     }
 
     /**
-     * Extrait les valeurs d'un type ENUM depuis sa définition.
+     * Extracts values from an ENUM type definition.
      */
     public static function extractEnumValues(string $enumDefinition): array
     {
-        // Exemple: enum('G','PG','PG-13','R','NC-17')
+        // Example: enum('G','PG','PG-13','R','NC-17')
         if (preg_match('/^enum\\((.+)\\)$/i', $enumDefinition, $matches)) {
             $values = str_getcsv($matches[1], ',', "'");
 
@@ -61,11 +61,11 @@ class MySQLTypeMapper
     }
 
     /**
-     * Extrait les valeurs d'un type SET depuis sa définition.
+     * Extracts values from a SET type definition.
      */
     public static function extractSetValues(string $setDefinition): array
     {
-        // Exemple: set('Trailers','Commentaries','Deleted Scenes','Behind the Scenes')
+        // Example: set('Trailers','Commentaries','Deleted Scenes','Behind the Scenes')
         if (preg_match('/^set\\((.+)\\)$/i', $setDefinition, $matches)) {
             $values = str_getcsv($matches[1], ',', "'");
 
@@ -76,7 +76,7 @@ class MySQLTypeMapper
     }
 
     /**
-     * Détermine le type PHP approprié pour un type de colonne.
+     * Determines the appropriate PHP type for a column type.
      */
     public static function mapToPhpType(string $columnType, bool $nullable = false): string
     {
@@ -119,7 +119,7 @@ class MySQLTypeMapper
     }
 
     /**
-     * Génère des constantes de classe pour les valeurs ENUM.
+     * Generates class constants for ENUM values.
      */
     public static function generateEnumConstants(array $enumValues, string $propertyName): array
     {
@@ -135,7 +135,7 @@ class MySQLTypeMapper
     }
 
     /**
-     * Génère des constantes de classe pour les valeurs SET.
+     * Generates class constants for SET values.
      */
     public static function generateSetConstants(array $setValues, string $propertyName): array
     {
@@ -151,7 +151,7 @@ class MySQLTypeMapper
     }
 
     /**
-     * Vérifie si un type de colonne est un type ENUM ou SET.
+     * Checks if a column type is an ENUM or SET type.
      */
     public static function isEnumOrSetType(string $columnType): bool
     {

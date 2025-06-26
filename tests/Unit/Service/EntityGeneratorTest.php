@@ -382,7 +382,7 @@ class EntityGeneratorTest extends TestCase
 
         // Assert
         $this->expectException(EntityGenerationException::class);
-        $this->expectExceptionMessage("Error generating entity for table 'invalid'");
+        $this->expectExceptionMessage("Entity generation failed for table 'invalid':");
 
         // Act
         $this->entityGenerator->generateEntity($tableName, $metadata);

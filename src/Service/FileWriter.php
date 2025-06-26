@@ -56,7 +56,7 @@ class FileWriter
 
             if ($bytesWritten === false) {
                 throw new FileWriteException(
-                    "Unable to write file '{$filePath}'",
+                    "Failed to write file '{$filePath}'",
                 );
             }
 
@@ -67,7 +67,7 @@ class FileWriter
             }
 
             throw new FileWriteException(
-                "Error writing entity file: " . $e->getMessage(),
+                "Entity file write failed: " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -113,7 +113,7 @@ class FileWriter
 
             if ($bytesWritten === false) {
                 throw new FileWriteException(
-                    "Unable to write repository file '{$filePath}'",
+                    "Failed to write repository file '{$filePath}'",
                 );
             }
 
@@ -124,7 +124,7 @@ class FileWriter
             }
 
             throw new FileWriteException(
-                "Error writing repository file: " . $e->getMessage(),
+                "Repository file write failed: " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -165,7 +165,7 @@ class FileWriter
         if (! file_exists($directory)) {
             if (! mkdir($directory, 0o755, true)) {
                 throw new FileWriteException(
-                    "Unable to create directory '{$directory}'",
+                    "Failed to create directory '{$directory}'",
                 );
             }
         }

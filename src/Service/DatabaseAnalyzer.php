@@ -37,7 +37,7 @@ class DatabaseAnalyzer
             return $connection->isConnected();
         } catch (Exception $e) {
             throw new DatabaseConnectionException(
-                'Unable to connect to database: ' . $e->getMessage(),
+                'Database connection failed: ' . $e->getMessage(),
                 0,
                 $e,
             );
@@ -61,7 +61,7 @@ class DatabaseAnalyzer
             return array_filter($tables, [$this, 'isUserTable']);
         } catch (Exception $e) {
             throw new DatabaseConnectionException(
-                'Error retrieving tables: ' . $e->getMessage(),
+                'Failed to retrieve tables: ' . $e->getMessage(),
                 0,
                 $e,
             );
@@ -128,7 +128,7 @@ class DatabaseAnalyzer
             }
         } catch (Exception $e) {
             throw new DatabaseConnectionException(
-                "Error analyzing table '{$tableName}': " . $e->getMessage(),
+                "Failed to analyze table '{$tableName}': " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -154,7 +154,7 @@ class DatabaseAnalyzer
                 MySQLTypeMapper::configurePlatform($platform);
             } catch (Exception $e) {
                 throw new DatabaseConnectionException(
-                    'Unable to create database connection: ' . $e->getMessage(),
+                    'Database connection creation failed: ' . $e->getMessage(),
                     0,
                     $e,
                 );

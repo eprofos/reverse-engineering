@@ -299,7 +299,7 @@ class MetadataExtractorTest extends TestCase
 
         // Assert
         $this->expectException(MetadataExtractionException::class);
-        $this->expectExceptionMessage("Error extracting metadata from table 'invalid_table'");
+        $this->expectExceptionMessage("Metadata extraction failed for table 'invalid_table':");
 
         // Act
         $this->metadataExtractor->extractTableMetadata($tableName);

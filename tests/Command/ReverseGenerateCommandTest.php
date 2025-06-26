@@ -254,7 +254,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('Unable to connect to database', $output);
+        $this->assertStringContainsString('Database connection failed', $output);
     }
 
     public function testExecuteHandlesInvalidTables(): void
@@ -287,7 +287,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('Les tables suivantes n\'existent pas : invalid_table', $output);
+        $this->assertStringContainsString('The following tables do not exist: invalid_table', $output);
     }
 
     public function testExecuteHandlesReverseEngineeringException(): void
@@ -314,7 +314,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('Error during generation: Generation error', $output);
+        $this->assertStringContainsString('Generation failed: Generation error', $output);
     }
 
     public function testExecuteHandlesGenericException(): void
@@ -331,7 +331,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::FAILURE, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('Error during generation: Unexpected error', $output);
+        $this->assertStringContainsString('Generation failed: Unexpected error', $output);
     }
 
     public function testExecuteShowsVerboseErrorTrace(): void
@@ -394,7 +394,7 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('Les tables suivantes n\'existent pas : invalid1, invalid2', $output);
+        $this->assertStringContainsString('The following tables do not exist: invalid1, invalid2', $output);
     }
 
     public function testExecuteDisplaysCorrectTableCount(): void
@@ -427,6 +427,6 @@ class ReverseGenerateCommandTest extends TestCase
         // Assert
         $this->assertEquals(Command::SUCCESS, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->assertStringContainsString('15 table(s) trouvée(s)', $output);
+        $this->assertStringContainsString('15 table(s) found in database', $output);
     }
 }

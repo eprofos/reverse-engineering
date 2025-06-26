@@ -23,7 +23,7 @@ class FileWriteExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertEquals('Error during file writing', $exception->getMessage());
+        $this->assertEquals('File write error', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
     }

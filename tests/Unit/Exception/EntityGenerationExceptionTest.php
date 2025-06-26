@@ -22,7 +22,7 @@ class EntityGenerationExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertEquals('Error during entity generation', $exception->getMessage());
+        $this->assertEquals('Entity generation failed', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
     }

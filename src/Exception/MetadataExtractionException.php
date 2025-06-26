@@ -12,7 +12,7 @@ use Throwable;
 class MetadataExtractionException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Error during metadata extraction',
+        string $message = 'Metadata extraction failed',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

@@ -22,7 +22,7 @@ class MetadataExtractionExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertEquals('Erreur lors de l\'extraction de métadonnées', $exception->getMessage());
+        $this->assertEquals('Metadata extraction failed', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
     }

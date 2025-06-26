@@ -216,7 +216,7 @@ class FileWriterTest extends TestCase
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage("Le chemin 'not/a/directory.txt' existe mais n'est pas un répertoire");
+        $this->expectExceptionMessage("Path 'not/a/directory.txt' exists but is not a directory");
 
         // Act
         $this->fileWriter->validateOutputDirectory($filePath);
@@ -308,7 +308,7 @@ class FileWriterTest extends TestCase
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage('Le répertoire');
+        $this->expectExceptionMessage('Directory');
 
         // Act
         $this->fileWriter->writeEntityFile($entity, 'readonly');
@@ -329,7 +329,7 @@ class FileWriterTest extends TestCase
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage('Le répertoire');
+        $this->expectExceptionMessage('Directory');
 
         // Act
         $this->fileWriter->writeRepositoryFile($repository, 'readonly');

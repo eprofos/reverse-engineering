@@ -12,7 +12,7 @@ use Throwable;
 class FileWriteException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Error during file writing',
+        string $message = 'File write error',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

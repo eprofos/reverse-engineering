@@ -23,7 +23,7 @@ class DatabaseConnectionExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertEquals('Database connection error', $exception->getMessage());
+        $this->assertEquals('Database connection failed', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
     }
