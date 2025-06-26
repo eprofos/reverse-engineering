@@ -21,10 +21,10 @@ use function count;
 use function in_array;
 
 /**
- * Tests d'intégration avec la base de données Sakila.
+ * Integration tests with Sakila database.
  *
- * Ces tests valident le processus de rétro-ingénierie sur une base de données
- * complexe et réaliste avec de nombreuses relations et types de données variés.
+ * These tests validate the reverse engineering process on a complex
+ * and realistic database with many relations and varied data types.
  */
 class SakilaIntegrationTest extends TestCase
 {
@@ -74,10 +74,10 @@ class SakilaIntegrationTest extends TestCase
 
     protected function setUp(): void
     {
-        // Configuration de la connexion Docker MySQL
+        // Docker MySQL connection configuration
         $this->connection = $this->createDockerConnection();
 
-        // Créer un répertoire temporaire pour les fichiers générés
+        // Create temporary directory for generated files
         $this->tempDir = TestHelper::createTempDirectory('sakila_test_');
 
         // Configurer les services
@@ -91,7 +91,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Test de connexion à la base de données Sakila.
+     * Test connection to Sakila database.
      */
     public function testSakilaDatabaseConnection(): void
     {
@@ -107,7 +107,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Test de génération complète des entités Sakila.
+     * Test complete generation of Sakila entities.
      */
     public function testCompleteEntityGeneration(): void
     {
@@ -123,15 +123,15 @@ class SakilaIntegrationTest extends TestCase
         $this->assertArrayHasKey('files', $result);
         $this->assertArrayHasKey('tables_processed', $result);
 
-        // Vérifier le nombre d'entités générées
+        // Verify number of generated entities
         $this->assertEquals(count(self::MAIN_TABLES), $result['tables_processed']);
         $this->assertCount(count(self::MAIN_TABLES), $result['entities']);
 
-        // Vérifier que tous les fichiers ont été créés
-        $expectedFiles = count(self::MAIN_TABLES) * 2; // entités + repositories
+        // Verify all files were created
+        $expectedFiles = count(self::MAIN_TABLES) * 2; // entities + repositories
         $this->assertCount($expectedFiles, $result['files']);
 
-        // Vérifier la structure des entités générées
+        // Verify structure of generated entities
         $this->verifyGeneratedEntities($result['entities']);
     }
 
@@ -250,7 +250,7 @@ class SakilaIntegrationTest extends TestCase
         $this->assertLessThan(
             30.0,
             $executionTime,
-            "Génération trop lente: {$executionTime}s",
+            "Generation too slow: {$executionTime}s",
         );
         $this->assertLessThan(
             128 * 1024 * 1024,
@@ -263,7 +263,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Test des entités avec relations Many-to-Many.
+     * Test entities with Many-to-Many relations.
      */
     public function testManyToManyRelations(): void
     {
@@ -275,7 +275,7 @@ class SakilaIntegrationTest extends TestCase
 
         foreach ($result['entities'] as $entity) {
             if (in_array($entity['table'], ['film_actor', 'film_category'], true)) {
-                // Obtenir les métadonnées de la table pour vérifier la clé primaire
+                // Get table metadata to verify primary key
                 $tableInfo = $this->service->getTableInfo($entity['table']);
                 $this->assertArrayHasKey('primary_key', $tableInfo);
                 $this->assertCount(
@@ -296,7 +296,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Test de génération avec exclusion de tables.
+     * Test generation with table exclusion.
      */
     public function testGenerationWithExcludedTables(): void
     {
@@ -339,7 +339,7 @@ class SakilaIntegrationTest extends TestCase
             $this->assertStringContainsString('<?php', $content);
             $this->assertStringContainsString('declare(strict_types=1);', $content);
 
-            // Vérifier le namespace approprié selon le type de fichier
+            // Verify appropriate namespace based on file type
             if (str_contains($filePath, 'Repository.php')) {
                 $this->assertStringContainsString('namespace Sakila\\Repository', $content);
             } else {
@@ -349,7 +349,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Test des métadonnées extraites pour une table complexe.
+     * Test extracted metadata for a complex table.
      */
     public function testComplexTableMetadata(): void
     {
@@ -373,7 +373,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Crée une connexion à la base de données Docker.
+     * Creates Docker database connection.
      */
     private function createDockerConnection(): Connection
     {
@@ -393,7 +393,7 @@ class SakilaIntegrationTest extends TestCase
                 'charset'  => 'utf8mb4',
             ]);
         } catch (Exception $e) {
-            $this->markTestSkipped('Impossible de se connecter à MySQL Docker: ' . $e->getMessage());
+            $this->markTestSkipped('Unable to connect to Docker MySQL: ' . $e->getMessage());
         }
     }
 
@@ -457,7 +457,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Vérifie la structure des entités générées.
+     * Verifies structure of generated entities.
      */
     private function verifyGeneratedEntities(array $entities): void
     {
@@ -469,7 +469,7 @@ class SakilaIntegrationTest extends TestCase
             $this->assertArrayHasKey('properties', $entity);
             $this->assertArrayHasKey('relations', $entity);
 
-            // Vérifier que le nom d'entité est correct
+            // Verify entity name is correct
             $expectedName = $this->tableToEntityName($entity['table']);
             $this->assertEquals($expectedName, $entity['name']);
 
@@ -487,7 +487,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Convertit un nom de table en nom d'entité.
+     * Converts table name to entity name.
      */
     private function tableToEntityName(string $tableName): string
     {
@@ -495,7 +495,7 @@ class SakilaIntegrationTest extends TestCase
     }
 
     /**
-     * Retourne le template Twig pour les entités.
+     * Returns Twig template for entities.
      */
     private function getEntityTemplate(): string
     {
@@ -552,7 +552,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * Repository pour l\'entité {{ entity_name }}.
+ * Repository for entity {{ entity_name }}.
  */
 class {{ repository_name }} extends ServiceEntityRepository
 {

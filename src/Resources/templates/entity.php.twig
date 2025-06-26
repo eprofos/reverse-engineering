@@ -9,7 +9,7 @@ use {{ import }};
 {% endfor %}
 
 /**
- * Entité {{ entity_name }} générée automatiquement.
+ * {{ entity_name }} entity generated automatically.
  * Table: {{ table_name }}
  */
 {% if use_annotations %}
@@ -26,7 +26,7 @@ class {{ entity_name }}
 {% if constants is defined and constants is not empty %}
 {% for constant_name, constant_value in constants %}
     /**
-     * Constante pour la valeur '{{ constant_value }}'
+     * Constant for value '{{ constant_value }}'
      */
     public const {{ constant_name }} = '{{ constant_value }}';
 
@@ -34,17 +34,17 @@ class {{ entity_name }}
 {% endif %}
 {% for property in properties %}
     /**
-     * {{ property.comment ? property.comment : 'Propriété ' ~ property.name }}
+     * {{ property.comment ? property.comment : 'Property ' ~ property.name }}
 {% if property.enum_values is defined %}
      *
-     * Constantes ENUM disponibles:
+     * Available ENUM constants:
 {% for enum_value in property.enum_values %}
      * - {{ enum_value }}
 {% endfor %}
 {% endif %}
 {% if property.set_values is defined %}
      *
-     * Valeurs SET disponibles:
+     * Available SET values:
 {% for set_value in property.set_values %}
      * - {{ set_value }}
 {% endfor %}
@@ -80,7 +80,7 @@ class {{ entity_name }}
 {% endfor %}
 {% for relation in relations %}
     /**
-     * Relation {{ relation.type }} vers {{ relation.target_entity }}
+     * {{ relation.type }} relation to {{ relation.target_entity }}
      */
 {% if use_annotations %}
     /**
@@ -96,7 +96,7 @@ class {{ entity_name }}
 {% endfor %}
 {% for property in properties %}
     /**
-     * Getter pour {{ property.name }}
+     * Getter for {{ property.name }}
      */
     public function {{ property.getter_name }}(): {{ property.type }}
     {
@@ -104,7 +104,7 @@ class {{ entity_name }}
     }
 
     /**
-     * Setter pour {{ property.name }}
+     * Setter for {{ property.name }}
      */
     public function {{ property.setter_name }}({{ property.type }} ${{ property.name }}): static
     {
@@ -115,7 +115,7 @@ class {{ entity_name }}
 {% endfor %}
 {% for relation in relations %}
     /**
-     * Getter pour la relation {{ relation.property_name }}
+     * Getter for relation {{ relation.property_name }}
      */
     public function {{ relation.getter_name }}(): {% if relation.nullable %}?{% endif %}{{ relation.target_entity }}
     {
@@ -123,7 +123,7 @@ class {{ entity_name }}
     }
 
     /**
-     * Setter pour la relation {{ relation.property_name }}
+     * Setter for relation {{ relation.property_name }}
      */
     public function {{ relation.setter_name }}({% if relation.nullable %}?{% endif %}{{ relation.target_entity }} ${{ relation.property_name }}): static
     {

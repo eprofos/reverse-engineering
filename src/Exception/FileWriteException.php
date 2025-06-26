@@ -7,12 +7,12 @@ namespace App\Exception;
 use Throwable;
 
 /**
- * Exception pour les erreurs d'écriture de fichiers.
+ * Exception for file writing errors.
  */
 class FileWriteException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Erreur lors de l\'écriture de fichier',
+        string $message = 'Error during file writing',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

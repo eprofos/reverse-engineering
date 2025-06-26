@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 /**
- * Extension pour la configuration du bundle ReverseEngineering.
+ * Extension for ReverseEngineering bundle configuration.
  */
 class ReverseEngineeringExtension extends Extension
 {
@@ -26,7 +26,7 @@ class ReverseEngineeringExtension extends Extension
         $configuration = $this->getConfiguration($configs, $container);
         $config        = $this->processConfiguration($configuration, $configs);
 
-        // Définir les paramètres de configuration
+        // Define configuration parameters
         $container->setParameter('reverse_engineering.config', $config);
     }
 

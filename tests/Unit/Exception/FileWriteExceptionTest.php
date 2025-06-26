@@ -12,7 +12,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Tests unitaires pour FileWriteException.
+ * Unit tests for FileWriteException.
  */
 class FileWriteExceptionTest extends TestCase
 {
@@ -23,7 +23,7 @@ class FileWriteExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertEquals('Erreur lors de l\'écriture de fichier', $exception->getMessage());
+        $this->assertEquals('Error during file writing', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
     }
@@ -31,7 +31,7 @@ class FileWriteExceptionTest extends TestCase
     public function testExceptionWithCustomMessage(): void
     {
         // Arrange
-        $message = 'Impossible d\'écrire le fichier User.php';
+        $message = 'Unable to write User.php file';
 
         // Act
         $exception = new FileWriteException($message);
@@ -60,7 +60,7 @@ class FileWriteExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message  = 'Erreur d\'écriture de fichier';
+        $message  = 'File writing error';
         $code     = 500;
         $previous = new RuntimeException('Disk full');
 
@@ -116,7 +116,7 @@ class FileWriteExceptionTest extends TestCase
     public function testExceptionWithFilePermissionScenario(): void
     {
         // Arrange
-        $message = 'Le répertoire /path/to/entities n\'est pas accessible en écriture';
+        $message = 'Directory /path/to/entities is not writable';
         $code    = 403;
 
         // Act
@@ -130,7 +130,7 @@ class FileWriteExceptionTest extends TestCase
     public function testExceptionWithDiskSpaceScenario(): void
     {
         // Arrange
-        $message  = 'Espace disque insuffisant pour écrire le fichier';
+        $message  = 'Insufficient disk space to write file';
         $previous = new RuntimeException('No space left on device');
 
         // Act

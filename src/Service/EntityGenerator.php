@@ -11,7 +11,7 @@ use Twig\Environment;
 use function in_array;
 
 /**
- * Service pour la génération du code des entités Doctrine.
+ * Service for generating Doctrine entity code.
  */
 class EntityGenerator
 {
@@ -22,7 +22,7 @@ class EntityGenerator
     }
 
     /**
-     * Génère une entité à partir des métadonnées d'une table.
+     * Generates an entity from table metadata.
      *
      * @throws EntityGenerationException
      */
@@ -44,7 +44,7 @@ class EntityGenerator
                 'relations'  => $entityData['relations'],
             ];
 
-            // Générer le repository si demandé
+            // Generate repository if requested
             if ($options['generate_repository'] ?? $this->config['generate_repository'] ?? true) {
                 $result['repository'] = $this->generateRepository($metadata, $options);
             }
@@ -52,7 +52,7 @@ class EntityGenerator
             return $result;
         } catch (Exception $e) {
             throw new EntityGenerationException(
-                "Erreur lors de la génération de l'entité pour la table '{$tableName}' : " . $e->getMessage(),
+                "Error generating entity for table '{$tableName}': " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -60,7 +60,7 @@ class EntityGenerator
     }
 
     /**
-     * Prépare les données pour la génération de l'entité.
+     * Prepares data for entity generation.
      */
     private function prepareEntityData(array $metadata, array $options): array
     {
@@ -85,14 +85,14 @@ class EntityGenerator
     }
 
     /**
-     * Prépare les propriétés de l'entité.
+     * Prepares entity properties.
      */
     private function prepareProperties(array $columns, array $primaryKey): array
     {
         $properties = [];
 
         foreach ($columns as $column) {
-            // Exclure les colonnes qui sont des clés étrangères (elles seront gérées comme relations)
+            // Exclude columns that are foreign keys (they will be handled as relations)
             if ($column['is_foreign_key']) {
                 continue;
             }
@@ -121,7 +121,7 @@ class EntityGenerator
     }
 
     /**
-     * Prépare les relations de l'entité.
+     * Prepares entity relations.
      */
     private function prepareRelations(array $relations, string $namespace): array
     {
@@ -147,7 +147,7 @@ class EntityGenerator
     }
 
     /**
-     * Génère les imports nécessaires pour l'entité.
+     * Generates necessary imports for the entity.
      */
     private function generateImports(array $metadata, bool $useAnnotations): array
     {
@@ -164,7 +164,7 @@ class EntityGenerator
             $imports[] = 'Doctrine\\ORM\\Mapping\\GeneratedValue';
         }
 
-        // Ajouter les imports pour les types de date
+        // Add imports for date types
         foreach ($metadata['columns'] as $column) {
             if ($column['type'] === '\DateTimeInterface') {
                 $imports[] = 'DateTimeInterface';
@@ -172,7 +172,7 @@ class EntityGenerator
             }
         }
 
-        // Ajouter les imports pour les relations
+        // Add imports for relations
         if (! empty($metadata['relations'])) {
             if (! $useAnnotations) {
                 $imports[] = 'Doctrine\\ORM\\Mapping\\ManyToOne';
@@ -185,7 +185,7 @@ class EntityGenerator
     }
 
     /**
-     * Génère le code de l'entité.
+     * Generates entity code.
      *
      * @throws EntityGenerationException
      */
@@ -195,7 +195,7 @@ class EntityGenerator
             return $this->twig->render('entity.php.twig', $entityData);
         } catch (Exception $e) {
             throw new EntityGenerationException(
-                'Erreur lors du rendu du template d\'entité : ' . $e->getMessage(),
+                'Error rendering entity template: ' . $e->getMessage(),
                 0,
                 $e,
             );
@@ -203,7 +203,7 @@ class EntityGenerator
     }
 
     /**
-     * Génère le repository pour l'entité.
+     * Generates repository for the entity.
      */
     private function generateRepository(array $metadata, array $options): array
     {
@@ -230,7 +230,7 @@ class EntityGenerator
     }
 
     /**
-     * Génère le nom du getter pour une propriété.
+     * Generates getter name for a property.
      */
     private function generateGetterName(string $propertyName): string
     {
@@ -238,7 +238,7 @@ class EntityGenerator
     }
 
     /**
-     * Génère le nom du setter pour une propriété.
+     * Generates setter name for a property.
      */
     private function generateSetterName(string $propertyName): string
     {
@@ -246,14 +246,14 @@ class EntityGenerator
     }
 
     /**
-     * Génère les constantes pour les types ENUM/SET.
+     * Generates constants for ENUM/SET types.
      */
     private function generateConstants(array $properties): array
     {
         $constants = [];
 
         foreach ($properties as $property) {
-            // Générer des constantes pour les ENUM
+            // Generate constants for ENUM
             if (isset($property['enum_values']) && ! empty($property['enum_values'])) {
                 $enumConstants = MySQLTypeMapper::generateEnumConstants(
                     $property['enum_values'],
@@ -262,7 +262,7 @@ class EntityGenerator
                 $constants = array_merge($constants, $enumConstants);
             }
 
-            // Générer des constantes pour les SET
+            // Generate constants for SET
             if (isset($property['set_values']) && ! empty($property['set_values'])) {
                 $setConstants = MySQLTypeMapper::generateSetConstants(
                     $property['set_values'],

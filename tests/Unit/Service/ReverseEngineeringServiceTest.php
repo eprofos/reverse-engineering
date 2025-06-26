@@ -15,7 +15,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests unitaires pour ReverseEngineeringService.
+ * Unit tests for ReverseEngineeringService.
  */
 class ReverseEngineeringServiceTest extends TestCase
 {
@@ -127,7 +127,7 @@ class ReverseEngineeringServiceTest extends TestCase
         $this->assertArrayHasKey('tables_processed', $result);
         $this->assertCount(2, $result['entities']);
         $this->assertEquals(2, $result['tables_processed']);
-        $this->assertCount(3, $result['files']); // 2 entités + 1 repository
+        $this->assertCount(3, $result['files']); // 2 entities + 1 repository
     }
 
     public function testGenerateEntitiesWithDryRun(): void
@@ -239,7 +239,7 @@ class ReverseEngineeringServiceTest extends TestCase
 
         // Assert
         $this->expectException(ReverseEngineeringException::class);
-        $this->expectExceptionMessage('Erreur lors de la génération des entités');
+        $this->expectExceptionMessage('Error during entity generation');
 
         // Act
         $this->service->generateEntities();
@@ -477,7 +477,7 @@ class ReverseEngineeringServiceTest extends TestCase
         $entity = [
             'name'     => 'Log',
             'filename' => 'Log.php',
-            // Pas de repository
+            // No repository
         ];
 
         $this->databaseAnalyzer
@@ -500,7 +500,7 @@ class ReverseEngineeringServiceTest extends TestCase
             ->method('writeEntityFile')
             ->willReturn('/path/to/Log.php');
 
-        // writeRepositoryFile ne doit pas être appelé
+        // writeRepositoryFile should not be called
         $this->fileWriter
             ->expects($this->never())
             ->method('writeRepositoryFile');
@@ -509,6 +509,6 @@ class ReverseEngineeringServiceTest extends TestCase
         $result = $this->service->generateEntities();
 
         // Assert
-        $this->assertCount(1, $result['files']); // Seulement l'entité
+        $this->assertCount(1, $result['files']); // Only the entity
     }
 }

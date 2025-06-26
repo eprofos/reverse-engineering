@@ -17,7 +17,7 @@ use ReflectionClass;
 use function count;
 
 /**
- * Tests unitaires pour DatabaseAnalyzer.
+ * Unit tests for DatabaseAnalyzer.
  */
 class DatabaseAnalyzerTest extends TestCase
 {
@@ -34,7 +34,7 @@ class DatabaseAnalyzerTest extends TestCase
             'path'   => ':memory:',
         ];
 
-        // Créer une connexion partagée pour tous les tests
+        // Create shared connection for all tests
         $this->connection       = DriverManager::getConnection($this->databaseConfig);
         $this->databaseAnalyzer = new DatabaseAnalyzer($this->databaseConfig, $this->connection);
     }
@@ -46,7 +46,7 @@ class DatabaseAnalyzerTest extends TestCase
 
     public function testTestConnectionSuccess(): void
     {
-        // Test avec une vraie connexion SQLite en mémoire
+        // Test with real SQLite in-memory connection
         $result = $this->databaseAnalyzer->testConnection();
 
         $this->assertTrue($result);
@@ -54,7 +54,7 @@ class DatabaseAnalyzerTest extends TestCase
 
     public function testTestConnectionFailure(): void
     {
-        // Configuration invalide pour forcer une erreur
+        // Invalid configuration to force error
         $invalidConfig = [
             'driver'   => 'pdo_mysql',
             'host'     => 'invalid_host',
@@ -66,7 +66,7 @@ class DatabaseAnalyzerTest extends TestCase
         $analyzer = new DatabaseAnalyzer($invalidConfig);
 
         $this->expectException(DatabaseConnectionException::class);
-        $this->expectExceptionMessage('Impossible de se connecter à la base de données');
+        $this->expectExceptionMessage('Unable to connect to database');
 
         $analyzer->testConnection();
     }
@@ -229,7 +229,7 @@ class DatabaseAnalyzerTest extends TestCase
         $analyzer = new DatabaseAnalyzer($this->databaseConfig);
 
         $this->expectException(DatabaseConnectionException::class);
-        $this->expectExceptionMessage("Erreur lors de l'analyse de la table 'non_existent_table'");
+        $this->expectExceptionMessage("Error analyzing table 'non_existent_table'");
 
         $analyzer->getTableDetails('non_existent_table');
     }
@@ -297,7 +297,7 @@ class DatabaseAnalyzerTest extends TestCase
 
     public function testListTablesThrowsExceptionOnConnectionError(): void
     {
-        // Configuration invalide
+        // Invalid configuration
         $invalidConfig = [
             'driver' => 'pdo_mysql',
             'host'   => 'invalid_host',
@@ -307,7 +307,7 @@ class DatabaseAnalyzerTest extends TestCase
         $analyzer = new DatabaseAnalyzer($invalidConfig);
 
         $this->expectException(DatabaseConnectionException::class);
-        $this->expectExceptionMessage('Erreur lors de la récupération des tables');
+        $this->expectExceptionMessage('Error retrieving tables');
 
         $analyzer->listTables();
     }

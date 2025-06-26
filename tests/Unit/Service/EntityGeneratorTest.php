@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 
 /**
- * Tests unitaires pour EntityGenerator.
+ * Unit tests for EntityGenerator.
  */
 class EntityGeneratorTest extends TestCase
 {
@@ -382,7 +382,7 @@ class EntityGeneratorTest extends TestCase
 
         // Assert
         $this->expectException(EntityGenerationException::class);
-        $this->expectExceptionMessage("Erreur lors de la génération de l'entité pour la table 'invalid'");
+        $this->expectExceptionMessage("Error generating entity for table 'invalid'");
 
         // Act
         $this->entityGenerator->generateEntity($tableName, $metadata);

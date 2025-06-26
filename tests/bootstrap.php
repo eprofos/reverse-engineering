@@ -16,23 +16,23 @@ if (file_exists(dirname(__DIR__) . '/config/bootstrap.php')) {
     (new Dotenv())->bootEnv(dirname(__DIR__) . '/.env');
 }
 
-// Charger la configuration Docker si disponible
+// Load Docker configuration if available
 if (file_exists(dirname(__DIR__) . '/.env.docker')) {
     (new Dotenv())->load(dirname(__DIR__) . '/.env.docker');
 }
 
-// Configuration spécifique aux tests
+// Test-specific configuration
 if (isset($_SERVER['APP_DEBUG']) && $_SERVER['APP_DEBUG']) {
     umask(0o000);
 }
 
-// Configuration pour les tests Docker
+// Configuration for Docker tests
 if (isset($_SERVER['APP_ENV']) && $_SERVER['APP_ENV'] === 'test') {
     // Augmenter les limites pour les tests d'intégration
     ini_set('memory_limit', $_ENV['PHPUNIT_MEMORY_LIMIT'] ?? '256M');
     ini_set('max_execution_time', '300');
 
-    // Configuration de la timezone
+    // Timezone configuration
     if (isset($_ENV['PHP_TIMEZONE'])) {
         date_default_timezone_set($_ENV['PHP_TIMEZONE']);
     }

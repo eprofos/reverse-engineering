@@ -30,7 +30,7 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
     protected function setUp(): void
     {
-        // Créer une base de données SQLite en mémoire
+        // Create SQLite in-memory database
         $this->connection = DriverManager::getConnection([
             'driver' => 'pdo_sqlite',
             'memory' => true,
@@ -59,7 +59,7 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'dry_run'    => true, // Éviter l'écriture de fichiers pour se concentrer sur l'analyse
+            'dry_run'    => true, // Avoid file writing to focus on analysis
         ]);
 
         $endTime       = microtime(true);
@@ -182,12 +182,12 @@ class ReverseEngineeringPerformanceTest extends TestCase
         // Arrange
         $this->createManyTables(20);
 
-        // Act - Tester la génération de fichiers réels
+        // Act - Test real file generation
         $startTime = microtime(true);
 
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
-            'dry_run'    => false, // Génération réelle de fichiers
+            'dry_run'    => false, // Real file generation
         ]);
 
         $endTime       = microtime(true);
@@ -195,18 +195,18 @@ class ReverseEngineeringPerformanceTest extends TestCase
 
         // Assert
         $this->assertEquals(20, $result['tables_processed']);
-        $this->assertCount(40, $result['files']); // 20 entités + 20 repositories
+        $this->assertCount(40, $result['files']); // 20 entities + 20 repositories
 
-        // Vérifier que tous les fichiers existent
+        // Verify all files exist
         foreach ($result['files'] as $file) {
             $this->assertFileExists($file);
         }
 
-        // La génération de 40 fichiers ne doit pas prendre plus de 5 secondes
+        // Generation of 40 files should not take more than 5 seconds
         $this->assertLessThan(
             5.0,
             $executionTime,
-            "La génération de fichiers a pris {$executionTime}s, ce qui est trop lent",
+            "File generation took {$executionTime}s, which is too slow",
         );
     }
 
@@ -215,7 +215,7 @@ class ReverseEngineeringPerformanceTest extends TestCase
         // Arrange
         $this->createManyTables(100);
 
-        // Act - Tester uniquement l'analyse de la base de données
+        // Act - Test only database analysis
         $startTime = microtime(true);
 
         $tables = $this->service->getAvailableTables();
@@ -226,11 +226,11 @@ class ReverseEngineeringPerformanceTest extends TestCase
         // Assert
         $this->assertCount(100, $tables);
 
-        // L'analyse de 100 tables ne doit pas prendre plus de 1 seconde
+        // Analysis of 100 tables should not take more than 1 second
         $this->assertLessThan(
             1.0,
             $executionTime,
-            "L'analyse de la base de données a pris {$executionTime}s, ce qui est trop lent",
+            "Database analysis took {$executionTime}s, which is too slow",
         );
     }
 
@@ -241,7 +241,7 @@ class ReverseEngineeringPerformanceTest extends TestCase
             'memory' => true,
         ];
 
-        // Passer la connexion existante au DatabaseAnalyzer pour partager la même base de données
+        // Pass existing connection to DatabaseAnalyzer to share same database
         $databaseAnalyzer  = new DatabaseAnalyzer($databaseConfig, $this->connection);
         $metadataExtractor = new MetadataExtractor($databaseAnalyzer);
 

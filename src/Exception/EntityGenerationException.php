@@ -7,12 +7,12 @@ namespace App\Exception;
 use Throwable;
 
 /**
- * Exception pour les erreurs de génération d'entités.
+ * Exception for entity generation errors.
  */
 class EntityGenerationException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Erreur lors de la génération d\'entité',
+        string $message = 'Error during entity generation',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

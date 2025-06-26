@@ -9,7 +9,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * Repository pour l'entité {{ entity_name }}.
+ * Repository for entity {{ entity_name }}.
  * 
  * @extends ServiceEntityRepository<{{ entity_name }}>
  */
@@ -21,7 +21,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     }
 
     /**
-     * Trouve une entité par son ID.
+     * Finds an entity by its ID.
      */
     public function find($id, $lockMode = null, $lockVersion = null): ?{{ entity_name }}
     {
@@ -29,7 +29,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     }
 
     /**
-     * Trouve toutes les entités.
+     * Finds all entities.
      *
      * @return {{ entity_name }}[]
      */
@@ -39,7 +39,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     }
 
     /**
-     * Trouve des entités selon des critères.
+     * Finds entities by criteria.
      *
      * @return {{ entity_name }}[]
      */
@@ -49,7 +49,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     }
 
     /**
-     * Trouve une entité selon des critères.
+     * Finds one entity by criteria.
      */
     public function findOneBy(array $criteria, array $orderBy = null): ?{{ entity_name }}
     {
@@ -57,7 +57,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     }
 
     /**
-     * Sauvegarde une entité.
+     * Saves an entity.
      */
     public function save({{ entity_name }} $entity, bool $flush = false): void
     {
@@ -69,7 +69,7 @@ class {{ repository_name }} extends ServiceEntityRepository
     }
 
     /**
-     * Supprime une entité.
+     * Removes an entity.
      */
     public function remove({{ entity_name }} $entity, bool $flush = false): void
     {

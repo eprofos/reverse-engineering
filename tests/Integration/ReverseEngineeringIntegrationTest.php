@@ -28,13 +28,13 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
     protected function setUp(): void
     {
-        // Créer une base de données SQLite en mémoire
+        // Create SQLite in-memory database
         $this->connection = DriverManager::getConnection([
             'driver' => 'pdo_sqlite',
             'memory' => true,
         ]);
 
-        // Créer un répertoire temporaire pour les fichiers générés
+        // Create temporary directory for generated files
         $this->tempDir = sys_get_temp_dir() . '/reverse_engineering_test_' . uniqid();
         mkdir($this->tempDir, 0o755, true);
 
@@ -53,7 +53,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
     public function testCompleteReverseEngineeringProcess(): void
     {
-        // Act - Générer les entités
+        // Act - Generate entities
         $result = $this->service->generateEntities([
             'output_dir' => $this->tempDir,
             'namespace'  => 'Test\\Entity',
@@ -69,10 +69,10 @@ class ReverseEngineeringIntegrationTest extends TestCase
         $this->assertEquals(3, $result['tables_processed']);
         $this->assertCount(3, $result['entities']);
 
-        // Vérifier que les fichiers ont été créés
-        $this->assertCount(6, $result['files']); // 3 entités + 3 repositories
+        // Verify files were created
+        $this->assertCount(6, $result['files']); // 3 entities + 3 repositories
 
-        // Vérifier le contenu des entités générées
+        // Verify generated entity content
         $this->verifyGeneratedEntities($result);
     }
 
@@ -121,7 +121,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
         $this->assertEmpty($result['files']);
         $this->assertCount(3, $result['entities']);
 
-        // Vérifier qu'aucun fichier n'a été créé
+        // Verify no files were created
         $files = glob($this->tempDir . '/*');
         $this->assertEmpty($files);
     }
@@ -161,7 +161,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
             'namespace'  => 'Test\\Entity',
         ]);
 
-        // Assert - Vérifier le contenu du fichier User.php
+        // Assert - Verify User.php file content
         $userFile = $this->tempDir . '/User.php';
         $this->assertFileExists($userFile);
 
@@ -183,7 +183,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
             'namespace'  => 'Test\\Entity',
         ]);
 
-        // Assert - Vérifier le contenu du fichier UserRepository.php
+        // Assert - Verify UserRepository.php file content
         $repositoryFile = $this->tempDir . '/UserRepository.php';
         $this->assertFileExists($repositoryFile);
 
@@ -230,7 +230,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
 
     public function testReverseEngineeringWithForceOverwrite(): void
     {
-        // Arrange - Créer d'abord un fichier
+        // Arrange - Create file first
         $userFile = $this->tempDir . '/User.php';
         file_put_contents($userFile, '<?php // Old content');
 
@@ -356,7 +356,7 @@ class ReverseEngineeringIntegrationTest extends TestCase
         $this->assertContains('Post', $entityNames);
         $this->assertContains('Log', $entityNames);
 
-        // Vérifier que tous les fichiers existent
+        // Verify all files exist
         foreach ($result['files'] as $file) {
             $this->assertFileExists($file);
         }
@@ -428,7 +428,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * Repository pour l\'entité {{ entity_name }}.
+ * Repository for entity {{ entity_name }}.
  */
 class {{ repository_name }} extends ServiceEntityRepository
 {

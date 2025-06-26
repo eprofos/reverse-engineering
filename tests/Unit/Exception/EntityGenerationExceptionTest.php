@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 /**
- * Tests unitaires pour EntityGenerationException.
+ * Unit tests for EntityGenerationException.
  */
 class EntityGenerationExceptionTest extends TestCase
 {
@@ -22,7 +22,7 @@ class EntityGenerationExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertEquals('Erreur lors de la génération d\'entité', $exception->getMessage());
+        $this->assertEquals('Error during entity generation', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
     }
@@ -30,7 +30,7 @@ class EntityGenerationExceptionTest extends TestCase
     public function testExceptionWithCustomMessage(): void
     {
         // Arrange
-        $message = 'Erreur lors de la génération de l\'entité User';
+        $message = 'Error generating User entity';
 
         // Act
         $exception = new EntityGenerationException($message);
@@ -59,7 +59,7 @@ class EntityGenerationExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message  = 'Erreur de génération d\'entité';
+        $message  = 'Entity generation error';
         $code     = 500;
         $previous = new \Twig\Error\SyntaxError('Template syntax error');
 

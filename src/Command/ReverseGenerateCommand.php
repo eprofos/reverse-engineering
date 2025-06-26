@@ -17,11 +17,11 @@ use function count;
 use function sprintf;
 
 /**
- * Commande pour générer des entités à partir d'une base de données existante.
+ * Command to generate entities from an existing database.
  */
 #[AsCommand(
     name: 'reverse:generate',
-    description: 'Génère des entités Doctrine à partir d\'une base de données existante',
+    description: 'Generates Doctrine entities from an existing database',
 )]
 class ReverseGenerateCommand extends Command
 {
@@ -38,41 +38,41 @@ class ReverseGenerateCommand extends Command
                 'tables',
                 't',
                 InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
-                'Tables spécifiques à traiter (toutes si non spécifié)',
+                'Specific tables to process (all if not specified)',
             )
             ->addOption(
                 'exclude',
                 'e',
                 InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
-                'Tables à exclure du traitement',
+                'Tables to exclude from processing',
             )
             ->addOption(
                 'namespace',
                 'ns',
                 InputOption::VALUE_OPTIONAL,
-                'Namespace des entités générées',
+                'Namespace for generated entities',
             )
             ->addOption(
                 'output-dir',
                 'o',
                 InputOption::VALUE_OPTIONAL,
-                'Répertoire de sortie des entités',
+                'Output directory for entities',
             )
             ->addOption(
                 'force',
                 'f',
                 InputOption::VALUE_NONE,
-                'Forcer l\'écrasement des fichiers existants',
+                'Force overwriting of existing files',
             )
             ->addOption(
                 'dry-run',
                 'd',
                 InputOption::VALUE_NONE,
-                'Afficher ce qui serait généré sans créer les fichiers',
+                'Show what would be generated without creating files',
             )
             ->setHelp(
-                'Cette commande analyse une base de données existante et génère ' .
-                'automatiquement les entités Doctrine correspondantes.',
+                'This command analyzes an existing database and automatically ' .
+                'generates the corresponding Doctrine entities.',
             );
     }
 
@@ -80,25 +80,25 @@ class ReverseGenerateCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title('🔄 Reverse Engineering - Génération d\'entités');
+        $io->title('🔄 Reverse Engineering - Entity Generation');
 
         try {
-            // 1. Valider la connexion à la base de données
-            $io->section('🔍 Validation de la connexion à la base de données...');
+            // 1. Validate database connection
+            $io->section('🔍 Validating database connection...');
 
             if (! $this->reverseEngineeringService->validateDatabaseConnection()) {
-                $io->error('❌ Impossible de se connecter à la base de données');
+                $io->error('❌ Unable to connect to database');
 
                 return Command::FAILURE;
             }
 
-            $io->success('✅ Connexion à la base de données validée');
+            $io->success('✅ Database connection validated');
 
-            // 2. Lister les tables disponibles
+            // 2. List available tables
             $availableTables = $this->reverseEngineeringService->getAvailableTables();
-            $io->text(sprintf('📊 %d table(s) trouvée(s) dans la base de données', count($availableTables)));
+            $io->text(sprintf('📊 %d table(s) found in database', count($availableTables)));
 
-            // 3. Préparer les options
+            // 3. Prepare options
             $options = [
                 'tables'     => $input->getOption('tables'),
                 'exclude'    => $input->getOption('exclude'),
@@ -108,25 +108,25 @@ class ReverseGenerateCommand extends Command
                 'dry_run'    => $input->getOption('dry-run'),
             ];
 
-            // 4. Valider les tables spécifiées
+            // 4. Validate specified tables
             if (! empty($options['tables'])) {
                 $invalidTables = array_diff($options['tables'], $availableTables);
 
                 if (! empty($invalidTables)) {
                     $io->warning(sprintf(
-                        'Les tables suivantes n\'existent pas : %s',
+                        'The following tables do not exist: %s',
                         implode(', ', $invalidTables),
                     ));
                 }
             }
 
-            // 5. Générer les entités
-            $io->section('⚙️ Génération des entités...');
+            // 5. Generate entities
+            $io->section('⚙️ Generating entities...');
             $result = $this->reverseEngineeringService->generateEntities($options);
 
-            // 6. Afficher les résultats
+            // 6. Display results
             if ($options['dry_run']) {
-                $io->section('📋 Aperçu des entités qui seraient générées :');
+                $io->section('📋 Preview of entities that would be generated:');
 
                 foreach ($result['entities'] as $entity) {
                     $io->text(sprintf(
@@ -136,14 +136,14 @@ class ReverseGenerateCommand extends Command
                         $entity['namespace'],
                     ));
                 }
-                $io->note('Mode dry-run activé : aucun fichier n\'a été créé');
+                $io->note('Dry-run mode enabled: no files were created');
             } else {
                 $io->success(sprintf(
-                    '✅ %d entité(s) générée(s) avec succès !',
+                    '✅ %d entity(ies) generated successfully!',
                     count($result['entities']),
                 ));
 
-                $io->section('📁 Fichiers créés :');
+                $io->section('📁 Files created:');
 
                 foreach ($result['files'] as $file) {
                     $io->text("- {$file}");
@@ -152,10 +152,10 @@ class ReverseGenerateCommand extends Command
 
             return Command::SUCCESS;
         } catch (Exception $e) {
-            $io->error('❌ Erreur lors de la génération : ' . $e->getMessage());
+            $io->error('❌ Error during generation: ' . $e->getMessage());
 
             if ($output->isVerbose()) {
-                $io->section('🐛 Trace de l\'erreur :');
+                $io->section('🐛 Error trace:');
                 $io->text($e->getTraceAsString());
             }
 

@@ -7,12 +7,12 @@ namespace App\Exception;
 use Throwable;
 
 /**
- * Exception pour les erreurs de connexion à la base de données.
+ * Exception for database connection errors.
  */
 class DatabaseConnectionException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Erreur de connexion à la base de données',
+        string $message = 'Database connection error',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

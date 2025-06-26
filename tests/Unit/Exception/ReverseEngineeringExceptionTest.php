@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 /**
- * Tests unitaires pour ReverseEngineeringException.
+ * Unit tests for ReverseEngineeringException.
  */
 class ReverseEngineeringExceptionTest extends TestCase
 {
@@ -29,7 +29,7 @@ class ReverseEngineeringExceptionTest extends TestCase
     public function testExceptionWithCustomMessage(): void
     {
         // Arrange
-        $message = 'Une erreur est survenue';
+        $message = 'An error occurred';
 
         // Act
         $exception = new ReverseEngineeringException($message);
@@ -43,7 +43,7 @@ class ReverseEngineeringExceptionTest extends TestCase
     public function testExceptionWithCustomMessageAndCode(): void
     {
         // Arrange
-        $message = 'Erreur avec code';
+        $message = 'Error with code';
         $code    = 500;
 
         // Act
@@ -58,9 +58,9 @@ class ReverseEngineeringExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message  = 'Erreur principale';
+        $message  = 'Main error';
         $code     = 400;
-        $previous = new Exception('Erreur précédente');
+        $previous = new Exception('Previous error');
 
         // Act
         $exception = new ReverseEngineeringException($message, $code, $previous);

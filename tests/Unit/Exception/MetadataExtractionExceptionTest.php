@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 /**
- * Tests unitaires pour MetadataExtractionException.
+ * Unit tests for MetadataExtractionException.
  */
 class MetadataExtractionExceptionTest extends TestCase
 {

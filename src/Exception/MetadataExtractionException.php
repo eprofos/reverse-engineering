@@ -7,12 +7,12 @@ namespace App\Exception;
 use Throwable;
 
 /**
- * Exception pour les erreurs d'extraction de métadonnées.
+ * Exception for metadata extraction errors.
  */
 class MetadataExtractionException extends ReverseEngineeringException
 {
     public function __construct(
-        string $message = 'Erreur lors de l\'extraction de métadonnées',
+        string $message = 'Error during metadata extraction',
         int $code = 0,
         ?Throwable $previous = null,
     ) {

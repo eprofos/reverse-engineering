@@ -9,10 +9,10 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
- * Bundle principal pour l'ingénierie inverse de base de données.
+ * Main bundle for database reverse engineering.
  *
- * Ce bundle permet de générer automatiquement des entités Doctrine
- * à partir d'une base de données existante.
+ * This bundle allows automatic generation of Doctrine entities
+ * from an existing database.
  */
 class ReverseEngineeringBundle extends Bundle
 {

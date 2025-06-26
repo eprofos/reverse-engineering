@@ -10,7 +10,7 @@ use Doctrine\DBAL\DriverManager;
 use Exception;
 
 /**
- * Service pour l'analyse de la structure de la base de données.
+ * Service for analyzing database structure.
  */
 class DatabaseAnalyzer
 {
@@ -24,7 +24,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Teste la connexion à la base de données.
+     * Tests database connection.
      *
      * @throws DatabaseConnectionException
      */
@@ -37,7 +37,7 @@ class DatabaseAnalyzer
             return $connection->isConnected();
         } catch (Exception $e) {
             throw new DatabaseConnectionException(
-                'Impossible de se connecter à la base de données : ' . $e->getMessage(),
+                'Unable to connect to database: ' . $e->getMessage(),
                 0,
                 $e,
             );
@@ -45,7 +45,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Récupère la liste de toutes les tables de la base de données.
+     * Retrieves the list of all database tables.
      *
      * @throws DatabaseConnectionException
      */
@@ -57,11 +57,11 @@ class DatabaseAnalyzer
 
             $tables = $schemaManager->listTableNames();
 
-            // Filtrer les tables système selon le type de base de données
+            // Filter system tables based on database type
             return array_filter($tables, [$this, 'isUserTable']);
         } catch (Exception $e) {
             throw new DatabaseConnectionException(
-                'Erreur lors de la récupération des tables : ' . $e->getMessage(),
+                'Error retrieving tables: ' . $e->getMessage(),
                 0,
                 $e,
             );
@@ -69,10 +69,10 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Analyse les tables spécifiées ou toutes les tables.
+     * Analyzes specified tables or all tables.
      *
-     * @param array $includeTables Tables à inclure (toutes si vide)
-     * @param array $excludeTables Tables à exclure
+     * @param array $includeTables Tables to include (all if empty)
+     * @param array $excludeTables Tables to exclude
      *
      * @throws DatabaseConnectionException
      */
@@ -80,14 +80,14 @@ class DatabaseAnalyzer
     {
         $allTables = $this->listTables();
 
-        // Si des tables spécifiques sont demandées
+        // If specific tables are requested
         if (! empty($includeTables)) {
             $tables = array_intersect($allTables, $includeTables);
         } else {
             $tables = $allTables;
         }
 
-        // Exclure les tables spécifiées
+        // Exclude specified tables
         if (! empty($excludeTables)) {
             $tables = array_diff($tables, $excludeTables);
         }
@@ -96,7 +96,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Récupère les informations détaillées d'une table.
+     * Retrieves detailed information about a table.
      *
      * @throws DatabaseConnectionException
      */
@@ -106,7 +106,7 @@ class DatabaseAnalyzer
             $connection    = $this->getConnection();
             $schemaManager = $connection->createSchemaManager();
 
-            // Essayer d'abord avec le SchemaManager standard
+            // Try first with standard SchemaManager
             try {
                 $table = $schemaManager->introspectTable($tableName);
 
@@ -118,7 +118,7 @@ class DatabaseAnalyzer
                     'primary_key'  => $table->getPrimaryKey()?->getColumns() ?? [],
                 ];
             } catch (\Doctrine\DBAL\Exception $doctrineException) {
-                // Si Doctrine échoue à cause des types ENUM/SET, utiliser notre méthode alternative
+                // If Doctrine fails due to ENUM/SET types, use our fallback method
                 if (str_contains($doctrineException->getMessage(), 'Unknown database type enum')
                     || str_contains($doctrineException->getMessage(), 'Unknown database type set')) {
                     return $this->getTableDetailsWithFallback($tableName);
@@ -128,7 +128,7 @@ class DatabaseAnalyzer
             }
         } catch (Exception $e) {
             throw new DatabaseConnectionException(
-                "Erreur lors de l'analyse de la table '{$tableName}' : " . $e->getMessage(),
+                "Error analyzing table '{$tableName}': " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -136,7 +136,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Récupère ou crée la connexion à la base de données.
+     * Gets or creates database connection.
      *
      * @throws DatabaseConnectionException
      */
@@ -144,17 +144,17 @@ class DatabaseAnalyzer
     {
         if ($this->connection === null) {
             try {
-                // Enregistrer les types MySQL personnalisés
+                // Register custom MySQL types
                 MySQLTypeMapper::registerCustomTypes();
 
                 $this->connection = DriverManager::getConnection($this->databaseConfig);
 
-                // Configurer la plateforme pour les types MySQL
+                // Configure platform for MySQL types
                 $platform = $this->connection->getDatabasePlatform();
                 MySQLTypeMapper::configurePlatform($platform);
             } catch (Exception $e) {
                 throw new DatabaseConnectionException(
-                    'Impossible de créer la connexion à la base de données : ' . $e->getMessage(),
+                    'Unable to create database connection: ' . $e->getMessage(),
                     0,
                     $e,
                 );
@@ -165,7 +165,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Vérifie si une table est une table utilisateur (non système).
+     * Checks if a table is a user table (not system).
      */
     private function isUserTable(string $tableName): bool
     {
@@ -193,13 +193,13 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Extrait les informations des colonnes.
+     * Extracts column information.
      */
     private function getColumnsInfo(\Doctrine\DBAL\Schema\Table $table): array
     {
         $columns = [];
 
-        // Obtenir les informations détaillées des colonnes via SHOW COLUMNS
+        // Get detailed column information via SHOW COLUMNS
         $detailedColumns = $this->getDetailedColumnInfo($table->getName());
 
         foreach ($table->getColumns() as $column) {
@@ -226,7 +226,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Extrait les informations des index.
+     * Extracts index information.
      */
     private function getIndexesInfo(\Doctrine\DBAL\Schema\Table $table): array
     {
@@ -245,7 +245,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Extrait les informations des clés étrangères.
+     * Extracts foreign key information.
      */
     private function getForeignKeysInfo(\Doctrine\DBAL\Schema\Table $table): array
     {
@@ -262,7 +262,7 @@ class DatabaseAnalyzer
             ];
         }
 
-        // Si aucune clé étrangère n'est trouvée via Doctrine, essayer la méthode fallback
+        // If no foreign keys found via Doctrine, try fallback method
         if (empty($foreignKeys)) {
             $foreignKeys = $this->getForeignKeysWithFallback($table->getName());
         }
@@ -271,7 +271,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Obtient les informations détaillées des colonnes via SHOW COLUMNS.
+     * Gets detailed column information via SHOW COLUMNS.
      */
     private function getDetailedColumnInfo(string $tableName): array
     {
@@ -292,7 +292,7 @@ class DatabaseAnalyzer
                     'Extra'   => $row['Extra'],
                 ];
 
-                // Extraire les valeurs ENUM/SET
+                // Extract ENUM/SET values
                 if (preg_match('/^enum\((.+)\)$/i', $row['Type'], $matches)) {
                     $columnInfo['enum_values'] = MySQLTypeMapper::extractEnumValues($row['Type']);
                 } elseif (preg_match('/^set\((.+)\)$/i', $row['Type'], $matches)) {
@@ -304,22 +304,22 @@ class DatabaseAnalyzer
 
             return $columns;
         } catch (Exception $e) {
-            // En cas d'erreur, retourner un tableau vide pour ne pas bloquer le processus
+            // In case of error, return empty array to not block the process
             return [];
         }
     }
 
     /**
-     * Méthode de fallback pour obtenir les détails d'une table quand Doctrine échoue.
+     * Fallback method to get table details when Doctrine fails.
      */
     private function getTableDetailsWithFallback(string $tableName): array
     {
         $connection = $this->getConnection();
 
-        // Obtenir les informations des colonnes via SHOW COLUMNS
+        // Get column information via SHOW COLUMNS
         $detailedColumns = $this->getDetailedColumnInfo($tableName);
 
-        // Construire les informations des colonnes
+        // Build column information
         $columns = [];
 
         foreach ($detailedColumns as $columnName => $columnInfo) {
@@ -341,7 +341,7 @@ class DatabaseAnalyzer
             ];
         }
 
-        // Obtenir les clés primaires
+        // Get primary keys
         $primaryKey = [];
 
         foreach ($detailedColumns as $columnName => $columnInfo) {
@@ -350,10 +350,10 @@ class DatabaseAnalyzer
             }
         }
 
-        // Obtenir les clés étrangères via INFORMATION_SCHEMA
+        // Get foreign keys via INFORMATION_SCHEMA
         $foreignKeys = $this->getForeignKeysWithFallback($tableName);
 
-        // Obtenir les index via SHOW INDEX
+        // Get indexes via SHOW INDEX
         $indexes = $this->getIndexesWithFallback($tableName);
 
         return [
@@ -366,11 +366,11 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Mappe un type MySQL vers un type Doctrine.
+     * Maps MySQL type to Doctrine type.
      */
     private function mapMySQLTypeToDoctrineType(string $mysqlType): string
     {
-        // Nettoyer le type en supprimant les modificateurs comme 'unsigned'
+        // Clean type by removing modifiers like 'unsigned'
         $cleanType = preg_replace('/\s+(unsigned|signed|zerofill)/i', '', $mysqlType);
         $baseType  = strtolower(explode('(', $cleanType)[0]);
 
@@ -395,7 +395,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Extrait la longueur d'un type MySQL.
+     * Extracts length from MySQL type.
      */
     private function extractLength(string $mysqlType): ?int
     {
@@ -407,7 +407,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Obtient les clés étrangères via INFORMATION_SCHEMA.
+     * Gets foreign keys via INFORMATION_SCHEMA.
      */
     private function getForeignKeysWithFallback(string $tableName): array
     {
@@ -460,7 +460,7 @@ class DatabaseAnalyzer
     }
 
     /**
-     * Obtient les index via SHOW INDEX.
+     * Gets indexes via SHOW INDEX.
      */
     private function getIndexesWithFallback(string $tableName): array
     {

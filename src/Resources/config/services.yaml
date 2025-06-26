@@ -4,7 +4,7 @@ services:
         autoconfigure: true
         public: false
 
-    # Services principaux du bundle
+    # Main bundle services
     App\Service\ReverseEngineeringService:
         arguments:
             $config: '%reverse_engineering.config%'
@@ -24,12 +24,12 @@ services:
             $projectDir: '%kernel.project_dir%'
             $config: '%reverse_engineering.config.generation%'
 
-    # Commande CLI
+    # CLI Command
     App\Command\ReverseGenerateCommand:
         tags:
             - { name: 'console.command' }
 
-    # Configuration Twig pour la génération d'entités
+    # Twig configuration for entity generation
     reverse_engineering.twig:
         class: Twig\Environment
         arguments:
@@ -41,5 +41,5 @@ services:
         arguments:
             - '%kernel.project_dir%/src/Resources/templates'
 
-    # Alias pour l'injection dans EntityGenerator
+    # Alias for injection in EntityGenerator
     Twig\Environment: '@reverse_engineering.twig'

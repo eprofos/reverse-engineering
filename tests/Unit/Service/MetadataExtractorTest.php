@@ -12,7 +12,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests unitaires pour MetadataExtractor.
+ * Unit tests for MetadataExtractor.
  */
 class MetadataExtractorTest extends TestCase
 {
@@ -299,7 +299,7 @@ class MetadataExtractorTest extends TestCase
 
         // Assert
         $this->expectException(MetadataExtractionException::class);
-        $this->expectExceptionMessage("Erreur lors de l'extraction des métadonnées de la table 'invalid_table'");
+        $this->expectExceptionMessage("Error extracting metadata from table 'invalid_table'");
 
         // Act
         $this->metadataExtractor->extractTableMetadata($tableName);

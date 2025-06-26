@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 /**
- * Tests unitaires pour DatabaseConnectionException.
+ * Unit tests for DatabaseConnectionException.
  */
 class DatabaseConnectionExceptionTest extends TestCase
 {
@@ -23,7 +23,7 @@ class DatabaseConnectionExceptionTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ReverseEngineeringException::class, $exception);
-        $this->assertEquals('Erreur de connexion à la base de données', $exception->getMessage());
+        $this->assertEquals('Database connection error', $exception->getMessage());
         $this->assertEquals(0, $exception->getCode());
         $this->assertNull($exception->getPrevious());
     }
@@ -31,7 +31,7 @@ class DatabaseConnectionExceptionTest extends TestCase
     public function testExceptionWithCustomMessage(): void
     {
         // Arrange
-        $message = 'Connexion impossible au serveur MySQL';
+        $message = 'Unable to connect to MySQL server';
 
         // Act
         $exception = new DatabaseConnectionException($message);
@@ -45,7 +45,7 @@ class DatabaseConnectionExceptionTest extends TestCase
     public function testExceptionWithCustomMessageAndCode(): void
     {
         // Arrange
-        $message = 'Timeout de connexion';
+        $message = 'Connection timeout';
         $code    = 2002;
 
         // Act
@@ -60,7 +60,7 @@ class DatabaseConnectionExceptionTest extends TestCase
     public function testExceptionWithPreviousException(): void
     {
         // Arrange
-        $message  = 'Erreur de connexion DBAL';
+        $message  = 'DBAL connection error';
         $code     = 500;
         $previous = new PDOException('Connection refused');
 

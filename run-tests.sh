@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# Script pour exécuter la suite de tests complète du ReverseEngineeringBundle
+# Script to run the complete test suite for ReverseEngineeringBundle
 
 set -e
 
-echo "🧪 Exécution de la suite de tests ReverseEngineeringBundle"
+echo "🧪 Running ReverseEngineeringBundle test suite"
 echo "========================================================="
 
-# Couleurs pour l'affichage
+# Colors for display
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Fonction pour afficher les messages colorés
+# Function to display colored messages
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -31,65 +31,65 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Vérifier que PHPUnit est installé
+# Check if PHPUnit is installed
 if ! command -v vendor/bin/phpunit &> /dev/null; then
-    print_error "PHPUnit n'est pas installé. Exécutez 'composer install' d'abord."
+    print_error "PHPUnit is not installed. Run 'composer install' first."
     exit 1
 fi
 
-# Créer le répertoire de couverture s'il n'existe pas
+# Create coverage directory if it doesn't exist
 mkdir -p coverage
 
-print_status "Nettoyage des fichiers de cache..."
+print_status "Cleaning cache files..."
 rm -rf .phpunit.cache
 rm -rf coverage/*
 
 echo ""
-print_status "1. Exécution des tests unitaires..."
+print_status "1. Running unit tests..."
 echo "-----------------------------------"
 vendor/bin/phpunit --testsuite=Unit --colors=always
 
 echo ""
-print_status "2. Exécution des tests d'intégration..."
+print_status "2. Running integration tests..."
 echo "---------------------------------------"
 vendor/bin/phpunit --testsuite=Integration --colors=always
 
 echo ""
-print_status "3. Exécution des tests de commande..."
+print_status "3. Running command tests..."
 echo "-------------------------------------"
 vendor/bin/phpunit --testsuite=Command --colors=always
 
 echo ""
-print_status "4. Exécution des tests d'exceptions..."
+print_status "4. Running exception tests..."
 echo "-------------------------------------"
 vendor/bin/phpunit --testsuite=Exception --colors=always
 
 echo ""
-print_status "5. Exécution des tests de performance..."
+print_status "5. Running performance tests..."
 echo "---------------------------------------"
 vendor/bin/phpunit --testsuite=Performance --colors=always
 
 echo ""
-print_status "6. Génération du rapport de couverture..."
+print_status "6. Generating coverage report..."
 echo "-----------------------------------------"
 vendor/bin/phpunit --coverage-html=coverage/html --coverage-text --coverage-clover=coverage/clover.xml
 
 echo ""
-print_success "✅ Tous les tests ont été exécutés avec succès!"
+print_success "✅ All tests executed successfully!"
 
-# Afficher le résumé de la couverture
+# Display coverage summary
 if [ -f "coverage/coverage.txt" ]; then
     echo ""
-    print_status "📊 Résumé de la couverture de code:"
+    print_status "📊 Code coverage summary:"
     echo "-----------------------------------"
     tail -n 10 coverage/coverage.txt
 fi
 
 echo ""
-print_status "📁 Rapports générés:"
-echo "  - Rapport HTML: coverage/html/index.html"
-echo "  - Rapport Clover: coverage/clover.xml"
-echo "  - Rapport texte: coverage/coverage.txt"
+print_status "📁 Generated reports:"
+echo "  - HTML report: coverage/html/index.html"
+echo "  - Clover report: coverage/clover.xml"
+echo "  - Text report: coverage/coverage.txt"
 
 echo ""
-print_success "🎉 Suite de tests terminée!"
+print_success "🎉 Test suite completed!"

@@ -15,11 +15,11 @@ use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
 /**
- * Script de génération d'entités pour l'environnement Docker.
- * Utilise directement les services PHP comme dans les tests d'intégration.
+ * Entity generation script for Docker environment.
+ * Uses PHP services directly like in integration tests.
  */
 
-// Configuration par défaut
+// Default configuration
 $defaultConfig = [
     'host'       => 'mysql',
     'port'       => 3306,
@@ -37,9 +37,9 @@ $defaultConfig = [
 $options = parseArguments($argv, $defaultConfig);
 
 try {
-    echo "🚀 Génération d'entités depuis Sakila...\n";
+    echo "🚀 Generating entities from Sakila...\n";
     echo "📊 Configuration:\n";
-    echo "   - Base de données: {$options['host']}:{$options['port']}/{$options['dbname']}\n";
+    echo "   - Database: {$options['host']}:{$options['port']}/{$options['dbname']}\n";
     echo "   - Namespace: {$options['namespace']}\n";
     echo "   - Répertoire de sortie: {$options['output_dir']}\n";
     echo '   - Mode dry-run: ' . ($options['dry_run'] ? 'Oui' : 'Non') . "\n";
@@ -51,7 +51,7 @@ try {
         echo "📁 Répertoire créé: {$options['output_dir']}\n";
     }
 
-    // Configuration de la base de données
+    // Database configuration
     $databaseConfig = [
         'driver'   => 'pdo_mysql',
         'host'     => $options['host'],
@@ -62,11 +62,11 @@ try {
         'charset'  => $options['charset'],
     ];
 
-    // Créer la connexion
-    echo "🔌 Connexion à la base de données...\n";
+    // Create connection
+    echo "🔌 Connecting to database...\n";
     $connection = DriverManager::getConnection($databaseConfig);
     $connection->connect();
-    echo "✅ Connexion établie avec succès\n\n";
+    echo "✅ Connection established successfully\n\n";
 
     // Configurer les services
     $databaseAnalyzer  = new DatabaseAnalyzer($databaseConfig, $connection);
@@ -86,9 +86,9 @@ try {
         $fileWriter,
     );
 
-    // Valider la connexion
+    // Validate connection
     if (! $service->validateDatabaseConnection()) {
-        throw new Exception('Impossible de valider la connexion à la base de données');
+        throw new Exception('Unable to validate database connection');
     }
 
     // Obtenir les tables disponibles
@@ -100,8 +100,8 @@ try {
     }
     echo "\n";
 
-    // Générer les entités
-    echo "⚙️  Génération des entités...\n";
+    // Generate entities
+    echo "⚙️  Generating entities...\n";
     $startTime = microtime(true);
 
     $result = $service->generateEntities([
@@ -114,32 +114,32 @@ try {
     $endTime       = microtime(true);
     $executionTime = round($endTime - $startTime, 3);
 
-    // Afficher les résultats
-    echo "\n🎉 Génération terminée avec succès !\n";
-    echo "📊 Statistiques:\n";
-    echo "   - Tables traitées: {$result['tables_processed']}\n";
-    echo '   - Entités générées: ' . count($result['entities']) . "\n";
-    echo '   - Fichiers créés: ' . count($result['files']) . "\n";
-    echo "   - Temps d'exécution: {$executionTime}s\n\n";
+    // Display results
+    echo "\n🎉 Generation completed successfully!\n";
+    echo "📊 Statistics:\n";
+    echo "   - Tables processed: {$result['tables_processed']}\n";
+    echo '   - Entities generated: ' . count($result['entities']) . "\n";
+    echo '   - Files created: ' . count($result['files']) . "\n";
+    echo "   - Execution time: {$executionTime}s\n\n";
 
     if ($options['dry_run']) {
-        echo "🔍 Mode dry-run - Aperçu des entités qui seraient générées:\n";
+        echo "🔍 Dry-run mode - Preview of entities that would be generated:\n";
 
         foreach ($result['entities'] as $entity) {
             echo "   - {$entity['name']} (table: {$entity['table']}, namespace: {$entity['namespace']})\n";
         }
     } else {
-        echo "📁 Fichiers générés:\n";
+        echo "📁 Generated files:\n";
 
         foreach ($result['files'] as $file) {
             echo "   - {$file}\n";
         }
     }
 
-    echo "\n✅ Génération d'entités terminée avec succès !\n";
+    echo "\n✅ Entity generation completed successfully!\n";
 } catch (Exception $e) {
-    echo "\n❌ Erreur lors de la génération: {$e->getMessage()}\n";
-    echo "📍 Fichier: {$e->getFile()}:{$e->getLine()}\n";
+    echo "\n❌ Error during generation: {$e->getMessage()}\n";
+    echo "📍 File: {$e->getFile()}:{$e->getLine()}\n";
 
     if (isset($argv) && in_array('--verbose', $argv, true)) {
         echo "\n🔍 Trace complète:\n";
@@ -254,17 +254,17 @@ function showHelp(): void
 {
     echo "Usage: php generate-entities.php [options]\n\n";
     echo "Options:\n";
-    echo "  --namespace <namespace>    Namespace pour les entités (défaut: Sakila\\Entity)\n";
-    echo "  --output-dir <dir>         Répertoire de sortie (défaut: generated/sakila)\n";
-    echo "  --force                    Écraser les fichiers existants\n";
-    echo "  --dry-run                  Aperçu sans génération de fichiers\n";
-    echo "  --host <host>              Hôte MySQL (défaut: mysql)\n";
-    echo "  --port <port>              Port MySQL (défaut: 3306)\n";
-    echo "  --dbname <dbname>          Nom de la base de données (défaut: sakila)\n";
-    echo "  --user <user>              Utilisateur MySQL (défaut: sakila_user)\n";
-    echo "  --password <password>      Mot de passe MySQL (défaut: sakila_password)\n";
-    echo "  --verbose                  Affichage détaillé des erreurs\n";
-    echo "  --help                     Afficher cette aide\n\n";
+    echo "  --namespace <namespace>    Namespace for entities (default: Sakila\\Entity)\n";
+    echo "  --output-dir <dir>         Output directory (default: generated/sakila)\n";
+    echo "  --force                    Overwrite existing files\n";
+    echo "  --dry-run                  Preview without file generation\n";
+    echo "  --host <host>              MySQL host (default: mysql)\n";
+    echo "  --port <port>              MySQL port (default: 3306)\n";
+    echo "  --dbname <dbname>          Database name (default: sakila)\n";
+    echo "  --user <user>              MySQL user (default: sakila_user)\n";
+    echo "  --password <password>      MySQL password (default: sakila_password)\n";
+    echo "  --verbose                  Detailed error display\n";
+    echo "  --help                     Show this help\n\n";
     echo "Exemples:\n";
     echo "  php generate-entities.php\n";
     echo "  php generate-entities.php --namespace=\"MyApp\\Entity\" --output-dir=\"src/Entity\"\n";

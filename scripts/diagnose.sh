@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# Script de diagnostic pour ReverseEngineeringBundle
-# Vérifie l'environnement et la configuration
+# Diagnostic script for ReverseEngineeringBundle
+# Checks environment and configuration
 
 set -e
 
-# Couleurs pour l'affichage
+# Colors for display
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Fonction pour afficher les messages colorés
+# Function to display colored messages
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -36,181 +36,181 @@ print_header() {
     echo "=========================================="
 }
 
-print_header "🔍 DIAGNOSTIC REVERSEENGINEERINGBUNDLE"
+print_header "🔍 REVERSEENGINEERINGBUNDLE DIAGNOSTIC"
 
-# 1. Vérification de l'environnement PHP
-print_status "1. Vérification de l'environnement PHP..."
+# 1. PHP environment check
+print_status "1. Checking PHP environment..."
 echo "Version PHP: $(php --version | head -n 1)"
 
-# Vérifier les extensions requises
+# Check required extensions
 REQUIRED_EXTENSIONS=("pdo" "json" "mbstring" "xml" "ctype" "iconv")
 MISSING_EXTENSIONS=()
 
 for ext in "${REQUIRED_EXTENSIONS[@]}"; do
     if php -m | grep -q "^$ext$"; then
-        print_success "✓ Extension $ext présente"
+        print_success "✓ Extension $ext present"
     else
-        print_error "✗ Extension $ext manquante"
+        print_error "✗ Extension $ext missing"
         MISSING_EXTENSIONS+=("$ext")
     fi
 done
 
-# Vérifier les drivers de base de données
+# Check database drivers
 DB_DRIVERS=("pdo_mysql" "pdo_pgsql" "pdo_sqlite")
 AVAILABLE_DRIVERS=()
 
 for driver in "${DB_DRIVERS[@]}"; do
     if php -m | grep -q "$driver"; then
-        print_success "✓ Driver $driver disponible"
+        print_success "✓ Driver $driver available"
         AVAILABLE_DRIVERS+=("$driver")
     else
-        print_warning "⚠ Driver $driver non disponible"
+        print_warning "⚠ Driver $driver not available"
     fi
 done
 
 if [ ${#AVAILABLE_DRIVERS[@]} -eq 0 ]; then
-    print_error "Aucun driver de base de données disponible!"
+    print_error "No database drivers available!"
 fi
 
-# 2. Vérification de Composer
-print_header "2. Vérification de Composer"
+# 2. Composer check
+print_header "2. Composer Check"
 if command -v composer &> /dev/null; then
     echo "Version Composer: $(composer --version)"
-    print_success "✓ Composer installé"
+    print_success "✓ Composer installed"
 else
-    print_error "✗ Composer non trouvé"
+    print_error "✗ Composer not found"
 fi
 
-# 3. Vérification du bundle
-print_header "3. Vérification du bundle"
+# 3. Bundle check
+print_header "3. Bundle Check"
 
 if [ -f "composer.json" ]; then
-    print_success "✓ Fichier composer.json présent"
+    print_success "✓ composer.json file present"
     
-    # Vérifier si le bundle est installé
+    # Check if bundle is installed
     if composer show eprofos/reverse-engineering-bundle &> /dev/null; then
         BUNDLE_VERSION=$(composer show eprofos/reverse-engineering-bundle | grep "versions" | awk '{print $3}')
-        print_success "✓ Bundle installé (version: $BUNDLE_VERSION)"
+        print_success "✓ Bundle installed (version: $BUNDLE_VERSION)"
     else
-        print_warning "⚠ Bundle non installé via Composer"
+        print_warning "⚠ Bundle not installed via Composer"
     fi
 else
-    print_error "✗ Fichier composer.json non trouvé"
+    print_error "✗ composer.json file not found"
 fi
 
-# Vérifier la structure du projet
+# Check project structure
 REQUIRED_DIRS=("src/Bundle" "src/Service" "src/Command" "src/Exception")
 for dir in "${REQUIRED_DIRS[@]}"; do
     if [ -d "$dir" ]; then
-        print_success "✓ Répertoire $dir présent"
+        print_success "✓ Directory $dir present"
     else
-        print_error "✗ Répertoire $dir manquant"
+        print_error "✗ Directory $dir missing"
     fi
 done
 
-# 4. Vérification de la configuration
-print_header "4. Vérification de la configuration"
+# 4. Configuration check
+print_header "4. Configuration Check"
 
 if [ -f "config/packages/reverse_engineering.yaml" ]; then
-    print_success "✓ Fichier de configuration présent"
+    print_success "✓ Configuration file present"
     
-    # Vérifier la syntaxe YAML
+    # Check YAML syntax
     if command -v php &> /dev/null && [ -f "bin/console" ]; then
         if php bin/console lint:yaml config/packages/reverse_engineering.yaml &> /dev/null; then
-            print_success "✓ Configuration YAML valide"
+            print_success "✓ Valid YAML configuration"
         else
-            print_error "✗ Erreur de syntaxe dans la configuration YAML"
+            print_error "✗ YAML configuration syntax error"
         fi
     fi
 else
-    print_warning "⚠ Fichier de configuration manquant"
-    echo "  Créez le fichier config/packages/reverse_engineering.yaml"
+    print_warning "⚠ Configuration file missing"
+    echo "  Create file config/packages/reverse_engineering.yaml"
 fi
 
-# Vérifier les bundles Symfony
+# Check Symfony bundles
 if [ -f "config/bundles.php" ]; then
     if grep -q "ReverseEngineeringBundle" config/bundles.php; then
-        print_success "✓ Bundle enregistré dans config/bundles.php"
+        print_success "✓ Bundle registered in config/bundles.php"
     else
-        print_warning "⚠ Bundle non enregistré dans config/bundles.php"
+        print_warning "⚠ Bundle not registered in config/bundles.php"
     fi
 fi
 
-# 5. Test de la commande CLI
-print_header "5. Test de la commande CLI"
+# 5. CLI command test
+print_header "5. CLI Command Test"
 
 if [ -f "bin/console" ]; then
-    print_success "✓ Console Symfony présente"
+    print_success "✓ Symfony console present"
     
-    # Tester si la commande est disponible
+    # Test if command is available
     if php bin/console list | grep -q "reverse:generate"; then
-        print_success "✓ Commande reverse:generate disponible"
+        print_success "✓ reverse:generate command available"
     else
-        print_error "✗ Commande reverse:generate non trouvée"
+        print_error "✗ reverse:generate command not found"
     fi
 else
-    print_error "✗ Console Symfony non trouvée"
+    print_error "✗ Symfony console not found"
 fi
 
-# 6. Test de connexion base de données
-print_header "6. Test de connexion base de données"
+# 6. Database connection test
+print_header "6. Database Connection Test"
 
 if [ -f "bin/console" ] && [ -f "config/packages/reverse_engineering.yaml" ]; then
-    print_status "Test de connexion..."
+    print_status "Testing connection..."
     
-    # Essayer un dry-run pour tester la connexion
+    # Try dry-run to test connection
     if php bin/console reverse:generate --dry-run --tables=non_existent_table 2>&1 | grep -q "Connection"; then
-        print_error "✗ Erreur de connexion à la base de données"
-        echo "  Vérifiez vos paramètres de connexion"
+        print_error "✗ Database connection error"
+        echo "  Check your connection parameters"
     else
-        print_success "✓ Connexion à la base de données OK"
+        print_success "✓ Database connection OK"
     fi
 else
-    print_warning "⚠ Impossible de tester la connexion (configuration manquante)"
+    print_warning "⚠ Unable to test connection (missing configuration)"
 fi
 
-# 7. Vérification des permissions
-print_header "7. Vérification des permissions"
+# 7. Permissions check
+print_header "7. Permissions Check"
 
-# Vérifier les permissions du répertoire src/Entity
+# Check src/Entity directory permissions
 if [ -d "src/Entity" ]; then
     if [ -w "src/Entity" ]; then
-        print_success "✓ Répertoire src/Entity accessible en écriture"
+        print_success "✓ src/Entity directory writable"
     else
-        print_error "✗ Répertoire src/Entity non accessible en écriture"
-        echo "  Exécutez: chmod 755 src/Entity"
+        print_error "✗ src/Entity directory not writable"
+        echo "  Run: chmod 755 src/Entity"
     fi
 else
-    print_warning "⚠ Répertoire src/Entity n'existe pas"
-    echo "  Il sera créé automatiquement lors de la génération"
+    print_warning "⚠ src/Entity directory doesn't exist"
+    echo "  It will be created automatically during generation"
 fi
 
-# 8. Vérification des tests
-print_header "8. Vérification des tests"
+# 8. Tests check
+print_header "8. Tests Check"
 
 if [ -f "phpunit.xml" ]; then
-    print_success "✓ Configuration PHPUnit présente"
+    print_success "✓ PHPUnit configuration present"
     
     if [ -d "tests" ]; then
         TEST_COUNT=$(find tests -name "*Test.php" | wc -l)
-        print_success "✓ $TEST_COUNT fichiers de test trouvés"
+        print_success "✓ $TEST_COUNT test files found"
     else
-        print_warning "⚠ Répertoire tests manquant"
+        print_warning "⚠ tests directory missing"
     fi
 else
-    print_warning "⚠ Configuration PHPUnit manquante"
+    print_warning "⚠ PHPUnit configuration missing"
 fi
 
-# 9. Vérification de la mémoire PHP
-print_header "9. Vérification des limites PHP"
+# 9. PHP memory check
+print_header "9. PHP Limits Check"
 
 MEMORY_LIMIT=$(php -r "echo ini_get('memory_limit');")
 MAX_EXECUTION_TIME=$(php -r "echo ini_get('max_execution_time');")
 
-echo "Limite mémoire: $MEMORY_LIMIT"
-echo "Temps d'exécution max: ${MAX_EXECUTION_TIME}s"
+echo "Memory limit: $MEMORY_LIMIT"
+echo "Max execution time: ${MAX_EXECUTION_TIME}s"
 
-# Convertir la limite mémoire en bytes pour comparaison
+# Convert memory limit to bytes for comparison
 MEMORY_BYTES=$(php -r "
     \$limit = '$MEMORY_LIMIT';
     \$bytes = (int)\$limit;
@@ -221,62 +221,62 @@ MEMORY_BYTES=$(php -r "
 ")
 
 if [ "$MEMORY_BYTES" -ge 134217728 ]; then  # 128MB
-    print_success "✓ Limite mémoire suffisante"
+    print_success "✓ Sufficient memory limit"
 else
-    print_warning "⚠ Limite mémoire faible (recommandé: 128M+)"
+    print_warning "⚠ Low memory limit (recommended: 128M+)"
 fi
 
 if [ "$MAX_EXECUTION_TIME" -ge 60 ] || [ "$MAX_EXECUTION_TIME" -eq 0 ]; then
-    print_success "✓ Temps d'exécution suffisant"
+    print_success "✓ Sufficient execution time"
 else
-    print_warning "⚠ Temps d'exécution limité (recommandé: 60s+)"
+    print_warning "⚠ Limited execution time (recommended: 60s+)"
 fi
 
-# 10. Résumé et recommandations
-print_header "📋 RÉSUMÉ ET RECOMMANDATIONS"
+# 10. Summary and recommendations
+print_header "📋 SUMMARY AND RECOMMENDATIONS"
 
 echo ""
-print_status "État général:"
+print_status "General status:"
 
 ISSUES=0
 
 if [ ${#MISSING_EXTENSIONS[@]} -gt 0 ]; then
-    print_error "Extensions PHP manquantes: ${MISSING_EXTENSIONS[*]}"
-    echo "  Installez avec: sudo apt-get install php-${MISSING_EXTENSIONS[*]// / php-}"
+    print_error "Missing PHP extensions: ${MISSING_EXTENSIONS[*]}"
+    echo "  Install with: sudo apt-get install php-${MISSING_EXTENSIONS[*]// / php-}"
     ((ISSUES++))
 fi
 
 if [ ${#AVAILABLE_DRIVERS[@]} -eq 0 ]; then
-    print_error "Aucun driver de base de données disponible"
-    echo "  Installez avec: sudo apt-get install php-mysql php-pgsql php-sqlite3"
+    print_error "No database drivers available"
+    echo "  Install with: sudo apt-get install php-mysql php-pgsql php-sqlite3"
     ((ISSUES++))
 fi
 
 if [ ! -f "config/packages/reverse_engineering.yaml" ]; then
-    print_warning "Configuration manquante"
-    echo "  Créez le fichier de configuration avec les paramètres de votre base de données"
+    print_warning "Missing configuration"
+    echo "  Create configuration file with your database parameters"
     ((ISSUES++))
 fi
 
 if [ $ISSUES -eq 0 ]; then
-    print_success "🎉 Aucun problème critique détecté!"
+    print_success "🎉 No critical issues detected!"
     echo ""
-    print_status "Prochaines étapes:"
-    echo "  1. Configurez votre base de données dans config/packages/reverse_engineering.yaml"
-    echo "  2. Testez avec: php bin/console reverse:generate --dry-run"
-    echo "  3. Générez vos entités: php bin/console reverse:generate"
+    print_status "Next steps:"
+    echo "  1. Configure your database in config/packages/reverse_engineering.yaml"
+    echo "  2. Test with: php bin/console reverse:generate --dry-run"
+    echo "  3. Generate your entities: php bin/console reverse:generate"
 else
-    print_warning "⚠ $ISSUES problème(s) détecté(s)"
-    echo "  Corrigez les problèmes ci-dessus avant d'utiliser le bundle"
+    print_warning "⚠ $ISSUES issue(s) detected"
+    echo "  Fix the issues above before using the bundle"
 fi
 
 echo ""
-print_status "Pour plus d'aide:"
+print_status "For more help:"
 echo "  - Documentation: https://github.com/eprofos/reverse-engineering-bundle#readme"
 echo "  - Issues: https://github.com/eprofos/reverse-engineering-bundle/issues"
 echo "  - Troubleshooting: docs/TROUBLESHOOTING.md"
 
 echo ""
-print_header "🔍 DIAGNOSTIC TERMINÉ"
+print_header "🔍 DIAGNOSTIC COMPLETED"
 
 exit 0

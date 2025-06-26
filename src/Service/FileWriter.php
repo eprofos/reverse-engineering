@@ -10,7 +10,7 @@ use Exception;
 use function sprintf;
 
 /**
- * Service pour l'écriture des fichiers d'entités générées.
+ * Service for writing generated entity files.
  */
 class FileWriter
 {
@@ -21,42 +21,42 @@ class FileWriter
     }
 
     /**
-     * Écrit le fichier d'entité sur le disque.
+     * Writes entity file to disk.
      *
      * @throws FileWriteException
      *
-     * @return string Le chemin du fichier créé
+     * @return string The path of the created file
      */
     public function writeEntityFile(array $entity, ?string $outputDir = null, bool $force = false): string
     {
         try {
             $outputDir ??= $this->config['output_dir'] ?? 'src/Entity';
 
-            // Si le chemin est absolu, l'utiliser tel quel, sinon le combiner avec projectDir
+            // If path is absolute, use as is, otherwise combine with projectDir
             if (str_starts_with($outputDir, '/')) {
                 $fullOutputDir = $outputDir;
             } else {
                 $fullOutputDir = $this->projectDir . '/' . ltrim($outputDir, '/');
             }
 
-            // Créer le répertoire s'il n'existe pas
+            // Create directory if it doesn't exist
             $this->ensureDirectoryExists($fullOutputDir);
 
             $filePath = $fullOutputDir . '/' . $entity['filename'];
 
-            // Vérifier si le fichier existe déjà
+            // Check if file already exists
             if (file_exists($filePath) && ! $force) {
                 throw new FileWriteException(
-                    "Le fichier '{$entity['filename']}' existe déjà. Utilisez l'option --force pour l'écraser.",
+                    "File '{$entity['filename']}' already exists. Use --force option to overwrite.",
                 );
             }
 
-            // Écrire le fichier
+            // Write file
             $bytesWritten = file_put_contents($filePath, $entity['code']);
 
             if ($bytesWritten === false) {
                 throw new FileWriteException(
-                    "Impossible d'écrire le fichier '{$filePath}'",
+                    "Unable to write file '{$filePath}'",
                 );
             }
 
@@ -67,7 +67,7 @@ class FileWriter
             }
 
             throw new FileWriteException(
-                "Erreur lors de l'écriture du fichier d'entité : " . $e->getMessage(),
+                "Error writing entity file: " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -75,45 +75,45 @@ class FileWriter
     }
 
     /**
-     * Écrit le fichier de repository sur le disque.
+     * Writes repository file to disk.
      *
      * @throws FileWriteException
      *
-     * @return string Le chemin du fichier créé
+     * @return string The path of the created file
      */
     public function writeRepositoryFile(array $repository, ?string $outputDir = null, bool $force = false): string
     {
         try {
             $outputDir ??= 'src/Repository';
 
-            // Si le chemin est absolu, l'utiliser tel quel, sinon le combiner avec projectDir
+            // If path is absolute, use as is, otherwise combine with projectDir
             if (str_starts_with($outputDir, '/')) {
                 $fullOutputDir = $outputDir;
             } else {
                 $fullOutputDir = $this->projectDir . '/' . ltrim($outputDir, '/');
             }
 
-            // Créer le répertoire s'il n'existe pas
+            // Create directory if it doesn't exist
             $this->ensureDirectoryExists($fullOutputDir);
 
             $filePath = $fullOutputDir . '/' . $repository['filename'];
 
-            // Vérifier si le fichier existe déjà
+            // Check if file already exists
             if (file_exists($filePath) && ! $force) {
                 throw new FileWriteException(
-                    "Le fichier repository '{$repository['filename']}' existe déjà. Utilisez l'option --force pour l'écraser.",
+                    "Repository file '{$repository['filename']}' already exists. Use --force option to overwrite.",
                 );
             }
 
-            // Utiliser le code du repository s'il est fourni, sinon le générer
+            // Use repository code if provided, otherwise generate it
             $repositoryCode = $repository['code'] ?? $this->generateRepositoryCode($repository);
 
-            // Écrire le fichier
+            // Write file
             $bytesWritten = file_put_contents($filePath, $repositoryCode);
 
             if ($bytesWritten === false) {
                 throw new FileWriteException(
-                    "Impossible d'écrire le fichier repository '{$filePath}'",
+                    "Unable to write repository file '{$filePath}'",
                 );
             }
 
@@ -124,7 +124,7 @@ class FileWriter
             }
 
             throw new FileWriteException(
-                "Erreur lors de l'écriture du fichier repository : " . $e->getMessage(),
+                "Error writing repository file: " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -132,7 +132,7 @@ class FileWriter
     }
 
     /**
-     * Valide qu'un répertoire peut être utilisé pour l'écriture.
+     * Validates that a directory can be used for writing.
      *
      * @throws FileWriteException
      */
@@ -142,13 +142,13 @@ class FileWriter
 
         if (file_exists($fullPath) && ! is_dir($fullPath)) {
             throw new FileWriteException(
-                "Le chemin '{$directory}' existe mais n'est pas un répertoire",
+                "Path '{$directory}' exists but is not a directory",
             );
         }
 
         if (file_exists($fullPath) && ! is_writable($fullPath)) {
             throw new FileWriteException(
-                "Le répertoire '{$directory}' n'est pas accessible en écriture",
+                "Directory '{$directory}' is not writable",
             );
         }
 
@@ -156,7 +156,7 @@ class FileWriter
     }
 
     /**
-     * Crée un répertoire s'il n'existe pas.
+     * Creates a directory if it doesn't exist.
      *
      * @throws FileWriteException
      */
@@ -165,20 +165,20 @@ class FileWriter
         if (! file_exists($directory)) {
             if (! mkdir($directory, 0o755, true)) {
                 throw new FileWriteException(
-                    "Impossible de créer le répertoire '{$directory}'",
+                    "Unable to create directory '{$directory}'",
                 );
             }
         }
 
         if (! is_writable($directory)) {
             throw new FileWriteException(
-                "Le répertoire '{$directory}' n'est pas accessible en écriture",
+                "Directory '{$directory}' is not writable",
             );
         }
     }
 
     /**
-     * Génère le code du repository.
+     * Generates repository code.
      */
     private function generateRepositoryCode(array $repository): string
     {
@@ -194,7 +194,7 @@ class FileWriter
             use Doctrine\Persistence\ManagerRegistry;
 
             /**
-             * Repository pour l'entité %s.
+             * Repository for entity %s.
              *
              * @extends ServiceEntityRepository<%s>
              */
@@ -206,7 +206,7 @@ class FileWriter
                 }
 
                 /**
-                 * Trouve une entité par son ID.
+                 * Finds an entity by its ID.
                  *
                  * @param mixed $id
                  * @param int|null $lockMode
@@ -219,7 +219,7 @@ class FileWriter
                 }
 
                 /**
-                 * Trouve toutes les entités.
+                 * Finds all entities.
                  *
                  * @return %s[]
                  */
@@ -229,7 +229,7 @@ class FileWriter
                 }
 
                 /**
-                 * Trouve des entités selon des critères.
+                 * Finds entities by criteria.
                  *
                  * @param array $criteria
                  * @param array|null $orderBy
@@ -243,7 +243,7 @@ class FileWriter
                 }
 
                 /**
-                 * Trouve une entité selon des critères.
+                 * Finds one entity by criteria.
                  *
                  * @param array $criteria
                  * @param array|null $orderBy
@@ -260,18 +260,18 @@ class FileWriter
 
         return sprintf(
             $template,
-            $repository['namespace'],           // namespace du repository
-            $repository['entity_class'],        // use de l'entité
-            $entityName,                        // nom de l'entité dans le commentaire
-            $entityName,                        // nom de l'entité dans @extends
-            $repository['name'],                // nom de la classe repository
-            $entityName,                        // nom de l'entité dans le constructeur
-            $entityName,                        // type de retour find()
-            $entityName,                        // type de retour find()
-            $entityName,                        // type de retour findAll()
-            $entityName,                        // type de retour findBy()
-            $entityName,                        // type de retour findOneBy()
-            $entityName,                         // type de retour findOneBy()
+            $repository['namespace'],           // repository namespace
+            $repository['entity_class'],        // entity use statement
+            $entityName,                        // entity name in comment
+            $entityName,                        // entity name in @extends
+            $repository['name'],                // repository class name
+            $entityName,                        // entity name in constructor
+            $entityName,                        // find() return type
+            $entityName,                        // find() return type
+            $entityName,                        // findAll() return type
+            $entityName,                        // findBy() return type
+            $entityName,                        // findOneBy() return type
+            $entityName,                         // findOneBy() return type
         );
     }
 }

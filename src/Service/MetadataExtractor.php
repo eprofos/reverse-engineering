@@ -10,7 +10,7 @@ use Exception;
 use function in_array;
 
 /**
- * Service pour l'extraction des métadonnées des tables.
+ * Service for extracting table metadata.
  */
 class MetadataExtractor
 {
@@ -20,9 +20,9 @@ class MetadataExtractor
     }
 
     /**
-     * Extrait les métadonnées complètes d'une table.
+     * Extracts complete metadata from a table.
      *
-     * @param array $allTables Liste de toutes les tables pour détecter les relations inverses
+     * @param array $allTables List of all tables to detect inverse relations
      *
      * @throws MetadataExtractionException
      */
@@ -43,7 +43,7 @@ class MetadataExtractor
             ];
         } catch (Exception $e) {
             throw new MetadataExtractionException(
-                "Erreur lors de l'extraction des métadonnées de la table '{$tableName}' : " . $e->getMessage(),
+                "Error extracting metadata from table '{$tableName}': " . $e->getMessage(),
                 0,
                 $e,
             );
@@ -51,14 +51,14 @@ class MetadataExtractor
     }
 
     /**
-     * Traite les colonnes et les convertit en propriétés d'entité.
+     * Processes columns and converts them to entity properties.
      */
     private function processColumns(array $columns, array $foreignKeys = [], array $primaryKey = []): array
     {
         $processedColumns  = [];
         $foreignKeyColumns = [];
 
-        // Extraire les colonnes qui sont des clés étrangères
+        // Extract columns that are foreign keys
         foreach ($foreignKeys as $fk) {
             foreach ($fk['local_columns'] as $localColumn) {
                 $foreignKeyColumns[] = $localColumn;
@@ -66,18 +66,18 @@ class MetadataExtractor
         }
 
         foreach ($columns as $column) {
-            // Utiliser le type brut si disponible, sinon le type Doctrine
+            // Use raw type if available, otherwise Doctrine type
             $typeToMap   = $column['raw_type'] ?? $column['type'];
             $basePhpType = $this->mapDatabaseTypeToPhp($typeToMap);
 
-            // Ajouter le préfixe ? pour les types nullable (sauf bool et clés primaires)
+            // Add ? prefix for nullable types (except bool and primary keys)
             $phpType      = $basePhpType;
             $isPrimaryKey = in_array($column['name'], $primaryKey, true);
 
-            // Les clés primaires et colonnes NOT NULL ne doivent pas être nullable
-            // Exception : les types DateTime peuvent être nullable même s'ils ne sont pas explicitement NULL
+            // Primary keys and NOT NULL columns should not be nullable
+            // Exception: DateTime types can be nullable even if not explicitly NULL
             if ($column['nullable'] && ! $isPrimaryKey && $basePhpType !== 'bool') {
-                // Gérer les types avec namespace (commençant par \)
+                // Handle types with namespace (starting with \)
                 $phpType = '?' . $basePhpType;
             }
 
@@ -97,7 +97,7 @@ class MetadataExtractor
                 'is_foreign_key' => in_array($column['name'], $foreignKeyColumns, true),
             ];
 
-            // Ajouter les informations ENUM/SET si disponibles
+            // Add ENUM/SET information if available
             if (isset($column['enum_values'])) {
                 $processedColumn['enum_values'] = $column['enum_values'];
                 $processedColumn['comment']     = $this->enhanceCommentWithEnumValues(
@@ -134,7 +134,7 @@ class MetadataExtractor
             $targetEntity = $this->generateEntityName($targetTable);
             $localColumn  = $foreignKey['local_columns'][0]; // Prendre la première colonne locale
 
-            // Générer un nom de propriété unique
+            // Generate unique property name
             $propertyName = $this->generateUniqueRelationPropertyName(
                 $targetTable,
                 $localColumn,
@@ -159,14 +159,14 @@ class MetadataExtractor
     }
 
     /**
-     * Traite les index de la table.
+     * Processes table indexes.
      */
     private function processIndexes(array $indexes): array
     {
         $processedIndexes = [];
 
         foreach ($indexes as $index) {
-            if (! $index['primary']) { // Exclure la clé primaire
+            if (! $index['primary']) { // Exclude primary key
                 $processedIndexes[] = [
                     'name'    => $index['name'],
                     'columns' => $index['columns'],
@@ -179,16 +179,16 @@ class MetadataExtractor
     }
 
     /**
-     * Génère le nom de l'entité à partir du nom de la table.
+     * Generates entity name from table name.
      */
     private function generateEntityName(string $tableName): string
     {
-        // Convertir snake_case en PascalCase
+        // Convert snake_case to PascalCase
         $entityName = str_replace('_', ' ', $tableName);
         $entityName = ucwords($entityName);
         $entityName = str_replace(' ', '', $entityName);
 
-        // Singulariser si nécessaire (règles basiques)
+        // Singularize if necessary (basic rules)
         if (str_ends_with($entityName, 'ies')) {
             $entityName = substr($entityName, 0, -3) . 'y';
         } elseif (str_ends_with($entityName, 's') && ! str_ends_with($entityName, 'ss')) {
@@ -199,11 +199,11 @@ class MetadataExtractor
     }
 
     /**
-     * Génère le nom de la propriété à partir du nom de la colonne.
+     * Generates property name from column name.
      */
     private function generatePropertyName(string $columnName): string
     {
-        // Convertir snake_case en camelCase
+        // Convert snake_case to camelCase
         $parts        = explode('_', $columnName);
         $propertyName = array_shift($parts);
 
@@ -215,7 +215,7 @@ class MetadataExtractor
     }
 
     /**
-     * Génère le nom de la propriété de relation.
+     * Generates relation property name.
      */
     private function generateRelationPropertyName(string $tableName): string
     {
@@ -225,27 +225,27 @@ class MetadataExtractor
     }
 
     /**
-     * Génère un nom de propriété de relation unique en tenant compte des conflits.
+     * Generates unique relation property name considering conflicts.
      */
     private function generateUniqueRelationPropertyName(string $targetTable, string $localColumn, array $usedPropertyNames): string
     {
-        // Nom de base basé sur la table cible
+        // Base name based on target table
         $basePropertyName = $this->generateRelationPropertyName($targetTable);
 
-        // Si le nom de base n'est pas utilisé, le retourner
+        // If base name is not used, return it
         if (! in_array($basePropertyName, $usedPropertyNames, true)) {
             return $basePropertyName;
         }
 
-        // Sinon, générer un nom basé sur la colonne locale
+        // Otherwise, generate name based on local column
         $columnBasedName = $this->generatePropertyNameFromColumn($localColumn, $targetTable);
 
-        // Si ce nom n'est pas utilisé, le retourner
+        // If this name is not used, return it
         if (! in_array($columnBasedName, $usedPropertyNames, true)) {
             return $columnBasedName;
         }
 
-        // En dernier recours, ajouter un suffixe numérique
+        // As last resort, add numeric suffix
         $counter    = 2;
         $uniqueName = $basePropertyName . $counter;
 
@@ -258,25 +258,25 @@ class MetadataExtractor
     }
 
     /**
-     * Génère un nom de propriété basé sur la colonne locale et la table cible.
+     * Generates property name based on local column and target table.
      */
     private function generatePropertyNameFromColumn(string $localColumn, string $targetTable): string
     {
-        // Supprimer le suffixe '_id' de la colonne locale
+        // Remove '_id' suffix from local column
         $columnWithoutId = preg_replace('/_id$/', '', $localColumn);
 
-        // Si la colonne contient le nom de la table cible, utiliser la colonne directement
+        // If column contains target table name, use column directly
         $targetEntityLower = strtolower($this->generateEntityName($targetTable));
 
         if (str_contains(strtolower($columnWithoutId), $targetEntityLower)) {
             return $this->generatePropertyName($columnWithoutId);
         }
 
-        // Sinon, combiner la colonne avec l'entité cible
+        // Otherwise, combine column with target entity
         $propertyName = $this->generatePropertyName($columnWithoutId);
         $targetEntity = $this->generateEntityName($targetTable);
 
-        // Si la propriété ne contient pas déjà le nom de l'entité, l'ajouter
+        // If property doesn't already contain entity name, add it
         if (stripos($propertyName, $targetEntity) === false) {
             $propertyName .= $targetEntity;
         }
@@ -285,7 +285,7 @@ class MetadataExtractor
     }
 
     /**
-     * Génère le nom du repository.
+     * Generates repository name.
      */
     private function generateRepositoryName(string $tableName): string
     {
@@ -293,13 +293,13 @@ class MetadataExtractor
     }
 
     /**
-     * Mappe les types de base de données vers les types PHP.
+     * Maps database types to PHP types.
      */
     private function mapDatabaseTypeToPhp(string $databaseType): string
     {
-        // Nettoyer le type en supprimant les modificateurs comme 'unsigned'
+        // Clean type by removing modifiers like 'unsigned'
         $cleanType = preg_replace('/\s+(unsigned|signed|zerofill)/i', '', $databaseType);
-        // Extraire le type de base (sans les paramètres)
+        // Extract base type (without parameters)
         $baseType = strtolower(explode('(', $cleanType)[0]);
 
         return match ($baseType) {
@@ -328,7 +328,7 @@ class MetadataExtractor
     }
 
     /**
-     * Mappe les types de base de données vers les types Doctrine.
+     * Maps database types to Doctrine types.
      */
     private function mapDatabaseTypeToDoctrineType(string $databaseType): string
     {
@@ -356,7 +356,7 @@ class MetadataExtractor
     }
 
     /**
-     * Détermine si une relation est nullable en fonction des colonnes locales.
+     * Determines if a relation is nullable based on local columns.
      */
     private function isRelationNullable(array $localColumns, array $tableColumns): bool
     {
@@ -372,7 +372,7 @@ class MetadataExtractor
     }
 
     /**
-     * Améliore le commentaire d'une colonne avec les valeurs ENUM.
+     * Enhances column comment with ENUM values.
      */
     private function enhanceCommentWithEnumValues(?string $originalComment, array $enumValues): string
     {
@@ -386,7 +386,7 @@ class MetadataExtractor
     }
 
     /**
-     * Améliore le commentaire d'une colonne avec les valeurs SET.
+     * Enhances column comment with SET values.
      */
     private function enhanceCommentWithSetValues(?string $originalComment, array $setValues): string
     {

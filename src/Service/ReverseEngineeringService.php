@@ -10,7 +10,7 @@ use Exception;
 use function count;
 
 /**
- * Service principal pour l'orchestration du reverse engineering.
+ * Main service for reverse engineering orchestration.
  */
 class ReverseEngineeringService
 {
@@ -21,18 +21,18 @@ class ReverseEngineeringService
         private readonly FileWriter $fileWriter,
         private readonly array $config = [],
     ) {
-        // Enregistrer les types MySQL personnalisés dès l'initialisation
+        // Register custom MySQL types during initialization
         MySQLTypeMapper::registerCustomTypes();
     }
 
     /**
-     * Génère les entités à partir de la base de données.
+     * Generates entities from the database.
      *
-     * @param array $options Options de génération
+     * @param array $options Generation options
      *
      * @throws ReverseEngineeringException
      *
-     * @return array Résultat de la génération
+     * @return array Generation result
      */
     public function generateEntities(array $options = []): array
     {
@@ -44,17 +44,17 @@ class ReverseEngineeringService
             );
 
             if (empty($tables)) {
-                throw new ReverseEngineeringException('Aucune table trouvée à traiter.');
+                throw new ReverseEngineeringException('No tables found to process.');
             }
 
-            // 2. Extraire les métadonnées
+            // 2. Extract metadata
             $metadata = [];
 
             foreach ($tables as $table) {
                 $metadata[$table] = $this->metadataExtractor->extractTableMetadata($table, $tables);
             }
 
-            // 3. Générer les entités
+            // 3. Generate entities
             $entities = [];
 
             foreach ($metadata as $tableName => $tableMetadata) {
@@ -65,7 +65,7 @@ class ReverseEngineeringService
                 );
             }
 
-            // 4. Écrire les fichiers (si pas en mode dry-run)
+            // 4. Write files (if not in dry-run mode)
             $files = [];
 
             if (! ($options['dry_run'] ?? false)) {
@@ -77,7 +77,7 @@ class ReverseEngineeringService
                     );
                     $files[] = $filePath;
 
-                    // Écrire le repository si présent
+                    // Write repository if present
                     if (isset($entity['repository'])) {
                         $repositoryPath = $this->fileWriter->writeRepositoryFile(
                             $entity['repository'],
@@ -96,7 +96,7 @@ class ReverseEngineeringService
             ];
         } catch (Exception $e) {
             throw new ReverseEngineeringException(
-                'Erreur lors de la génération des entités : ' . $e->getMessage(),
+                'Error during entity generation: ' . $e->getMessage(),
                 0,
                 $e,
             );
@@ -104,7 +104,7 @@ class ReverseEngineeringService
     }
 
     /**
-     * Valide la configuration de la base de données.
+     * Validates database configuration.
      *
      * @throws ReverseEngineeringException
      */
@@ -114,7 +114,7 @@ class ReverseEngineeringService
     }
 
     /**
-     * Récupère la liste des tables disponibles.
+     * Retrieves the list of available tables.
      *
      * @throws ReverseEngineeringException
      */
@@ -124,7 +124,7 @@ class ReverseEngineeringService
     }
 
     /**
-     * Récupère les informations sur une table spécifique.
+     * Retrieves information about a specific table.
      *
      * @throws ReverseEngineeringException
      */

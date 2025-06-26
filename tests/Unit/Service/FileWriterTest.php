@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 use function dirname;
 
 /**
- * Tests unitaires pour FileWriter.
+ * Unit tests for FileWriter.
  */
 class FileWriterTest extends TestCase
 {
@@ -25,7 +25,7 @@ class FileWriterTest extends TestCase
 
     protected function setUp(): void
     {
-        // Créer un système de fichiers virtuel
+        // Create virtual file system
         $this->root       = vfsStream::setup('project');
         $this->projectDir = vfsStream::url('project');
 
@@ -95,14 +95,14 @@ class FileWriterTest extends TestCase
             'code'     => '<?php class Order {}',
         ];
 
-        // Créer le fichier d'abord
+        // Create file first
         $outputDir = $this->projectDir . '/src/Entity';
         mkdir($outputDir, 0o755, true);
         file_put_contents($outputDir . '/Order.php', 'existing content');
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage("Le fichier 'Order.php' existe déjà");
+        $this->expectExceptionMessage("File 'Order.php' already exists");
 
         // Act
         $this->fileWriter->writeEntityFile($entity);
@@ -117,7 +117,7 @@ class FileWriterTest extends TestCase
             'code'     => '<?php class Comment {}',
         ];
 
-        // Créer le fichier d'abord avec un contenu différent
+        // Create file first with different content
         $outputDir = $this->projectDir . '/src/Entity';
         mkdir($outputDir, 0o755, true);
         file_put_contents($outputDir . '/Comment.php', 'old content');
@@ -183,14 +183,14 @@ class FileWriterTest extends TestCase
             'entity_class' => 'App\\Entity\\Category',
         ];
 
-        // Créer le fichier d'abord
+        // Create file first
         $outputDir = $this->projectDir . '/src/Repository';
         mkdir($outputDir, 0o755, true);
         file_put_contents($outputDir . '/CategoryRepository.php', 'existing content');
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage("Le fichier repository 'CategoryRepository.php' existe déjà");
+        $this->expectExceptionMessage("Repository file 'CategoryRepository.php' already exists");
 
         // Act
         $this->fileWriter->writeRepositoryFile($repository);
@@ -231,7 +231,7 @@ class FileWriterTest extends TestCase
 
         // Assert
         $this->expectException(FileWriteException::class);
-        $this->expectExceptionMessage("Le répertoire 'readonly/directory' n'est pas accessible en écriture");
+        $this->expectExceptionMessage("Directory 'readonly/directory' is not writable");
 
         // Act
         $this->fileWriter->validateOutputDirectory($directory);
@@ -337,7 +337,7 @@ class FileWriterTest extends TestCase
 
     public function testEnsureDirectoryExistsThrowsExceptionWhenCannotCreateDirectory(): void
     {
-        // Arrange - Créer un fichier avec le même nom que le répertoire à créer
+        // Arrange - Create file with same name as directory to create
         $conflictPath = $this->projectDir . '/conflict';
         file_put_contents($conflictPath, 'content');
 
