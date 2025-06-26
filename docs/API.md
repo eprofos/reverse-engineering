@@ -1,136 +1,259 @@
-# Documentation API - ReverseEngineeringBundle
+# API Documentation - ReverseEngineeringBundle
 
-Cette documentation décrit l'API publique du ReverseEngineeringBundle, incluant tous les services, méthodes et interfaces disponibles pour les développeurs.
+This comprehensive documentation describes the complete public API of the ReverseEngineeringBundle, including all services, methods, interfaces, and usage patterns for developers integrating the bundle into their applications.
 
-## 📋 Table des Matières
+## 📋 Table of Contents
 
-- [Services Principaux](#services-principaux)
-- [Exceptions](#exceptions)
-- [Configuration](#configuration)
-- [Commandes CLI](#commandes-cli)
-- [Exemples d'Utilisation](#exemples-dutilisation)
+- [Core Services](#core-services)
+- [Exception Hierarchy](#exception-hierarchy)
+- [Configuration System](#configuration-system)
+- [CLI Commands](#cli-commands)
+- [Usage Examples](#usage-examples)
+- [Extension Points](#extension-points)
 
-## 🔧 Services Principaux
+## 🔧 Core Services
 
 ### ReverseEngineeringService
 
-**Service principal** pour l'orchestration du processus de génération d'entités.
+**Primary orchestration service** that coordinates the entire entity generation process.
 
-#### Constructeur
+#### Class Definition
 
 ```php
-public function __construct(
-    private readonly DatabaseAnalyzer $databaseAnalyzer,
-    private readonly MetadataExtractor $metadataExtractor,
-    private readonly EntityGenerator $entityGenerator,
-    private readonly FileWriter $fileWriter,
-    private readonly array $config = []
-)
+namespace App\Service;
+
+use App\Service\DatabaseAnalyzer;
+use App\Service\MetadataExtractor;
+use App\Service\EntityGenerator;
+use App\Service\FileWriter;
+use App\Exception\ReverseEngineeringException;
+
+class ReverseEngineeringService
+{
+    public function __construct(
+        private readonly DatabaseAnalyzer $databaseAnalyzer,
+        private readonly MetadataExtractor $metadataExtractor,
+        private readonly EntityGenerator $entityGenerator,
+        private readonly FileWriter $fileWriter,
+        private readonly array $config = []
+    ) {}
+}
 ```
 
-#### Méthodes Publiques
+#### Public Methods
 
 ##### `generateEntities(array $options = []): array`
 
-Génère les entités à partir de la base de données.
+Generates entities from database schema with comprehensive options.
 
-**Paramètres :**
-- `$options` (array) : Options de génération
-  - `tables` (array) : Tables spécifiques à traiter
-  - `exclude` (array) : Tables à exclure
-  - `namespace` (string) : Namespace des entités
-  - `output_dir` (string) : Répertoire de sortie
-  - `force` (bool) : Forcer l'écrasement des fichiers
-  - `dry_run` (bool) : Mode simulation
-  - `generate_repository` (bool) : Générer les repositories
+**Parameters:**
+- `$options` (array): Generation configuration options
+  - `tables` (array): Specific tables to process (empty = all tables)
+  - `exclude` (array): Tables to exclude from processing
+  - `namespace` (string): Target namespace for generated entities
+  - `output_dir` (string): Output directory for generated files
+  - `force` (bool): Force overwrite existing files
+  - `dry_run` (bool): Preview mode without file creation
+  - `generate_repository` (bool): Generate repository classes
+  - `use_annotations` (bool): Use annotations instead of PHP 8 attributes
 
-**Retour :**
+**Return Value:**
 ```php
 [
-    'entities' => array,      // Entités générées
-    'files' => array,         // Fichiers créés
-    'tables_processed' => int // Nombre de tables traitées
+    'entities' => [
+        [
+            'class_name' => 'User',
+            'namespace' => 'App\\Entity',
+            'filename' => 'User.php',
+            'content' => '<?php...',
+            'table_name' => 'users',
+            'relationships' => [...],
+            'repository' => [...]
+        ],
+        // ... additional entities
+    ],
+    'files' => [
+        '/path/to/User.php',
+        '/path/to/UserRepository.php',
+        // ... additional file paths
+    ],
+    'tables_processed' => 15,
+    'generation_time' => 12.34,
+    'memory_usage' => '45MB'
 ]
 ```
 
-**Exceptions :**
-- `ReverseEngineeringException` : Erreur générale du processus
+**Exceptions:**
+- `ReverseEngineeringException`: General process errors
+- `DatabaseConnectionException`: Database connectivity issues
+- `MetadataExtractionException`: Schema analysis failures
+- `EntityGenerationException`: Code generation errors
+- `FileWriteException`: File system operation failures
 
-**Exemple :**
+**Usage Example:**
 ```php
 $service = $container->get(ReverseEngineeringService::class);
 
-$result = $service->generateEntities([
-    'tables' => ['users', 'products'],
-    'namespace' => 'App\\Entity\\Shop',
-    'output_dir' => 'src/Entity/Shop',
-    'force' => true
-]);
-
-echo "Entités générées : " . count($result['entities']);
+try {
+    $result = $service->generateEntities([
+        'tables' => ['users', 'products', 'orders'],
+        'namespace' => 'App\\Entity\\Shop',
+        'output_dir' => 'src/Entity/Shop',
+        'force' => true,
+        'generate_repository' => true
+    ]);
+    
+    echo "Generated {$result['tables_processed']} entities in {$result['generation_time']}s\n";
+    echo "Files created: " . count($result['files']) . "\n";
+    echo "Memory used: {$result['memory_usage']}\n";
+    
+} catch (ReverseEngineeringException $e) {
+    echo "Generation failed: " . $e->getMessage() . "\n";
+}
 ```
 
 ##### `validateDatabaseConnection(): bool`
 
-Valide la connexion à la base de données.
+Validates database connectivity and accessibility.
 
-**Retour :** `true` si la connexion est valide
+**Return Value:** `true` if connection is valid and database is accessible
 
-**Exceptions :**
-- `ReverseEngineeringException` : Erreur de connexion
+**Exceptions:**
+- `DatabaseConnectionException`: Connection or authentication failures
+
+**Usage Example:**
+```php
+try {
+    $isValid = $service->validateDatabaseConnection();
+    if ($isValid) {
+        echo "Database connection is valid\n";
+    }
+} catch (DatabaseConnectionException $e) {
+    echo "Connection failed: " . $e->getMessage() . "\n";
+}
+```
 
 ##### `getAvailableTables(): array`
 
-Récupère la liste des tables disponibles.
+Retrieves list of all available tables in the database.
 
-**Retour :** Array des noms de tables
+**Return Value:** Array of table names
+
+**Usage Example:**
+```php
+$tables = $service->getAvailableTables();
+echo "Available tables: " . implode(', ', $tables) . "\n";
+```
 
 ##### `getTableInfo(string $tableName): array`
 
-Récupère les informations détaillées d'une table.
+Retrieves detailed information about a specific table.
 
-**Paramètres :**
-- `$tableName` (string) : Nom de la table
+**Parameters:**
+- `$tableName` (string): Name of the table to analyze
 
-**Retour :** Métadonnées de la table
+**Return Value:**
+```php
+[
+    'name' => 'users',
+    'columns' => [
+        [
+            'name' => 'id',
+            'type' => 'int',
+            'nullable' => false,
+            'primary' => true,
+            'auto_increment' => true,
+            'default' => null,
+            'length' => null
+        ],
+        // ... additional columns
+    ],
+    'foreign_keys' => [
+        [
+            'column' => 'category_id',
+            'referenced_table' => 'categories',
+            'referenced_column' => 'id',
+            'on_delete' => 'CASCADE',
+            'on_update' => 'RESTRICT'
+        ],
+        // ... additional foreign keys
+    ],
+    'indexes' => [...],
+    'primary_key' => ['id'],
+    'table_comment' => 'User accounts table'
+]
+```
+
+**Usage Example:**
+```php
+$tableInfo = $service->getTableInfo('users');
+echo "Table: {$tableInfo['name']}\n";
+echo "Columns: " . count($tableInfo['columns']) . "\n";
+echo "Foreign Keys: " . count($tableInfo['foreign_keys']) . "\n";
+```
 
 ---
 
 ### DatabaseAnalyzer
 
-**Service d'analyse** de la structure de base de données.
+**Database structure analysis service** for schema introspection and metadata extraction.
 
-#### Méthodes Publiques
+#### Class Definition
+
+```php
+namespace App\Service;
+
+use Doctrine\DBAL\Connection;
+use App\Exception\DatabaseConnectionException;
+
+class DatabaseAnalyzer
+{
+    public function __construct(
+        private readonly Connection $connection
+    ) {}
+}
+```
+
+#### Public Methods
 
 ##### `analyzeTables(array $include = [], array $exclude = []): array`
 
-Analyse les tables de la base de données avec filtrage.
+Analyzes database tables with filtering capabilities.
 
-**Paramètres :**
-- `$include` (array) : Tables à inclure (toutes si vide)
-- `$exclude` (array) : Tables à exclure
+**Parameters:**
+- `$include` (array): Tables to include (empty = all tables)
+- `$exclude` (array): Tables to exclude from analysis
 
-**Retour :** Array des noms de tables filtrées
+**Return Value:** Array of filtered table names
 
-**Exemple :**
+**Usage Example:**
 ```php
 $analyzer = $container->get(DatabaseAnalyzer::class);
 
-// Analyser toutes les tables sauf les tables système
-$tables = $analyzer->analyzeTables([], ['information_schema', 'performance_schema']);
+// Analyze all tables except system tables
+$tables = $analyzer->analyzeTables([], [
+    'information_schema',
+    'performance_schema',
+    'mysql',
+    'sys'
+]);
 
-// Analyser seulement les tables spécifiées
-$tables = $analyzer->analyzeTables(['users', 'products', 'orders']);
+// Analyze only specific tables
+$userTables = $analyzer->analyzeTables([
+    'users',
+    'user_profiles',
+    'user_permissions'
+]);
 ```
 
 ##### `getTableColumns(string $tableName): array`
 
-Récupère les colonnes d'une table avec leurs propriétés.
+Retrieves detailed column information for a table.
 
-**Paramètres :**
-- `$tableName` (string) : Nom de la table
+**Parameters:**
+- `$tableName` (string): Name of the table
 
-**Retour :**
+**Return Value:**
 ```php
 [
     [
@@ -142,66 +265,131 @@ Récupère les colonnes d'une table avec leurs propriétés.
         'primary' => true,
         'length' => null,
         'precision' => null,
-        'scale' => null
+        'scale' => null,
+        'unsigned' => true,
+        'comment' => 'Primary key'
     ],
-    // ... autres colonnes
+    [
+        'name' => 'email',
+        'type' => 'varchar',
+        'nullable' => false,
+        'default' => null,
+        'auto_increment' => false,
+        'primary' => false,
+        'length' => 255,
+        'precision' => null,
+        'scale' => null,
+        'unsigned' => false,
+        'comment' => 'User email address'
+    ],
+    // ... additional columns
 ]
 ```
 
 ##### `getForeignKeys(string $tableName): array`
 
-Récupère les clés étrangères d'une table.
+Retrieves foreign key constraints for a table.
 
-**Paramètres :**
-- `$tableName` (string) : Nom de la table
+**Parameters:**
+- `$tableName` (string): Name of the table
 
-**Retour :**
+**Return Value:**
 ```php
 [
     [
         'column' => 'user_id',
         'referenced_table' => 'users',
         'referenced_column' => 'id',
+        'constraint_name' => 'fk_posts_user_id',
         'on_delete' => 'CASCADE',
         'on_update' => 'RESTRICT'
     ],
-    // ... autres FK
+    [
+        'column' => 'category_id',
+        'referenced_table' => 'categories',
+        'referenced_column' => 'id',
+        'constraint_name' => 'fk_posts_category_id',
+        'on_delete' => 'SET NULL',
+        'on_update' => 'CASCADE'
+    ],
+    // ... additional foreign keys
 ]
 ```
 
 ##### `getIndexes(string $tableName): array`
 
-Récupère les index d'une table.
+Retrieves index information for a table.
+
+**Return Value:**
+```php
+[
+    [
+        'name' => 'idx_email',
+        'columns' => ['email'],
+        'unique' => true,
+        'primary' => false
+    ],
+    [
+        'name' => 'idx_created_at',
+        'columns' => ['created_at'],
+        'unique' => false,
+        'primary' => false
+    ],
+    // ... additional indexes
+]
+```
 
 ##### `testConnection(): bool`
 
-Teste la connexion à la base de données.
+Tests database connectivity.
+
+**Return Value:** `true` if connection is successful
 
 ##### `listTables(): array`
 
-Liste toutes les tables de la base de données.
+Lists all tables in the database.
+
+**Return Value:** Array of all table names
 
 ---
 
 ### MetadataExtractor
 
-**Service d'extraction** et de transformation des métadonnées.
+**Metadata transformation service** that converts database schema to entity metadata.
 
-#### Méthodes Publiques
+#### Class Definition
+
+```php
+namespace App\Service;
+
+use App\Service\DatabaseAnalyzer;
+use App\Service\MySQLTypeMapper;
+
+class MetadataExtractor
+{
+    public function __construct(
+        private readonly DatabaseAnalyzer $databaseAnalyzer,
+        private readonly MySQLTypeMapper $typeMapper
+    ) {}
+}
+```
+
+#### Public Methods
 
 ##### `extractTableMetadata(string $tableName, array $allTables = []): array`
 
-Extrait et transforme les métadonnées d'une table.
+Extracts and transforms table metadata for entity generation.
 
-**Paramètres :**
-- `$tableName` (string) : Nom de la table
-- `$allTables` (array) : Liste de toutes les tables (pour les relations)
+**Parameters:**
+- `$tableName` (string): Name of the table to process
+- `$allTables` (array): List of all available tables (for relationship detection)
 
-**Retour :**
+**Return Value:**
 ```php
 [
     'table_name' => 'users',
     'class_name' => 'User',
+    'namespace' => 'App\\Entity',
     'columns' => [
         [
             'name' => 'id',
@@ -210,200 +398,475 @@ Extrait et transforme les métadonnées d'une table.
             'doctrine_type' => 'integer',
             'nullable' => false,
             'primary' => true,
-            'generated' => true
+            'generated' => true,
+            'default' => null,
+            'length' => null,
+            'precision' => null,
+            'scale' => null,
+            'options' => []
         ],
-        // ... autres colonnes
+        [
+            'name' => 'email',
+            'property_name' => 'email',
+            'php_type' => 'string',
+            'doctrine_type' => 'string',
+            'nullable' => false,
+            'primary' => false,
+            'generated' => false,
+            'default' => null,
+            'length' => 255,
+            'precision' => null,
+            'scale' => null,
+            'options' => ['unique' => true]
+        ],
+        // ... additional columns
     ],
     'relations' => [
         [
             'type' => 'ManyToOne',
             'property' => 'category',
             'target_entity' => 'Category',
-            'join_column' => 'category_id'
-        ]
+            'join_column' => 'category_id',
+            'referenced_column' => 'id',
+            'nullable' => false,
+            'on_delete' => 'CASCADE'
+        ],
+        // ... additional relations
     ],
-    'repository' => 'UserRepository'
+    'repository' => 'UserRepository',
+    'table_comment' => 'User accounts and profiles'
 ]
 ```
 
-##### `mapColumnType(string $dbType, string $driver): string`
+##### `mapColumnType(string $dbType, string $driver): array`
 
-Mappe un type de base de données vers un type PHP/Doctrine.
+Maps database column type to PHP and Doctrine types.
 
-**Paramètres :**
-- `$dbType` (string) : Type de la base de données
-- `$driver` (string) : Driver utilisé (pdo_mysql, pdo_pgsql, pdo_sqlite)
+**Parameters:**
+- `$dbType` (string): Database column type (e.g., 'VARCHAR(255)', 'INT(11)')
+- `$driver` (string): Database driver (pdo_mysql, pdo_pgsql, pdo_sqlite)
 
-**Retour :** Type PHP correspondant
+**Return Value:**
+```php
+[
+    'php_type' => 'string',
+    'doctrine_type' => 'string',
+    'length' => 255,
+    'precision' => null,
+    'scale' => null,
+    'options' => []
+]
+```
 
-**Exemple :**
+**Usage Example:**
 ```php
 $extractor = $container->get(MetadataExtractor::class);
 
-echo $extractor->mapColumnType('VARCHAR', 'pdo_mysql'); // 'string'
-echo $extractor->mapColumnType('INTEGER', 'pdo_sqlite'); // 'int'
-echo $extractor->mapColumnType('TIMESTAMP', 'pdo_pgsql'); // 'DateTimeInterface'
+// Map MySQL types
+$stringType = $extractor->mapColumnType('VARCHAR(255)', 'pdo_mysql');
+// Result: ['php_type' => 'string', 'doctrine_type' => 'string', 'length' => 255, ...]
+
+$intType = $extractor->mapColumnType('INT(11)', 'pdo_mysql');
+// Result: ['php_type' => 'int', 'doctrine_type' => 'integer', ...]
+
+$decimalType = $extractor->mapColumnType('DECIMAL(10,2)', 'pdo_mysql');
+// Result: ['php_type' => 'string', 'doctrine_type' => 'decimal', 'precision' => 10, 'scale' => 2, ...]
 ```
 
 ##### `detectRelations(array $foreignKeys, array $allTables): array`
 
-Détecte et configure les relations entre entités.
+Detects and configures entity relationships from foreign keys.
+
+**Parameters:**
+- `$foreignKeys` (array): Foreign key constraints from database
+- `$allTables` (array): List of all available tables
+
+**Return Value:** Array of relationship configurations
 
 ##### `normalizeNames(string $name): string`
 
-Normalise les noms (table → classe, colonne → propriété).
+Normalizes database names to PHP naming conventions.
+
+**Parameters:**
+- `$name` (string): Database name (table or column)
+
+**Return Value:** Normalized PHP name
+
+**Usage Example:**
+```php
+$tableName = $extractor->normalizeNames('user_profiles');
+// Result: 'UserProfile'
+
+$propertyName = $extractor->normalizeNames('first_name');
+// Result: 'firstName'
+```
 
 ---
 
 ### EntityGenerator
 
-**Service de génération** du code PHP des entités.
+**Code generation service** that creates PHP entity classes from metadata.
 
-#### Méthodes Publiques
+#### Class Definition
+
+```php
+namespace App\Service;
+
+use Twig\Environment;
+use App\Exception\EntityGenerationException;
+
+class EntityGenerator
+{
+    public function __construct(
+        private readonly Environment $twig,
+        private readonly array $config = []
+    ) {}
+}
+```
+
+#### Public Methods
 
 ##### `generateEntity(string $tableName, array $metadata, array $options = []): array`
 
-Génère le code d'une entité à partir des métadonnées.
+Generates PHP entity code from table metadata.
 
-**Paramètres :**
-- `$tableName` (string) : Nom de la table
-- `$metadata` (array) : Métadonnées de la table
-- `$options` (array) : Options de génération
-  - `namespace` (string) : Namespace de l'entité
-  - `use_annotations` (bool) : Utiliser annotations au lieu d'attributs
-  - `generate_repository` (bool) : Générer le repository
+**Parameters:**
+- `$tableName` (string): Source table name
+- `$metadata` (array): Table metadata from MetadataExtractor
+- `$options` (array): Generation options
+  - `namespace` (string): Entity namespace
+  - `use_annotations` (bool): Use annotations instead of attributes
+  - `generate_repository` (bool): Generate repository class
+  - `template` (string): Custom template name
 
-**Retour :**
+**Return Value:**
 ```php
 [
     'class_name' => 'User',
     'namespace' => 'App\\Entity',
     'filename' => 'User.php',
-    'content' => '<?php...',
+    'content' => '<?php
+
+declare(strict_types=1);
+
+namespace App\\Entity;
+
+use Doctrine\\ORM\\Mapping as ORM;
+use DateTimeInterface;
+
+#[ORM\\Entity(repositoryClass: App\\Repository\\UserRepository::class)]
+#[ORM\\Table(name: \'users\')]
+class User
+{
+    #[ORM\\Id]
+    #[ORM\\GeneratedValue]
+    #[ORM\\Column(type: \'integer\')]
+    private int $id;
+    
+    // ... rest of entity code
+}',
     'repository' => [
         'class_name' => 'UserRepository',
+        'namespace' => 'App\\Repository',
         'filename' => 'UserRepository.php',
         'content' => '<?php...'
+    ],
+    'relationships' => [
+        [
+            'type' => 'ManyToOne',
+            'property' => 'category',
+            'target_entity' => 'Category'
+        ]
     ]
 ]
 ```
 
 ##### `generateRepository(string $entityName, array $options = []): array`
 
-Génère le code d'un repository Doctrine.
+Generates repository class for an entity.
+
+**Parameters:**
+- `$entityName` (string): Entity class name
+- `$options` (array): Generation options
+
+**Return Value:**
+```php
+[
+    'class_name' => 'UserRepository',
+    'namespace' => 'App\\Repository',
+    'filename' => 'UserRepository.php',
+    'content' => '<?php...'
+]
+```
 
 ##### `renderTemplate(string $template, array $variables): string`
 
-Rend un template Twig avec les variables fournies.
+Renders a Twig template with provided variables.
 
-**Paramètres :**
-- `$template` (string) : Nom du template
-- `$variables` (array) : Variables pour le template
+**Parameters:**
+- `$template` (string): Template name (e.g., 'entity.php.twig')
+- `$variables` (array): Template variables
+
+**Return Value:** Rendered template content
+
+**Usage Example:**
+```php
+$generator = $container->get(EntityGenerator::class);
+
+$content = $generator->renderTemplate('entity.php.twig', [
+    'class_name' => 'User',
+    'namespace' => 'App\\Entity',
+    'columns' => [...],
+    'relations' => [...]
+]);
+```
 
 ---
 
 ### FileWriter
 
-**Service d'écriture** sécurisée des fichiers.
+**File system service** for secure file writing and management.
 
-#### Méthodes Publiques
+#### Class Definition
+
+```php
+namespace App\Service;
+
+use App\Exception\FileWriteException;
+
+class FileWriter
+{
+    public function __construct(
+        private readonly string $projectDir
+    ) {}
+}
+```
+
+#### Public Methods
 
 ##### `writeEntityFile(array $entity, ?string $outputDir = null, bool $force = false): string`
 
-Écrit un fichier d'entité sur le disque.
+Writes entity file to disk with conflict management.
 
-**Paramètres :**
-- `$entity` (array) : Données de l'entité générée
-- `$outputDir` (string|null) : Répertoire de sortie
-- `$force` (bool) : Forcer l'écrasement si le fichier existe
+**Parameters:**
+- `$entity` (array): Entity data from EntityGenerator
+- `$outputDir` (string|null): Output directory (null = use config default)
+- `$force` (bool): Force overwrite existing files
 
-**Retour :** Chemin du fichier créé
+**Return Value:** Path to created file
 
-**Exceptions :**
-- `FileWriteException` : Erreur d'écriture
+**Exceptions:**
+- `FileWriteException`: File system errors, permission issues, or conflicts
+
+**Usage Example:**
+```php
+$fileWriter = $container->get(FileWriter::class);
+
+try {
+    $filePath = $fileWriter->writeEntityFile($entity, 'src/Entity', true);
+    echo "Entity written to: $filePath\n";
+} catch (FileWriteException $e) {
+    echo "Write failed: " . $e->getMessage() . "\n";
+}
+```
 
 ##### `writeRepositoryFile(array $repository, ?string $outputDir = null, bool $force = false): string`
 
-Écrit un fichier de repository sur le disque.
+Writes repository file to disk.
+
+**Parameters:** Same as `writeEntityFile`
 
 ##### `validateOutputDirectory(string $directory): bool`
 
-Valide qu'un répertoire est accessible en écriture.
+Validates that a directory is writable.
+
+**Parameters:**
+- `$directory` (string): Directory path to validate
+
+**Return Value:** `true` if directory is writable
 
 ##### `handleFileConflict(string $filePath, bool $force): bool`
 
-Gère les conflits de fichiers existants.
+Handles conflicts with existing files.
+
+**Parameters:**
+- `$filePath` (string): Path to potentially conflicting file
+- `$force` (bool): Whether to force overwrite
+
+**Return Value:** `true` if file can be written
 
 ---
 
-## ⚠️ Exceptions
+## ⚠️ Exception Hierarchy
 
-### Hiérarchie des Exceptions
+### Base Exception
 
-```
-ReverseEngineeringException (base)
-├── DatabaseConnectionException
-├── MetadataExtractionException
-├── EntityGenerationException
-└── FileWriteException
-```
+#### ReverseEngineeringException
 
-### ReverseEngineeringException
-
-**Exception de base** pour toutes les erreurs du bundle.
+**Base exception class** for all bundle-related errors.
 
 ```php
+namespace App\Exception;
+
 class ReverseEngineeringException extends \Exception
 {
     public function __construct(
         string $message = '',
         int $code = 0,
         ?\Throwable $previous = null
-    )
+    ) {
+        parent::__construct($message, $code, $previous);
+    }
+    
+    public function getContext(): array
+    {
+        return [
+            'bundle' => 'ReverseEngineeringBundle',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'memory_usage' => memory_get_usage(true)
+        ];
+    }
 }
 ```
 
-### DatabaseConnectionException
+### Specialized Exceptions
 
-**Exception spécialisée** pour les erreurs de connexion à la base de données.
+#### DatabaseConnectionException
 
-**Cas d'usage :**
-- Paramètres de connexion invalides
-- Base de données inaccessible
-- Driver non disponible
+**Database connectivity and access errors.**
 
-### MetadataExtractionException
+```php
+namespace App\Exception;
 
-**Exception spécialisée** pour les erreurs d'extraction de métadonnées.
+class DatabaseConnectionException extends ReverseEngineeringException
+{
+    public function __construct(
+        string $message = '',
+        string $driver = '',
+        string $host = '',
+        ?\Throwable $previous = null
+    ) {
+        $this->driver = $driver;
+        $this->host = $host;
+        parent::__construct($message, 1001, $previous);
+    }
+    
+    public function getDriver(): string
+    {
+        return $this->driver;
+    }
+    
+    public function getHost(): string
+    {
+        return $this->host;
+    }
+}
+```
 
-**Cas d'usage :**
-- Table inexistante
-- Permissions insuffisantes
-- Structure de table invalide
+**Common Scenarios:**
+- Invalid database credentials
+- Database server unreachable
+- Missing database drivers
+- Insufficient database permissions
 
-### EntityGenerationException
+#### MetadataExtractionException
 
-**Exception spécialisée** pour les erreurs de génération d'entités.
+**Schema analysis and metadata extraction errors.**
 
-**Cas d'usage :**
-- Template invalide
-- Métadonnées corrompues
-- Erreur de rendu Twig
+```php
+namespace App\Exception;
 
-### FileWriteException
+class MetadataExtractionException extends ReverseEngineeringException
+{
+    public function __construct(
+        string $message = '',
+        string $tableName = '',
+        ?\Throwable $previous = null
+    ) {
+        $this->tableName = $tableName;
+        parent::__construct($message, 1002, $previous);
+    }
+    
+    public function getTableName(): string
+    {
+        return $this->tableName;
+    }
+}
+```
 
-**Exception spécialisée** pour les erreurs d'écriture de fichiers.
+**Common Scenarios:**
+- Table does not exist
+- Insufficient table permissions
+- Unsupported column types
+- Corrupted table structure
 
-**Cas d'usage :**
-- Permissions insuffisantes
-- Espace disque insuffisant
-- Chemin invalide
+#### EntityGenerationException
+
+**Entity code generation errors.**
+
+```php
+namespace App\Exception;
+
+class EntityGenerationException extends ReverseEngineeringException
+{
+    public function __construct(
+        string $message = '',
+        string $entityName = '',
+        ?\Throwable $previous = null
+    ) {
+        $this->entityName = $entityName;
+        parent::__construct($message, 1003, $previous);
+    }
+    
+    public function getEntityName(): string
+    {
+        return $this->entityName;
+    }
+}
+```
+
+**Common Scenarios:**
+- Template rendering errors
+- Invalid metadata structure
+- Namespace conflicts
+- Memory exhaustion during generation
+
+#### FileWriteException
+
+**File system operation errors.**
+
+```php
+namespace App\Exception;
+
+class FileWriteException extends ReverseEngineeringException
+{
+    public function __construct(
+        string $message = '',
+        string $filePath = '',
+        ?\Throwable $previous = null
+    ) {
+        $this->filePath = $filePath;
+        parent::__construct($message, 1004, $previous);
+    }
+    
+    public function getFilePath(): string
+    {
+        return $this->filePath;
+    }
+}
+```
+
+**Common Scenarios:**
+- Insufficient file permissions
+- Disk space exhaustion
+- Invalid file paths
+- File conflicts without force option
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Configuration System
 
-### Structure de Configuration
+### Configuration Structure
 
 ```yaml
 # config/packages/reverse_engineering.yaml
@@ -416,7 +879,8 @@ reverse_engineering:
         user: username
         password: password
         charset: utf8mb4
-        options: []
+        options:
+            1002: "SET SESSION sql_mode=''"  # PDO::MYSQL_ATTR_INIT_COMMAND
     
     generation:
         namespace: App\Entity
@@ -424,208 +888,237 @@ reverse_engineering:
         generate_repository: true
         use_annotations: false
         tables: []
-        exclude_tables: []
+        exclude_tables:
+            - doctrine_migration_versions
+            - messenger_messages
         
     templates:
         entity: '@ReverseEngineering/entity.php.twig'
         repository: '@ReverseEngineering/repository.php.twig'
+        
+    type_mapping:
+        # Custom type mappings
+        custom_enum: string
+        special_decimal: decimal
 ```
 
-### Options de Configuration
+### Configuration Access
 
-#### Section `database`
-- `driver` : Driver Doctrine DBAL (pdo_mysql, pdo_pgsql, pdo_sqlite)
-- `host` : Hôte de la base de données
-- `port` : Port de connexion
-- `dbname` : Nom de la base de données
-- `user` : Nom d'utilisateur
-- `password` : Mot de passe
-- `charset` : Encodage des caractères
-- `options` : Options supplémentaires du driver
+```php
+// Access configuration in services
+class CustomService
+{
+    public function __construct(
+        private readonly array $reverseEngineeringConfig
+    ) {}
+    
+    public function getNamespace(): string
+    {
+        return $this->reverseEngineeringConfig['generation']['namespace'];
+    }
+}
 
-#### Section `generation`
-- `namespace` : Namespace par défaut des entités
-- `output_dir` : Répertoire de sortie par défaut
-- `generate_repository` : Générer les repositories automatiquement
-- `use_annotations` : Utiliser annotations au lieu d'attributs PHP 8+
-- `tables` : Tables à traiter (toutes si vide)
-- `exclude_tables` : Tables à exclure
-
-#### Section `templates`
-- `entity` : Template pour les entités
-- `repository` : Template pour les repositories
+// Service definition
+services:
+    App\Service\CustomService:
+        arguments:
+            $reverseEngineeringConfig: '%reverse_engineering%'
+```
 
 ---
 
-## 🖥️ Commandes CLI
+## 🖥️ CLI Commands
 
-### reverse:generate
+### reverse:generate Command
 
-**Commande principale** pour la génération d'entités.
+**Primary command for entity generation.**
 
-#### Syntaxe
+#### Command Definition
 
-```bash
-php bin/console reverse:generate [options]
+```php
+namespace App\Command;
+
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputOption;
+
+class ReverseGenerateCommand extends Command
+{
+    protected static $defaultName = 'reverse:generate';
+    protected static $defaultDescription = 'Generate Doctrine entities from database schema';
+}
 ```
 
-#### Options
+#### Command Options
 
-| Option | Raccourci | Description | Valeur par défaut |
-|--------|-----------|-------------|-------------------|
-| `--tables` | `-t` | Tables à traiter | Toutes |
-| `--exclude` | `-e` | Tables à exclure | Aucune |
-| `--namespace` | `-n` | Namespace des entités | Configuration |
-| `--output-dir` | `-o` | Répertoire de sortie | Configuration |
-| `--force` | `-f` | Forcer l'écrasement | false |
-| `--dry-run` | `-d` | Mode simulation | false |
-| `--verbose` | `-v` | Mode verbeux | false |
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--tables` | array | [] | Specific tables to process |
+| `--exclude` | array | [] | Tables to exclude |
+| `--namespace` | string | config | Entity namespace |
+| `--output-dir` | string | config | Output directory |
+| `--force` | bool | false | Force overwrite existing files |
+| `--dry-run` | bool | false | Preview mode |
+| `--verbose` | bool | false | Verbose output |
 
-#### Exemples
+#### Usage Examples
 
 ```bash
-# Génération basique
+# Basic generation
 php bin/console reverse:generate
 
-# Tables spécifiques
-php bin/console reverse:generate --tables=users --tables=products
+# Specific tables with custom namespace
+php bin/console reverse:generate \
+    --tables=users \
+    --tables=products \
+    --namespace="App\Entity\Shop" \
+    --output-dir="src/Entity/Shop"
 
-# Avec namespace personnalisé
-php bin/console reverse:generate --namespace="App\Entity\Shop" --output-dir="src/Entity/Shop"
-
-# Mode simulation
+# Dry run with verbose output
 php bin/console reverse:generate --dry-run --verbose
 
-# Force l'écrasement
-php bin/console reverse:generate --force
+# Force overwrite with exclusions
+php bin/console reverse:generate \
+    --force \
+    --exclude=cache_items \
+    --exclude=sessions
 ```
 
-#### Codes de Retour
+#### Exit Codes
 
-- `0` : Succès
-- `1` : Erreur générale
-- `2` : Erreur de configuration
-- `3` : Erreur de connexion base de données
-- `4` : Erreur de génération
+- `0`: Success
+- `1`: General error
+- `2`: Configuration error
+- `3`: Database connection error
+- `4`: Generation error
+- `5`: File write error
 
 ---
 
-## 💡 Exemples d'Utilisation
+## 💡 Usage Examples
 
-### Utilisation Programmatique
-
-#### Génération Simple
+### Basic Service Usage
 
 ```php
 use App\Service\ReverseEngineeringService;
+use App\Exception\ReverseEngineeringException;
 
-class MyController
+class EntityGenerationController
 {
     public function __construct(
         private ReverseEngineeringService $reverseService
     ) {}
     
-    public function generateEntities(): Response
+    public function generateAction(): Response
     {
         try {
             $result = $this->reverseService->generateEntities([
                 'tables' => ['users', 'products'],
                 'namespace' => 'App\\Entity\\Generated',
-                'output_dir' => 'src/Entity/Generated'
+                'output_dir' => 'src/Entity/Generated',
+                'force' => true
             ]);
             
             return new JsonResponse([
                 'success' => true,
-                'entities_count' => count($result['entities']),
-                'files_created' => count($result['files'])
+                'entities_generated' => count($result['entities']),
+                'files_created' => count($result['files']),
+                'generation_time' => $result['generation_time']
             ]);
             
         } catch (ReverseEngineeringException $e) {
             return new JsonResponse([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'error_code' => $e->getCode()
             ], 400);
         }
     }
 }
 ```
 
-#### Validation de Connexion
-
-```php
-use App\Service\ReverseEngineeringService;
-
-class DatabaseController
-{
-    public function testConnection(ReverseEngineeringService $service): Response
-    {
-        try {
-            $isValid = $service->validateDatabaseConnection();
-            
-            return new JsonResponse([
-                'connection' => $isValid ? 'OK' : 'FAILED'
-            ]);
-            
-        } catch (ReverseEngineeringException $e) {
-            return new JsonResponse([
-                'connection' => 'ERROR',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-}
-```
-
-#### Analyse de Tables
+### Advanced Database Analysis
 
 ```php
 use App\Service\DatabaseAnalyzer;
+use App\Service\MetadataExtractor;
 
-class SchemaController
+class SchemaAnalysisService
 {
-    public function analyzeTables(DatabaseAnalyzer $analyzer): Response
+    public function __construct(
+        private DatabaseAnalyzer $analyzer,
+        private MetadataExtractor $extractor
+    ) {}
+    
+    public function analyzeSchema(): array
     {
-        $tables = $analyzer->listTables();
         $analysis = [];
+        $tables = $this->analyzer->listTables();
         
         foreach ($tables as $table) {
-            $columns = $analyzer->getTableColumns($table);
-            $foreignKeys = $analyzer->getForeignKeys($table);
+            $columns = $this->analyzer->getTableColumns($table);
+            $foreignKeys = $this->analyzer->getForeignKeys($table);
+            $metadata = $this->extractor->extractTableMetadata($table, $tables);
             
             $analysis[$table] = [
-                'columns_count' => count($columns),
-                'has_foreign_keys' => !empty($foreignKeys),
-                'columns' => array_column($columns, 'name')
+                'column_count' => count($columns),
+                'foreign_key_count' => count($foreignKeys),
+                'has_primary_key' => !empty($metadata['primary_key']),
+                'estimated_complexity' => $this->calculateComplexity($metadata),
+                'relationships' => array_map(
+                    fn($rel) => $rel['type'],
+                    $metadata['relations']
+                )
             ];
         }
         
-        return new JsonResponse($analysis);
+        return $analysis;
+    }
+    
+    private function calculateComplexity(array $metadata): string
+    {
+        $score = count($metadata['columns']) + (count($metadata['relations']) * 2);
+        
+        return match (true) {
+            $score <= 5 => 'simple',
+            $score <= 15 => 'medium',
+            default => 'complex'
+        };
     }
 }
 ```
 
-### Service Personnalisé
+### Custom Entity Generation
 
 ```php
-use App\Service\ReverseEngineeringService;
 use App\Service\EntityGenerator;
+use App\Service\MetadataExtractor;
 
 class CustomEntityService
 {
     public function __construct(
-        private ReverseEngineeringService $reverseService,
-        private EntityGenerator $entityGenerator
+        private EntityGenerator $generator,
+        private MetadataExtractor $extractor
     ) {}
     
     public function generateWithCustomTemplate(string $tableName): string
     {
-        // 1. Obtenir les métadonnées
-        $metadata = $this->reverseService->getTableInfo($tableName);
+        // Extract metadata
+        $metadata = $this->extractor->extractTableMetadata($tableName);
         
-        // 2. Générer avec template personnalisé
-        $entity = $this->entityGenerator->generateEntity(
+        // Add custom variables
+        $customMetadata = array_merge($metadata, [
+            'author' => 'Custom Generator',
+            'version' => '2.0',
+            'generated_at' => date('Y-m-d H:i:s'),
+            'custom_methods' => $this->getCustomMethods($tableName)
+        ]);
+        
+        // Generate with custom template
+        $entity = $this->generator->generateEntity(
             $tableName,
-            $metadata,
+            $customMetadata,
             [
                 'template' => 'custom_entity.php.twig',
                 'namespace' => 'App\\Entity\\Custom'
@@ -634,10 +1127,22 @@ class CustomEntityService
         
         return $entity['content'];
     }
+    
+    private function getCustomMethods(string $tableName): array
+    {
+        // Define custom methods based on table name
+        $methods = [
+            'users' => ['getFullName', 'isActive', 'getDisplayName'],
+            'products' => ['getFormattedPrice', 'isInStock', 'getDiscountedPrice'],
+            'orders' => ['getTotalAmount', 'isCompleted', 'getStatusLabel']
+        ];
+        
+        return $methods[$tableName] ?? [];
+    }
 }
 ```
 
-### Gestion d'Erreurs Avancée
+### Error Handling Patterns
 
 ```php
 use App\Exception\DatabaseConnectionException;
@@ -662,46 +1167,17 @@ class RobustGenerationService
         } catch (DatabaseConnectionException $e) {
             $results['errors'][] = [
                 'type' => 'database_connection',
-                'message' => 'Impossible de se connecter à la base de données',
-                'details' => $e->getMessage()
+                'message' => 'Failed to connect to database',
+                'details' => $e->getMessage(),
+                'driver' => $e->getDriver(),
+                'host' => $e->getHost(),
+                'suggestions' => [
+                    'Check database credentials',
+                    'Verify database server is running',
+                    'Check network connectivity'
+                ]
             ];
             
         } catch (MetadataExtractionException $e) {
             $results['errors'][] = [
-                'type' => 'metadata_extraction',
-                'message' => 'Erreur lors de l\'extraction des métadonnées',
-                'details' => $e->getMessage()
-            ];
-            
-        } catch (EntityGenerationException $e) {
-            $results['errors'][] = [
-                'type' => 'entity_generation',
-                'message' => 'Erreur lors de la génération des entités',
-                'details' => $e->getMessage()
-            ];
-            
-        } catch (FileWriteException $e) {
-            $results['errors'][] = [
-                'type' => 'file_write',
-                'message' => 'Erreur lors de l\'écriture des fichiers',
-                'details' => $e->getMessage()
-            ];
-        }
-        
-        return $results;
-    }
-}
-```
-
----
-
-## 📚 Références
-
-- [Symfony Service Container](https://symfony.com/doc/current/service_container.html)
-- [Doctrine DBAL Types](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html)
-- [Twig Templates](https://twig.symfony.com/doc/3.x/)
-- [PHP 8 Attributes](https://www.php.net/manual/en/language.attributes.overview.php)
-
----
-
-**Cette API est stable et rétrocompatible dans la version 0.x du bundle.**
+                '

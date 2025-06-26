@@ -1,39 +1,39 @@
-# Guide de Dépannage - ReverseEngineeringBundle
+# Troubleshooting Guide - ReverseEngineeringBundle
 
-Ce guide vous aide à résoudre les problèmes courants rencontrés lors de l'utilisation du ReverseEngineeringBundle.
+This guide helps you resolve common issues encountered when using the ReverseEngineeringBundle for Symfony 7+ and PHP 8+ database reverse engineering.
 
-## 🚨 Problèmes de Connexion Base de Données
+## 🚨 Database Connection Issues
 
-### Erreur : "Connection refused" ou "Access denied"
+### Error: "Connection refused" or "Access denied"
 
-**Symptômes :**
+**Symptoms:**
 ```
 DatabaseConnectionException: SQLSTATE[HY000] [2002] Connection refused
 DatabaseConnectionException: SQLSTATE[28000] [1045] Access denied for user
 ```
 
-**Causes possibles :**
-- Paramètres de connexion incorrects
-- Base de données non démarrée
-- Permissions utilisateur insuffisantes
-- Firewall bloquant la connexion
+**Possible Causes:**
+- Incorrect connection parameters
+- Database not started
+- Insufficient user permissions
+- Firewall blocking connection
 
-**Solutions :**
+**Solutions:**
 
-1. **Vérifier les paramètres de connexion :**
+1. **Verify connection parameters:**
 ```yaml
 # config/packages/reverse_engineering.yaml
 reverse_engineering:
     database:
         driver: pdo_mysql
-        host: localhost    # Vérifier l'hôte
-        port: 3306        # Vérifier le port
-        dbname: myapp     # Vérifier le nom de la BDD
-        user: username    # Vérifier l'utilisateur
-        password: password # Vérifier le mot de passe
+        host: localhost    # Check host
+        port: 3306        # Check port
+        dbname: myapp     # Check database name
+        user: username    # Check username
+        password: password # Check password
 ```
 
-2. **Tester la connexion manuellement :**
+2. **Test connection manually:**
 ```bash
 # MySQL
 mysql -h localhost -P 3306 -u username -p myapp
@@ -41,12 +41,12 @@ mysql -h localhost -P 3306 -u username -p myapp
 # PostgreSQL
 psql -h localhost -p 5432 -U username -d myapp
 
-# Vérifier que le service est démarré
+# Check service is running
 sudo systemctl status mysql
 sudo systemctl status postgresql
 ```
 
-3. **Vérifier les permissions utilisateur :**
+3. **Verify user permissions:**
 ```sql
 -- MySQL
 SHOW GRANTS FOR 'username'@'localhost';
@@ -58,16 +58,16 @@ GRANT USAGE ON SCHEMA public TO username;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO username;
 ```
 
-### Erreur : "Driver not found"
+### Error: "Driver not found"
 
-**Symptômes :**
+**Symptoms:**
 ```
 DatabaseConnectionException: Driver pdo_mysql not found
 ```
 
-**Solutions :**
+**Solutions:**
 
-1. **Installer l'extension PHP manquante :**
+1. **Install missing PHP extension:**
 ```bash
 # Ubuntu/Debian
 sudo apt-get install php-mysql php-pgsql php-sqlite3
@@ -75,20 +75,20 @@ sudo apt-get install php-mysql php-pgsql php-sqlite3
 # CentOS/RHEL
 sudo yum install php-mysql php-pgsql php-sqlite
 
-# Vérifier les extensions installées
+# Check installed extensions
 php -m | grep -E "(mysql|pgsql|sqlite)"
 ```
 
-2. **Vérifier la configuration PHP :**
+2. **Verify PHP configuration:**
 ```bash
 php -i | grep -E "(mysql|pgsql|sqlite)"
 ```
 
-### Erreur : "Unknown database" ou "Database does not exist"
+### Error: "Unknown database" or "Database does not exist"
 
-**Solutions :**
+**Solutions:**
 
-1. **Créer la base de données :**
+1. **Create the database:**
 ```sql
 -- MySQL
 CREATE DATABASE myapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -97,7 +97,7 @@ CREATE DATABASE myapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE myapp WITH ENCODING 'UTF8';
 ```
 
-2. **Vérifier l'existence de la base :**
+2. **Verify database existence:**
 ```sql
 -- MySQL
 SHOW DATABASES;
@@ -108,24 +108,24 @@ SHOW DATABASES;
 
 ---
 
-## 🔍 Problèmes d'Extraction de Métadonnées
+## 🔍 Metadata Extraction Issues
 
-### Erreur : "Table not found" ou "Permission denied"
+### Error: "Table not found" or "Permission denied"
 
-**Symptômes :**
+**Symptoms:**
 ```
 MetadataExtractionException: Table 'users' doesn't exist
 MetadataExtractionException: Access denied for table 'users'
 ```
 
-**Solutions :**
+**Solutions:**
 
-1. **Vérifier l'existence des tables :**
+1. **Verify table existence:**
 ```bash
 php bin/console reverse:generate --dry-run --verbose
 ```
 
-2. **Lister les tables disponibles :**
+2. **List available tables:**
 ```sql
 -- MySQL
 SHOW TABLES;
@@ -137,7 +137,7 @@ SHOW TABLES;
 .tables
 ```
 
-3. **Vérifier les permissions :**
+3. **Check permissions:**
 ```sql
 -- MySQL
 SHOW GRANTS FOR CURRENT_USER();
@@ -146,23 +146,23 @@ SHOW GRANTS FOR CURRENT_USER();
 SELECT * FROM information_schema.table_privileges WHERE grantee = CURRENT_USER;
 ```
 
-### Erreur : "Unsupported column type"
+### Error: "Unsupported column type"
 
-**Symptômes :**
+**Symptoms:**
 ```
 MetadataExtractionException: Unsupported column type 'GEOMETRY'
 ```
 
-**Solutions :**
+**Solutions:**
 
-1. **Exclure les tables avec types non supportés :**
+1. **Exclude tables with unsupported types:**
 ```bash
 php bin/console reverse:generate --exclude=spatial_table
 ```
 
-2. **Mapping personnalisé (développement futur) :**
+2. **Custom mapping (future development):**
 ```php
-// Configuration personnalisée pour types spéciaux
+// Custom configuration for special types
 $customMapping = [
     'GEOMETRY' => 'string',
     'POINT' => 'string',
@@ -170,11 +170,11 @@ $customMapping = [
 ];
 ```
 
-### Erreur : "Foreign key constraint error"
+### Error: "Foreign key constraint error"
 
-**Solutions :**
+**Solutions:**
 
-1. **Vérifier l'intégrité des clés étrangères :**
+1. **Verify foreign key integrity:**
 ```sql
 -- MySQL
 SELECT * FROM information_schema.KEY_COLUMN_USAGE 
@@ -184,38 +184,38 @@ WHERE REFERENCED_TABLE_NAME IS NOT NULL;
 SELECT * FROM information_schema.referential_constraints;
 ```
 
-2. **Générer les tables dans l'ordre des dépendances :**
+2. **Generate tables in dependency order:**
 ```bash
-# Générer d'abord les tables parentes
+# Generate parent tables first
 php bin/console reverse:generate --tables=categories
 php bin/console reverse:generate --tables=products
 ```
 
 ---
 
-## ⚙️ Problèmes de Génération d'Entités
+## ⚙️ Entity Generation Issues
 
-### Erreur : "Template not found" ou "Twig error"
+### Error: "Template not found" or "Twig error"
 
-**Symptômes :**
+**Symptoms:**
 ```
 EntityGenerationException: Template "entity.php.twig" not found
 EntityGenerationException: Syntax error in template
 ```
 
-**Solutions :**
+**Solutions:**
 
-1. **Vérifier l'existence du template :**
+1. **Verify template existence:**
 ```bash
 ls -la src/Resources/templates/
 ```
 
-2. **Réinstaller le bundle :**
+2. **Reinstall the bundle:**
 ```bash
 composer reinstall eprofos/reverse-engineering-bundle
 ```
 
-3. **Vérifier la configuration Twig :**
+3. **Check Twig configuration:**
 ```yaml
 # config/packages/twig.yaml
 twig:
@@ -223,49 +223,49 @@ twig:
         '%kernel.project_dir%/src/Resources/templates': 'ReverseEngineering'
 ```
 
-### Erreur : "Invalid namespace" ou "Class name conflict"
+### Error: "Invalid namespace" or "Class name conflict"
 
-**Symptômes :**
+**Symptoms:**
 ```
 EntityGenerationException: Invalid namespace 'App\Entity\123Invalid'
 EntityGenerationException: Class 'User' already exists
 ```
 
-**Solutions :**
+**Solutions:**
 
-1. **Utiliser un namespace valide :**
+1. **Use a valid namespace:**
 ```bash
 php bin/console reverse:generate --namespace="App\\Entity\\Generated"
 ```
 
-2. **Forcer l'écrasement ou utiliser un répertoire différent :**
+2. **Force overwrite or use different directory:**
 ```bash
 php bin/console reverse:generate --force
-# ou
+# or
 php bin/console reverse:generate --output-dir="src/Entity/New"
 ```
 
-### Erreur : "Memory limit exceeded"
+### Error: "Memory limit exceeded"
 
-**Symptômes :**
+**Symptoms:**
 ```
 Fatal error: Allowed memory size exhausted
 ```
 
-**Solutions :**
+**Solutions:**
 
-1. **Augmenter la limite mémoire :**
+1. **Increase memory limit:**
 ```bash
 php -d memory_limit=512M bin/console reverse:generate
 ```
 
-2. **Traiter les tables par petits lots :**
+2. **Process tables in small batches:**
 ```bash
-# Traiter 10 tables à la fois
+# Process 10 tables at a time
 php bin/console reverse:generate --tables=table1 --tables=table2 --tables=table3
 ```
 
-3. **Optimiser la configuration PHP :**
+3. **Optimize PHP configuration:**
 ```ini
 ; php.ini
 memory_limit = 512M
@@ -274,80 +274,80 @@ max_execution_time = 300
 
 ---
 
-## 📁 Problèmes d'Écriture de Fichiers
+## 📁 File Writing Issues
 
-### Erreur : "Permission denied" ou "Directory not writable"
+### Error: "Permission denied" or "Directory not writable"
 
-**Symptômes :**
+**Symptoms:**
 ```
 FileWriteException: Permission denied: /path/to/src/Entity/User.php
 FileWriteException: Directory '/path/to/src/Entity' is not writable
 ```
 
-**Solutions :**
+**Solutions:**
 
-1. **Vérifier les permissions :**
+1. **Check permissions:**
 ```bash
 ls -la src/
 chmod 755 src/Entity/
 chown -R www-data:www-data src/Entity/
 ```
 
-2. **Créer le répertoire manuellement :**
+2. **Create directory manually:**
 ```bash
 mkdir -p src/Entity/Generated
 chmod 755 src/Entity/Generated
 ```
 
-3. **Utiliser un répertoire temporaire :**
+3. **Use temporary directory:**
 ```bash
 php bin/console reverse:generate --output-dir="/tmp/entities"
 ```
 
-### Erreur : "File already exists"
+### Error: "File already exists"
 
-**Solutions :**
+**Solutions:**
 
-1. **Utiliser l'option force :**
+1. **Use force option:**
 ```bash
 php bin/console reverse:generate --force
 ```
 
-2. **Sauvegarder les fichiers existants :**
+2. **Backup existing files:**
 ```bash
 cp -r src/Entity src/Entity.backup.$(date +%Y%m%d)
 php bin/console reverse:generate --force
 ```
 
-### Erreur : "Invalid filename" ou "Path too long"
+### Error: "Invalid filename" or "Path too long"
 
-**Solutions :**
+**Solutions:**
 
-1. **Utiliser des noms de tables plus courts :**
+1. **Use shorter table names:**
 ```bash
-# Renommer la table si possible
+# Rename table if possible
 ALTER TABLE very_long_table_name_that_causes_issues RENAME TO short_name;
 ```
 
-2. **Utiliser un répertoire de sortie plus court :**
+2. **Use shorter output directory:**
 ```bash
 php bin/console reverse:generate --output-dir="src/E"
 ```
 
 ---
 
-## 🐛 Problèmes de Performance
+## 🐛 Performance Issues
 
-### Génération très lente
+### Very slow generation
 
-**Symptômes :**
-- Génération qui prend plusieurs minutes
-- Utilisation excessive de la mémoire
-- Timeouts de connexion
+**Symptoms:**
+- Generation taking several minutes
+- Excessive memory usage
+- Connection timeouts
 
-**Solutions :**
+**Solutions:**
 
-1. **Optimiser la connexion base de données :**
+1. **Optimize database connection:**
 ```yaml
 reverse_engineering:
     database:
@@ -358,9 +358,9 @@ reverse_engineering:
             'application_name': 'ReverseEngineering'
 ```
 
-2. **Traiter par lots :**
+2. **Process in batches:**
 ```bash
-# Script de traitement par lots
+# Batch processing script
 #!/bin/bash
 TABLES=(users products orders categories)
 for table in "${TABLES[@]}"; do
@@ -369,23 +369,23 @@ for table in "${TABLES[@]}"; do
 done
 ```
 
-3. **Utiliser des index sur les tables système :**
+3. **Use indexes on system tables:**
 ```sql
--- MySQL - Optimiser information_schema (si possible)
--- PostgreSQL - Analyser les statistiques
+-- MySQL - Optimize information_schema (if possible)
+-- PostgreSQL - Analyze statistics
 ANALYZE;
 ```
 
-### Utilisation excessive de mémoire
+### Excessive memory usage
 
-**Solutions :**
+**Solutions:**
 
-1. **Limiter le nombre de tables traitées :**
+1. **Limit number of processed tables:**
 ```bash
 php bin/console reverse:generate --tables=table1 --tables=table2
 ```
 
-2. **Optimiser la configuration PHP :**
+2. **Optimize PHP configuration:**
 ```ini
 ; php.ini
 memory_limit = 256M
@@ -395,43 +395,43 @@ opcache.memory_consumption = 128
 
 ---
 
-## 🔧 Problèmes de Configuration
+## 🔧 Configuration Issues
 
-### Configuration non prise en compte
+### Configuration not taken into account
 
-**Solutions :**
+**Solutions:**
 
-1. **Vider le cache :**
+1. **Clear cache:**
 ```bash
 php bin/console cache:clear
 php bin/console cache:clear --env=prod
 ```
 
-2. **Vérifier la syntaxe YAML :**
+2. **Check YAML syntax:**
 ```bash
 php bin/console lint:yaml config/packages/reverse_engineering.yaml
 ```
 
-3. **Vérifier l'ordre de chargement des bundles :**
+3. **Check bundle loading order:**
 ```php
 // config/bundles.php
 return [
-    // ... autres bundles
+    // ... other bundles
     App\Bundle\ReverseEngineeringBundle::class => ['all' => true],
 ];
 ```
 
-### Variables d'environnement non résolues
+### Environment variables not resolved
 
-**Solutions :**
+**Solutions:**
 
-1. **Vérifier le fichier .env :**
+1. **Check .env file:**
 ```bash
 # .env
 DATABASE_URL=mysql://user:pass@localhost:3306/dbname
 ```
 
-2. **Utiliser la résolution de variables :**
+2. **Use variable resolution:**
 ```yaml
 reverse_engineering:
     database:
@@ -442,34 +442,34 @@ reverse_engineering:
 
 ---
 
-## 🧪 Problèmes de Tests
+## 🧪 Testing Issues
 
-### Tests qui échouent
+### Tests failing
 
-**Solutions :**
+**Solutions:**
 
-1. **Vérifier l'environnement de test :**
+1. **Check test environment:**
 ```bash
-# Vérifier la configuration de test
+# Check test configuration
 cat phpunit.xml
 ```
 
-2. **Nettoyer le cache de test :**
+2. **Clear test cache:**
 ```bash
 rm -rf .phpunit.cache
 vendor/bin/phpunit --cache-clear
 ```
 
-3. **Vérifier les dépendances de test :**
+3. **Check test dependencies:**
 ```bash
 composer install --dev
 ```
 
-### Base de données de test non accessible
+### Test database not accessible
 
-**Solutions :**
+**Solutions:**
 
-1. **Utiliser SQLite en mémoire :**
+1. **Use SQLite in-memory:**
 ```xml
 <!-- phpunit.xml -->
 <php>
@@ -477,7 +477,7 @@ composer install --dev
 </php>
 ```
 
-2. **Créer une base de test dédiée :**
+2. **Create dedicated test database:**
 ```sql
 CREATE DATABASE myapp_test;
 GRANT ALL ON myapp_test.* TO 'test_user'@'localhost';
@@ -485,87 +485,87 @@ GRANT ALL ON myapp_test.* TO 'test_user'@'localhost';
 
 ---
 
-## 📊 Outils de Diagnostic
+## 📊 Diagnostic Tools
 
-### Script de diagnostic automatique
+### Automatic diagnostic script
 
 ```bash
 #!/bin/bash
 # scripts/diagnose.sh
 
-echo "=== DIAGNOSTIC REVERSEENGINEERINGBUNDLE ==="
+echo "=== REVERSEENGINEERINGBUNDLE DIAGNOSTICS ==="
 
-echo "1. Vérification PHP..."
+echo "1. PHP verification..."
 php --version
 php -m | grep -E "(pdo|mysql|pgsql|sqlite)"
 
-echo "2. Vérification Composer..."
+echo "2. Composer verification..."
 composer --version
 composer show eprofos/reverse-engineering-bundle
 
-echo "3. Vérification configuration..."
+echo "3. Configuration verification..."
 if [ -f "config/packages/reverse_engineering.yaml" ]; then
-    echo "✓ Fichier de configuration présent"
+    echo "✓ Configuration file present"
 else
-    echo "✗ Fichier de configuration manquant"
+    echo "✗ Configuration file missing"
 fi
 
-echo "4. Test de connexion..."
+echo "4. Connection test..."
 php bin/console reverse:generate --dry-run --tables=non_existent 2>&1 | head -5
 
-echo "5. Vérification permissions..."
-ls -la src/Entity/ 2>/dev/null || echo "Répertoire src/Entity non trouvé"
+echo "5. Permission verification..."
+ls -la src/Entity/ 2>/dev/null || echo "src/Entity directory not found"
 
-echo "6. Vérification cache..."
+echo "6. Cache verification..."
 ls -la var/cache/ | head -3
 
-echo "=== FIN DIAGNOSTIC ==="
+echo "=== END DIAGNOSTICS ==="
 ```
 
-### Commandes de debug utiles
+### Useful debug commands
 
 ```bash
-# Informations détaillées sur la configuration
+# Detailed configuration information
 php bin/console debug:config reverse_engineering
 
-# Services disponibles
+# Available services
 php bin/console debug:container reverse
 
-# Vérification des routes (si applicable)
+# Route verification (if applicable)
 php bin/console debug:router | grep reverse
 
-# Logs en temps réel
+# Real-time logs
 tail -f var/log/dev.log | grep -i reverse
 
-# Test de connexion base de données
+# Database connection test
 php bin/console dbal:run-sql "SELECT 1"
 ```
 
 ---
 
-## 📞 Obtenir de l'Aide
+## 📞 Getting Help
 
-### Informations à fournir lors d'un rapport de bug
+### Information to provide when reporting a bug
 
-1. **Version du bundle :**
+1. **Bundle version:**
 ```bash
 composer show eprofos/reverse-engineering-bundle
 ```
 
-2. **Configuration PHP :**
+2. **PHP configuration:**
 ```bash
 php --version
 php -m | grep -E "(pdo|mysql|pgsql|sqlite)"
 ```
 
-3. **Configuration Symfony :**
+3. **Symfony configuration:**
 ```bash
 php bin/console --version
 ```
 
-4. **Configuration base de données :**
+4. **Database configuration:**
 ```yaml
-# Masquer les mots de passe !
+# Hide passwords!
 reverse_engineering:
     database:
         driver: pdo_mysql
@@ -574,66 +574,66 @@ reverse_engineering:
         # ...
 ```
 
-5. **Message d'erreur complet :**
+5. **Complete error message:**
 ```bash
 php bin/console reverse:generate --verbose 2>&1
 ```
 
-6. **Logs applicatifs :**
+6. **Application logs:**
 ```bash
 tail -50 var/log/dev.log
 ```
 
-### Canaux de support
+### Support channels
 
-- **Issues GitHub :** [Signaler un bug](https://github.com/eprofos/reverse-engineering-bundle/issues/new?template=bug_report.md)
-- **Discussions :** [Poser une question](https://github.com/eprofos/reverse-engineering-bundle/discussions)
-- **Documentation :** [Guide complet](https://github.com/eprofos/reverse-engineering-bundle#readme)
+- **GitHub Issues:** [Report a bug](https://github.com/eprofos/reverse-engineering-bundle/issues/new?template=bug_report.md)
+- **Discussions:** [Ask a question](https://github.com/eprofos/reverse-engineering-bundle/discussions)
+- **Documentation:** [Complete guide](https://github.com/eprofos/reverse-engineering-bundle#readme)
 
 ---
 
-## 🔄 Procédure de Récupération d'Urgence
+## 🔄 Emergency Recovery Procedure
 
-### En cas de corruption des entités générées
+### In case of corrupted generated entities
 
-1. **Restaurer depuis la sauvegarde :**
+1. **Restore from backup:**
 ```bash
-# Si vous avez fait une sauvegarde
+# If you made a backup
 cp -r src/Entity.backup/* src/Entity/
 ```
 
-2. **Régénérer proprement :**
+2. **Clean regeneration:**
 ```bash
-# Nettoyer le répertoire
+# Clean directory
 rm -rf src/Entity/Generated/
 
-# Régénérer avec validation
+# Regenerate with validation
 php bin/console reverse:generate --dry-run
 php bin/console reverse:generate --output-dir="src/Entity/Generated"
 ```
 
-3. **Valider les entités générées :**
+3. **Validate generated entities:**
 ```bash
-# Vérifier la syntaxe PHP
+# Check PHP syntax
 find src/Entity -name "*.php" -exec php -l {} \;
 
-# Valider avec Doctrine
+# Validate with Doctrine
 php bin/console doctrine:schema:validate
 ```
 
-### En cas de problème de performance critique
+### In case of critical performance issues
 
-1. **Mode dégradé :**
+1. **Degraded mode:**
 ```bash
-# Traiter une seule table à la fois
+# Process one table at a time
 php bin/console reverse:generate --tables=critical_table --force
 ```
 
-2. **Augmenter les limites temporairement :**
+2. **Temporarily increase limits:**
 ```bash
 php -d memory_limit=1G -d max_execution_time=600 bin/console reverse:generate
 ```
 
 ---
 
-**Ce guide couvre les problèmes les plus courants. Pour des cas spécifiques, n'hésitez pas à consulter la communauté ou créer une issue sur GitHub.**
+**This guide covers the most common issues. For specific cases, don't hesitate to consult the community or create an issue on GitHub.**

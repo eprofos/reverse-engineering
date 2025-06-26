@@ -1,45 +1,45 @@
-# Architecture du ReverseEngineeringBundle
+# ReverseEngineeringBundle Architecture
 
-Ce document décrit l'architecture technique du ReverseEngineeringBundle, un bundle Symfony professionnel pour l'ingénierie inverse de base de données.
+This document describes the technical architecture of the ReverseEngineeringBundle, a professional Symfony bundle for database reverse engineering.
 
-## 🏗️ Vue d'ensemble
+## 🏗️ Overview
 
-Le ReverseEngineeringBundle suit une architecture modulaire basée sur le pattern **Service Layer** avec une séparation claire des responsabilités. L'architecture est conçue pour être extensible, testable et maintenable.
+The ReverseEngineeringBundle follows a modular architecture based on the **Service Layer** pattern with clear separation of responsibilities. The architecture is designed to be extensible, testable, and maintainable.
 
-### Principes Architecturaux
+### Architectural Principles
 
-- **Single Responsibility Principle** : Chaque service a une responsabilité unique
-- **Dependency Injection** : Utilisation du container Symfony pour l'injection de dépendances
-- **Interface Segregation** : Interfaces spécialisées pour chaque type d'opération
-- **Open/Closed Principle** : Extensible sans modification du code existant
-- **Testabilité** : Architecture permettant le mocking et les tests unitaires
+- **Single Responsibility Principle**: Each service has a unique responsibility
+- **Dependency Injection**: Uses Symfony container for dependency injection
+- **Interface Segregation**: Specialized interfaces for each operation type
+- **Open/Closed Principle**: Extensible without modifying existing code
+- **Testability**: Architecture enabling mocking and unit testing
 
-## 📊 Diagramme d'Architecture
+## 📊 Architecture Diagram
 
 ```mermaid
 graph TB
-    subgraph "Interface Utilisateur"
+    subgraph "User Interface Layer"
         CLI[reverse:generate Command]
-        CONFIG[Configuration YAML]
+        CONFIG[YAML Configuration]
     end
     
-    subgraph "Couche Service"
-        RES[ReverseEngineeringService<br/>Orchestrateur Principal]
-        DA[DatabaseAnalyzer<br/>Analyse BDD]
-        ME[MetadataExtractor<br/>Extraction Métadonnées]
-        EG[EntityGenerator<br/>Génération Entités]
-        FW[FileWriter<br/>Écriture Fichiers]
+    subgraph "Service Layer"
+        RES[ReverseEngineeringService<br/>Main Orchestrator]
+        DA[DatabaseAnalyzer<br/>Database Analysis]
+        ME[MetadataExtractor<br/>Metadata Extraction]
+        EG[EntityGenerator<br/>Entity Generation]
+        FW[FileWriter<br/>File Writing]
     end
     
-    subgraph "Couche Infrastructure"
-        DBAL[Doctrine DBAL<br/>Abstraction BDD]
+    subgraph "Infrastructure Layer"
+        DBAL[Doctrine DBAL<br/>Database Abstraction]
         TWIG[Twig<br/>Templates]
-        FS[Filesystem<br/>Système de fichiers]
+        FS[Filesystem<br/>File System]
     end
     
-    subgraph "Couche Données"
-        DB[(Base de Données<br/>MySQL/PostgreSQL/SQLite)]
-        FILES[Fichiers PHP<br/>Entités générées]
+    subgraph "Data Layer"
+        DB[(Database<br/>MySQL/PostgreSQL/SQLite)]
+        FILES[PHP Files<br/>Generated Entities]
     end
     
     CLI --> RES
@@ -64,27 +64,27 @@ graph TB
     style FILES fill:#fff3e0
 ```
 
-## 🔧 Services Principaux
+## 🔧 Core Services
 
-### 1. ReverseEngineeringService (Orchestrateur)
+### 1. ReverseEngineeringService (Orchestrator)
 
-**Responsabilité** : Coordonne l'ensemble du processus de génération d'entités.
+**Responsibility**: Coordinates the entire entity generation process.
 
 ```php
 class ReverseEngineeringService
 {
     public function generateEntities(array $options = []): array
     {
-        // 1. Analyser la base de données
+        // 1. Analyze database
         $tables = $this->databaseAnalyzer->analyzeTables();
         
-        // 2. Extraire les métadonnées
+        // 2. Extract metadata
         $metadata = $this->metadataExtractor->extractTableMetadata();
         
-        // 3. Générer les entités
+        // 3. Generate entities
         $entities = $this->entityGenerator->generateEntity();
         
-        // 4. Écrire les fichiers
+        // 4. Write files
         $files = $this->fileWriter->writeEntityFile();
         
         return ['entities' => $entities, 'files' => $files];
@@ -92,13 +92,13 @@ class ReverseEngineeringService
 }
 ```
 
-**Patterns utilisés** :
-- **Facade Pattern** : Interface simplifiée pour un processus complexe
-- **Template Method** : Définit les étapes du processus de génération
+**Patterns used**:
+- **Facade Pattern**: Simplified interface for a complex process
+- **Template Method**: Defines the steps of the generation process
 
-### 2. DatabaseAnalyzer (Analyse de Base de Données)
+### 2. DatabaseAnalyzer (Database Analysis)
 
-**Responsabilité** : Analyse la structure de la base de données et extrait les informations de schéma.
+**Responsibility**: Analyzes database structure and extracts schema information.
 
 ```php
 class DatabaseAnalyzer
@@ -111,20 +111,20 @@ class DatabaseAnalyzer
 }
 ```
 
-**Fonctionnalités** :
-- Connexion et validation de la base de données
-- Listage des tables avec filtrage
-- Extraction des colonnes et leurs propriétés
-- Détection des clés étrangères et contraintes
-- Support multi-SGBD (MySQL, PostgreSQL, SQLite)
+**Features**:
+- Database connection and validation
+- Table listing with filtering
+- Column and property extraction
+- Foreign key and constraint detection
+- Multi-DBMS support (MySQL, PostgreSQL, SQLite)
 
-**Patterns utilisés** :
-- **Strategy Pattern** : Différentes stratégies selon le SGBD
-- **Factory Pattern** : Création des connexions selon le driver
+**Patterns used**:
+- **Strategy Pattern**: Different strategies per DBMS
+- **Factory Pattern**: Connection creation based on driver
 
-### 3. MetadataExtractor (Extraction de Métadonnées)
+### 3. MetadataExtractor (Metadata Extraction)
 
-**Responsabilité** : Transforme les informations brutes de la base de données en métadonnées utilisables pour la génération d'entités.
+**Responsibility**: Transforms raw database information into usable metadata for entity generation.
 
 ```php
 class MetadataExtractor
@@ -136,19 +136,19 @@ class MetadataExtractor
 }
 ```
 
-**Fonctionnalités** :
-- Mapping des types de données DB vers PHP/Doctrine
-- Détection et configuration des relations
-- Normalisation des noms (table → classe, colonne → propriété)
-- Gestion des contraintes et validations
+**Features**:
+- DB to PHP/Doctrine data type mapping
+- Relationship detection and configuration
+- Name normalization (table → class, column → property)
+- Constraint and validation management
 
-**Patterns utilisés** :
-- **Adapter Pattern** : Adaptation des types de données entre systèmes
-- **Builder Pattern** : Construction progressive des métadonnées
+**Patterns used**:
+- **Adapter Pattern**: Data type adaptation between systems
+- **Builder Pattern**: Progressive metadata construction
 
-### 4. EntityGenerator (Génération d'Entités)
+### 4. EntityGenerator (Entity Generation)
 
-**Responsabilité** : Génère le code PHP des entités à partir des métadonnées.
+**Responsibility**: Generates PHP entity code from metadata.
 
 ```php
 class EntityGenerator
@@ -159,20 +159,20 @@ class EntityGenerator
 }
 ```
 
-**Fonctionnalités** :
-- Génération d'entités avec attributs PHP 8+ ou annotations
-- Génération des getters/setters
-- Génération des repositories Doctrine
-- Support des templates Twig personnalisables
-- Gestion des relations ManyToOne
+**Features**:
+- Entity generation with PHP 8+ attributes or annotations
+- Getter/setter generation
+- Doctrine repository generation
+- Customizable Twig template support
+- ManyToOne relationship management
 
-**Patterns utilisés** :
-- **Template Method** : Structure de génération standardisée
-- **Strategy Pattern** : Différentes stratégies (attributs vs annotations)
+**Patterns used**:
+- **Template Method**: Standardized generation structure
+- **Strategy Pattern**: Different strategies (attributes vs annotations)
 
-### 5. FileWriter (Écriture de Fichiers)
+### 5. FileWriter (File Writing)
 
-**Responsabilité** : Écrit les fichiers générés sur le système de fichiers de manière sécurisée.
+**Responsibility**: Writes generated files to the filesystem securely.
 
 ```php
 class FileWriter
@@ -184,24 +184,24 @@ class FileWriter
 }
 ```
 
-**Fonctionnalités** :
-- Écriture sécurisée avec vérification des permissions
-- Gestion des conflits de fichiers existants
-- Création automatique des répertoires
-- Validation des chemins et noms de fichiers
-- Mode dry-run pour prévisualisation
+**Features**:
+- Secure writing with permission verification
+- Existing file conflict management
+- Automatic directory creation
+- Path and filename validation
+- Dry-run mode for preview
 
-**Patterns utilisés** :
-- **Command Pattern** : Opérations d'écriture encapsulées
-- **Chain of Responsibility** : Gestion des conflits en cascade
+**Patterns used**:
+- **Command Pattern**: Encapsulated write operations
+- **Chain of Responsibility**: Cascading conflict management
 
-## 🔄 Flux de Données
+## 🔄 Data Flow
 
-### Processus de Génération Complet
+### Complete Generation Process
 
 ```mermaid
 sequenceDiagram
-    participant CLI as Command CLI
+    participant CLI as CLI Command
     participant RES as ReverseEngineeringService
     participant DA as DatabaseAnalyzer
     participant ME as MetadataExtractor
@@ -248,62 +248,62 @@ sequenceDiagram
     RES-->>CLI: Generation result
 ```
 
-### Gestion des Erreurs
+### Error Handling
 
 ```mermaid
 graph TD
-    A[Opération] --> B{Succès ?}
-    B -->|Oui| C[Continuer]
-    B -->|Non| D[Exception Spécialisée]
+    A[Operation] --> B{Success?}
+    B -->|Yes| C[Continue]
+    B -->|No| D[Specialized Exception]
     
-    D --> E{Type d'erreur}
-    E -->|Connexion BDD| F[DatabaseConnectionException]
+    D --> E{Error Type}
+    E -->|DB Connection| F[DatabaseConnectionException]
     E -->|Extraction| G[MetadataExtractionException]
-    E -->|Génération| H[EntityGenerationException]
-    E -->|Écriture| I[FileWriteException]
+    E -->|Generation| H[EntityGenerationException]
+    E -->|Writing| I[FileWriteException]
     
-    F --> J[Log + Message utilisateur]
+    F --> J[Log + User Message]
     G --> J
     H --> J
     I --> J
     
-    J --> K[Arrêt gracieux]
+    J --> K[Graceful Stop]
 ```
 
-## 🎯 Patterns de Conception Utilisés
+## 🎯 Design Patterns Used
 
 ### 1. Service Layer Pattern
-- **Objectif** : Séparer la logique métier de l'interface utilisateur
-- **Implémentation** : Chaque service encapsule une responsabilité métier
-- **Avantages** : Réutilisabilité, testabilité, maintenabilité
+- **Objective**: Separate business logic from user interface
+- **Implementation**: Each service encapsulates a business responsibility
+- **Advantages**: Reusability, testability, maintainability
 
 ### 2. Dependency Injection Pattern
-- **Objectif** : Découpler les dépendances entre services
-- **Implémentation** : Container Symfony pour l'injection
-- **Avantages** : Flexibilité, testabilité, configuration centralisée
+- **Objective**: Decouple dependencies between services
+- **Implementation**: Symfony container for injection
+- **Advantages**: Flexibility, testability, centralized configuration
 
 ### 3. Strategy Pattern
-- **Objectif** : Adapter le comportement selon le contexte
-- **Implémentation** : Différentes stratégies selon le SGBD
-- **Avantages** : Extensibilité, support multi-plateforme
+- **Objective**: Adapt behavior based on context
+- **Implementation**: Different strategies per DBMS
+- **Advantages**: Extensibility, multi-platform support
 
 ### 4. Template Method Pattern
-- **Objectif** : Définir un algorithme avec des étapes personnalisables
-- **Implémentation** : Processus de génération standardisé
-- **Avantages** : Cohérence, extensibilité contrôlée
+- **Objective**: Define an algorithm with customizable steps
+- **Implementation**: Standardized generation process
+- **Advantages**: Consistency, controlled extensibility
 
 ### 5. Factory Pattern
-- **Objectif** : Créer des objets sans spécifier leur classe exacte
-- **Implémentation** : Création de connexions DB selon le driver
-- **Avantages** : Flexibilité, encapsulation de la création
+- **Objective**: Create objects without specifying their exact class
+- **Implementation**: DB connection creation based on driver
+- **Advantages**: Flexibility, creation encapsulation
 
-## 🔌 Points d'Extension
+## 🔌 Extension Points
 
-### 1. Nouveaux SGBD
-Pour ajouter le support d'un nouveau SGBD :
+### 1. New DBMS Support
+To add support for a new DBMS:
 
 ```php
-// 1. Étendre DatabaseAnalyzer
+// 1. Extend DatabaseAnalyzer
 class OracleAnalyzer extends DatabaseAnalyzer
 {
     protected function getTableListQuery(): string
@@ -312,7 +312,7 @@ class OracleAnalyzer extends DatabaseAnalyzer
     }
 }
 
-// 2. Ajouter le mapping des types
+// 2. Add type mapping
 class OracleMetadataExtractor extends MetadataExtractor
 {
     protected function getTypeMapping(): array
@@ -326,76 +326,76 @@ class OracleMetadataExtractor extends MetadataExtractor
 }
 ```
 
-### 2. Templates Personnalisés
+### 2. Custom Templates
 ```php
-// Configuration personnalisée
+// Custom configuration
 $entityGenerator->setTemplate('custom_entity.php.twig');
-$entityGenerator->addTemplateVariable('author', 'Mon Nom');
+$entityGenerator->addTemplateVariable('author', 'My Name');
 ```
 
-### 3. Hooks et Événements
+### 3. Hooks and Events
 ```php
-// Événements personnalisés (future version)
+// Custom events (future version)
 $dispatcher->addListener('entity.before_generate', $callback);
 $dispatcher->addListener('entity.after_generate', $callback);
 ```
 
-## 📊 Métriques et Performance
+## 📊 Metrics and Performance
 
-### Complexité Cyclomatique
-- **DatabaseAnalyzer** : 8 (Acceptable)
-- **MetadataExtractor** : 12 (Modérée)
-- **EntityGenerator** : 10 (Acceptable)
-- **FileWriter** : 6 (Faible)
-- **ReverseEngineeringService** : 4 (Faible)
+### Cyclomatic Complexity
+- **DatabaseAnalyzer**: 8 (Acceptable)
+- **MetadataExtractor**: 12 (Moderate)
+- **EntityGenerator**: 10 (Acceptable)
+- **FileWriter**: 6 (Low)
+- **ReverseEngineeringService**: 4 (Low)
 
 ### Performance Benchmarks
-- **Analyse 100 tables** : < 1 seconde
-- **Génération 50 entités** : < 10 secondes
-- **Table 50 colonnes** : < 2 secondes
-- **Utilisation mémoire** : < 50MB pour 30 entités
+- **100 table analysis**: < 2 seconds
+- **50 entity generation**: < 15 seconds
+- **50-column table**: < 3 seconds
+- **Memory usage**: < 128MB for 50 entities
 
-### Optimisations Implémentées
-- **Lazy Loading** : Chargement des métadonnées à la demande
-- **Caching** : Cache des informations de schéma
-- **Batch Processing** : Traitement par lots pour les grandes bases
-- **Memory Management** : Libération mémoire entre les tables
+### Implemented Optimizations
+- **Lazy Loading**: On-demand metadata loading
+- **Caching**: Schema information cache
+- **Batch Processing**: Batch processing for large databases
+- **Memory Management**: Memory release between tables
 
-## 🧪 Architecture de Tests
+## 🧪 Test Architecture
 
-### Structure des Tests
+### Test Structure
 ```
 tests/
-├── Unit/           # Tests unitaires (mocks)
-├── Integration/    # Tests bout-en-bout
-├── Performance/    # Tests de charge
-└── Command/        # Tests CLI
+├── Unit/           # Unit tests (mocks)
+├── Integration/    # End-to-end tests
+├── Performance/    # Load tests
+└── Command/        # CLI tests
 ```
 
-### Stratégie de Test
-- **Tests Unitaires** : Chaque service testé isolément avec mocks
-- **Tests d'Intégration** : Processus complet avec base de données réelle
-- **Tests de Performance** : Validation des benchmarks
-- **Tests de Régression** : Prévention des régressions
+### Test Strategy
+- **Unit Tests**: Each service tested in isolation with mocks
+- **Integration Tests**: Complete process with real database
+- **Performance Tests**: Benchmark validation
+- **Regression Tests**: Regression prevention
 
-## 🔮 Évolutions Futures
+## 🔮 Future Evolution
 
 ### Version 0.2.0
-- **Relations OneToMany** : Détection et génération automatiques
-- **Relations ManyToMany** : Support des tables de liaison
-- **Cache avancé** : Mise en cache des métadonnées
+- **OneToMany Relations**: Automatic detection and generation
+- **ManyToMany Relations**: Junction table support
+- **Advanced Cache**: Metadata caching
 
 ### Version 0.3.0
-- **Support Oracle/SQL Server** : Nouveaux drivers
-- **API REST** : Interface web pour la génération
-- **Templates avancés** : Système de templates extensible
+- **Oracle/SQL Server Support**: New drivers
+- **REST API**: Web interface for generation
+- **Advanced Templates**: Extensible template system
 
 ### Version 1.0.0
-- **Interface graphique** : Administration web complète
-- **Migrations automatiques** : Génération de migrations Doctrine
-- **Plugin IDE** : Intégration PHPStorm/VSCode
+- **Graphical Interface**: Complete web administration
+- **Automatic Migrations**: Doctrine migration generation
+- **IDE Plugin**: PHPStorm/VSCode integration
 
-## 📚 Références
+## 📚 References
 
 - [Symfony Service Container](https://symfony.com/doc/current/service_container.html)
 - [Doctrine DBAL](https://www.doctrine-project.org/projects/dbal.html)
@@ -404,4 +404,4 @@ tests/
 
 ---
 
-**Cette architecture garantit un code maintenable, extensible et performant pour le ReverseEngineeringBundle.**
+**This architecture ensures maintainable, extensible, and performant code for the ReverseEngineeringBundle.**

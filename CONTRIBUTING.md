@@ -1,107 +1,107 @@
-# Guide de Contribution - ReverseEngineeringBundle
+# Contributing Guide - ReverseEngineeringBundle
 
-Merci de votre intérêt pour contribuer au ReverseEngineeringBundle ! Ce guide vous aidera à comprendre comment participer efficacement au développement du projet.
+Thank you for your interest in contributing to the ReverseEngineeringBundle! This guide will help you understand how to participate effectively in the development of this Symfony 7+ / PHP 8+ database reverse engineering bundle.
 
-## 🎯 Comment Contribuer
+## 🎯 How to Contribute
 
-### 🐛 Signaler des Bugs
+### 🐛 Reporting Bugs
 
-1. **Vérifiez les issues existantes** pour éviter les doublons
-2. **Utilisez le template de bug report** disponible sur GitHub
-3. **Fournissez des informations détaillées** :
-   - Version du bundle
-   - Version de PHP et Symfony
-   - SGBD utilisé et version
-   - Étapes pour reproduire le problème
-   - Comportement attendu vs observé
-   - Logs d'erreur complets
+1. **Check existing issues** to avoid duplicates
+2. **Use the bug report template** available on GitHub
+3. **Provide detailed information**:
+   - Bundle version
+   - PHP and Symfony versions
+   - Database system and version
+   - Steps to reproduce the issue
+   - Expected vs observed behavior
+   - Complete error logs
 
-### 💡 Proposer des Fonctionnalités
+### 💡 Proposing Features
 
-1. **Ouvrez une discussion** avant de commencer le développement
-2. **Utilisez le template de feature request**
-3. **Décrivez clairement** :
-   - Le problème que cela résout
-   - La solution proposée
-   - Les alternatives considérées
-   - L'impact sur l'API existante
+1. **Open a discussion** before starting development
+2. **Use the feature request template**
+3. **Clearly describe**:
+   - The problem it solves
+   - The proposed solution
+   - Alternatives considered
+   - Impact on existing API
 
-### 🔧 Contribuer au Code
+### 🔧 Contributing Code
 
-1. **Fork** le repository
-2. **Créez une branche** pour votre fonctionnalité :
+1. **Fork** the repository
+2. **Create a branch** for your feature:
    ```bash
-   git checkout -b feature/ma-nouvelle-fonctionnalite
+   git checkout -b feature/my-new-feature
    ```
-3. **Développez** en suivant nos standards
-4. **Testez** votre code
-5. **Soumettez** une Pull Request
+3. **Develop** following our standards
+4. **Test** your code thoroughly
+5. **Submit** a Pull Request
 
-## 🏗️ Architecture du Projet
+## 🏗️ Project Architecture
 
-### Structure des Répertoires
+### Directory Structure
 
 ```
 src/
-├── Bundle/                 # Bundle principal Symfony
-├── Command/               # Commandes CLI
-├── DependencyInjection/   # Configuration du container
-├── Exception/             # Exceptions personnalisées
-├── Resources/             # Templates et configuration
-│   ├── config/           # Configuration des services
-│   └── templates/        # Templates Twig
-└── Service/              # Services métier
-    ├── DatabaseAnalyzer.php      # Analyse de la BDD
-    ├── MetadataExtractor.php     # Extraction métadonnées
-    ├── EntityGenerator.php       # Génération entités
-    ├── FileWriter.php           # Écriture fichiers
+├── Bundle/                 # Main Symfony bundle
+├── Command/               # CLI commands
+├── DependencyInjection/   # Container configuration
+├── Exception/             # Custom exceptions
+├── Resources/             # Templates and configuration
+│   ├── config/           # Service configuration
+│   └── templates/        # Twig templates
+└── Service/              # Business services
+    ├── DatabaseAnalyzer.php      # Database analysis
+    ├── MetadataExtractor.php     # Metadata extraction
+    ├── EntityGenerator.php       # Entity generation
+    ├── FileWriter.php           # File writing
     └── ReverseEngineeringService.php # Orchestration
 
 tests/
-├── Unit/                 # Tests unitaires
-├── Integration/          # Tests d'intégration
-├── Performance/          # Tests de performance
-└── Command/             # Tests des commandes CLI
+├── Unit/                 # Unit tests
+├── Integration/          # Integration tests
+├── Performance/          # Performance tests
+└── Command/             # CLI command tests
 ```
 
-### Services Principaux
+### Core Services
 
-1. **`DatabaseAnalyzer`** : Analyse la structure de la base de données
-   - Connexion et validation
-   - Listage des tables
-   - Extraction des métadonnées de schéma
+1. **`DatabaseAnalyzer`**: Analyzes database structure
+   - Connection and validation
+   - Table listing
+   - Schema metadata extraction
 
-2. **`MetadataExtractor`** : Extrait et mappe les métadonnées
-   - Mapping des types de données
-   - Détection des relations
-   - Normalisation des noms
+2. **`MetadataExtractor`**: Extracts and maps metadata
+   - Data type mapping
+   - Relationship detection
+   - Name normalization
 
-3. **`EntityGenerator`** : Génère le code PHP des entités
-   - Utilisation de templates Twig
-   - Génération des propriétés et méthodes
-   - Support attributs PHP 8+ et annotations
+3. **`EntityGenerator`**: Generates PHP entity code
+   - Twig template usage
+   - Property and method generation
+   - PHP 8+ attributes and annotation support
 
-4. **`FileWriter`** : Écrit les fichiers sur le disque
-   - Gestion des conflits
-   - Validation des permissions
-   - Création des répertoires
+4. **`FileWriter`**: Writes files to disk
+   - Conflict management
+   - Permission validation
+   - Directory creation
 
-5. **`ReverseEngineeringService`** : Orchestre tout le processus
-   - Coordination des services
-   - Gestion des options
-   - Gestion d'erreurs globale
+5. **`ReverseEngineeringService`**: Orchestrates the entire process
+   - Service coordination
+   - Option management
+   - Global error handling
 
-## 📋 Standards de Développement
+## 📋 Development Standards
 
-### Standards de Code
+### Code Standards
 
-- **PSR-12** : Standard de style de code PHP
-- **PHPStan niveau 8** : Analyse statique stricte
-- **PHP 8.1+** : Utilisation des fonctionnalités modernes
-- **Types stricts** : `declare(strict_types=1)` obligatoire
-- **Documentation** : PHPDoc complète pour toutes les méthodes publiques
+- **PSR-12**: PHP code style standard
+- **PHPStan level 9**: Strict static analysis
+- **PHP 8.1+**: Modern PHP features usage
+- **Strict types**: `declare(strict_types=1)` mandatory
+- **Documentation**: Complete PHPDoc for all public methods
 
-### Conventions de Nommage
+### Naming Conventions
 
 #### Classes
 ```php
@@ -116,13 +116,13 @@ class DatabaseConnectionException extends ReverseEngineeringException
 class ReverseGenerateCommand extends Command
 ```
 
-#### Méthodes
+#### Methods
 ```php
-// Actions principales
+// Main actions
 public function generateEntities(array $options = []): array
 public function extractTableMetadata(string $tableName): array
 
-// Validation/Test
+// Validation/Testing
 public function validateConnection(): bool
 public function testDatabaseConnection(): bool
 
@@ -133,12 +133,12 @@ public function setOutputDirectory(string $dir): void
 
 #### Variables
 ```php
-// CamelCase pour les variables
+// CamelCase for variables
 $tableName = 'users';
 $entityMetadata = [];
 $outputDirectory = '/path/to/entities';
 
-// Snake_case pour les clés de configuration
+// Snake_case for configuration keys
 $config = [
     'output_dir' => '/path',
     'generate_repository' => true,
@@ -146,9 +146,9 @@ $config = [
 ];
 ```
 
-### Gestion d'Erreurs
+### Error Handling
 
-#### Hiérarchie des Exceptions
+#### Exception Hierarchy
 ```php
 ReverseEngineeringException (base)
 ├── DatabaseConnectionException
@@ -157,170 +157,170 @@ ReverseEngineeringException (base)
 └── FileWriteException
 ```
 
-#### Bonnes Pratiques
+#### Best Practices
 ```php
-// ✅ Bon : Exception spécifique avec contexte
+// ✅ Good: Specific exception with context
 throw new EntityGenerationException(
-    "Impossible de générer l'entité pour la table '{$tableName}' : {$reason}",
+    "Unable to generate entity for table '{$tableName}': {$reason}",
     0,
     $previousException
 );
 
-// ❌ Mauvais : Exception générique
-throw new Exception('Erreur');
+// ❌ Bad: Generic exception
+throw new Exception('Error');
 ```
 
-## 🧪 Tests et Qualité
+## 🧪 Testing and Quality
 
-### Types de Tests
+### Test Types
 
-1. **Tests Unitaires** (`tests/Unit/`)
-   - Un test par service/classe
-   - Mocking des dépendances
-   - Couverture de tous les chemins d'exécution
+1. **Unit Tests** (`tests/Unit/`)
+   - One test per service/class
+   - Dependency mocking
+   - Coverage of all execution paths
 
-2. **Tests d'Intégration** (`tests/Integration/`)
-   - Tests de bout en bout
-   - Base de données réelle (SQLite en mémoire)
-   - Scénarios utilisateur complets
+2. **Integration Tests** (`tests/Integration/`)
+   - End-to-end tests
+   - Real database (SQLite in-memory)
+   - Complete user scenarios
 
-3. **Tests de Performance** (`tests/Performance/`)
-   - Benchmarks avec grandes tables
-   - Mesure de la mémoire utilisée
-   - Validation des limites de performance
+3. **Performance Tests** (`tests/Performance/`)
+   - Benchmarks with large tables
+   - Memory usage measurement
+   - Performance limit validation
 
-4. **Tests de Commande** (`tests/Command/`)
-   - Tests CLI avec `CommandTester`
-   - Validation des options et arguments
-   - Tests des codes de retour
+4. **Command Tests** (`tests/Command/`)
+   - CLI tests with `CommandTester`
+   - Option and argument validation
+   - Return code testing
 
-### Exécution des Tests
+### Running Tests
 
 ```bash
-# Tous les tests
+# All tests
 ./run-tests.sh
 
-# Tests par catégorie
+# Tests by category
 vendor/bin/phpunit --testsuite=Unit
 vendor/bin/phpunit --testsuite=Integration
 vendor/bin/phpunit --testsuite=Performance
 
-# Avec couverture
+# With coverage
 vendor/bin/phpunit --coverage-html=coverage/html
 
-# Test spécifique
+# Specific test
 vendor/bin/phpunit tests/Unit/Service/DatabaseAnalyzerTest.php
 ```
 
-### Objectifs de Qualité
+### Quality Objectives
 
-- **Couverture de code** : > 90%
-- **PHPStan** : Niveau 8 sans erreur
-- **Tests** : Tous les tests doivent passer
-- **Performance** : Respecter les benchmarks définis
+- **Code coverage**: > 95%
+- **PHPStan**: Level 9 without errors
+- **Tests**: All tests must pass
+- **Performance**: Meet defined benchmarks
 
-### Outils de Qualité
+### Quality Tools
 
 ```bash
-# Analyse statique
+# Static analysis
 composer phpstan
 
-# Correction du style de code
+# Code style fixing
 composer cs-fix
 
-# Validation complète
+# Complete validation
 ./scripts/validate.sh
 ```
 
-## 🔄 Processus de Pull Request
+## 🔄 Pull Request Process
 
-### Checklist Avant Soumission
+### Pre-submission Checklist
 
-- [ ] **Code** : Respecte les standards PSR-12
-- [ ] **Tests** : Tous les tests passent
-- [ ] **Couverture** : Nouvelles fonctionnalités testées
-- [ ] **PHPStan** : Niveau 8 sans erreur
-- [ ] **Documentation** : PHPDoc à jour
-- [ ] **CHANGELOG** : Entrée ajoutée si nécessaire
-- [ ] **Commit** : Messages clairs et descriptifs
+- [ ] **Code**: Follows PSR-12 standards
+- [ ] **Tests**: All tests pass
+- [ ] **Coverage**: New features are tested
+- [ ] **PHPStan**: Level 9 without errors
+- [ ] **Documentation**: PHPDoc up to date
+- [ ] **CHANGELOG**: Entry added if necessary
+- [ ] **Commits**: Clear and descriptive messages
 
-### Format des Messages de Commit
+### Commit Message Format
 
 ```bash
-# Format : type(scope): description
+# Format: type(scope): description
 
-# Types :
-feat(generator): ajout support des relations OneToMany
-fix(analyzer): correction détection clés étrangères PostgreSQL
-docs(readme): mise à jour exemples d'utilisation
-test(unit): ajout tests pour MetadataExtractor
-refactor(service): simplification de l'architecture
-perf(analyzer): optimisation requêtes pour grandes tables
+# Types:
+feat(generator): add OneToMany relationship support
+fix(analyzer): fix PostgreSQL foreign key detection
+docs(readme): update usage examples
+test(unit): add tests for MetadataExtractor
+refactor(service): simplify architecture
+perf(analyzer): optimize queries for large tables
 ```
 
-### Processus de Review
+### Review Process
 
-1. **Validation automatique** : CI/CD vérifie la qualité
-2. **Review par les mainteneurs** : Code et architecture
-3. **Tests manuels** : Validation fonctionnelle
-4. **Merge** : Après approbation
+1. **Automatic validation**: CI/CD checks quality
+2. **Maintainer review**: Code and architecture
+3. **Manual testing**: Functional validation
+4. **Merge**: After approval
 
-## 🎯 Domaines de Contribution
+## 🎯 Contribution Areas
 
-### Priorité Haute
-- **Relations OneToMany/ManyToMany** : Détection et génération automatiques
-- **Support Oracle/SQL Server** : Nouveaux drivers de base de données
-- **Performance** : Optimisation pour très grandes bases de données
-- **Templates** : Personnalisation avancée des entités générées
+### High Priority
+- **OneToMany/ManyToMany Relations**: Automatic detection and generation
+- **Oracle/SQL Server Support**: New database drivers
+- **Performance**: Optimization for very large databases
+- **Templates**: Advanced customization of generated entities
 
-### Priorité Moyenne
-- **Interface Web** : Administration via navigateur
-- **Migrations Doctrine** : Génération automatique
-- **API REST** : Intégration avec d'autres outils
-- **Fixtures** : Génération de données de test
+### Medium Priority
+- **Web Interface**: Browser-based administration
+- **Doctrine Migrations**: Automatic generation
+- **REST API**: Integration with other tools
+- **Fixtures**: Test data generation
 
-### Priorité Basse
-- **Plugin IDE** : Intégration PHPStorm/VSCode
-- **Support des vues** : Génération d'entités read-only
-- **Procédures stockées** : Mapping vers des services
+### Low Priority
+- **IDE Plugin**: PHPStorm/VSCode integration
+- **View Support**: Read-only entity generation
+- **Stored Procedures**: Mapping to services
 
-## 📚 Ressources
+## 📚 Resources
 
 ### Documentation
-- [Architecture détaillée](./docs/ARCHITECTURE.md)
-- [Documentation API](./docs/API.md)
-- [Guide de dépannage](./docs/TROUBLESHOOTING.md)
-- [Cas d'usage avancés](./docs/ADVANCED_USAGE.md)
+- [Detailed Architecture](./docs/ARCHITECTURE.md)
+- [API Documentation](./docs/API.md)
+- [Troubleshooting Guide](./docs/TROUBLESHOOTING.md)
+- [Advanced Usage Cases](./docs/ADVANCED_USAGE.md)
 
-### Outils de Développement
-- [PHPUnit](https://phpunit.de/) - Framework de tests
-- [PHPStan](https://phpstan.org/) - Analyse statique
-- [PHP CS Fixer](https://cs.symfony.com/) - Style de code
-- [Doctrine DBAL](https://www.doctrine-project.org/projects/dbal.html) - Abstraction base de données
+### Development Tools
+- [PHPUnit](https://phpunit.de/) - Testing framework
+- [PHPStan](https://phpstan.org/) - Static analysis
+- [PHP CS Fixer](https://cs.symfony.com/) - Code style
+- [Doctrine DBAL](https://www.doctrine-project.org/projects/dbal.html) - Database abstraction
 
-### Communauté
-- [Issues GitHub](https://github.com/eprofos/reverse-engineering-bundle/issues)
+### Community
+- [GitHub Issues](https://github.com/eprofos/reverse-engineering-bundle/issues)
 - [Discussions](https://github.com/eprofos/reverse-engineering-bundle/discussions)
 - [Pull Requests](https://github.com/eprofos/reverse-engineering-bundle/pulls)
 
-## 🤝 Code de Conduite
+## 🤝 Code of Conduct
 
-Ce projet adhère au [Code de Conduite Contributor Covenant](https://www.contributor-covenant.org/fr/version/2/1/code_of_conduct/).
-En participant, vous vous engagez à respecter ce code.
+This project adheres to the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+By participating, you agree to uphold this code.
 
-### Nos Engagements
+### Our Commitments
 
-- **Respect** : Traiter tous les contributeurs avec respect
-- **Inclusion** : Accueillir toutes les perspectives et expériences
-- **Collaboration** : Travailler ensemble vers des objectifs communs
-- **Professionnalisme** : Maintenir un environnement professionnel
+- **Respect**: Treat all contributors with respect
+- **Inclusion**: Welcome all perspectives and experiences
+- **Collaboration**: Work together toward common goals
+- **Professionalism**: Maintain a professional environment
 
 ## 📞 Contact
 
-- **Mainteneur principal** : Eprofos Team
-- **Issues** : [GitHub Issues](https://github.com/eprofos/reverse-engineering-bundle/issues)
-- **Discussions** : [GitHub Discussions](https://github.com/eprofos/reverse-engineering-bundle/discussions)
+- **Main Maintainer**: Eprofos Team
+- **Issues**: [GitHub Issues](https://github.com/eprofos/reverse-engineering-bundle/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/eprofos/reverse-engineering-bundle/discussions)
 
 ---
 
-**Merci de contribuer au ReverseEngineeringBundle ! Ensemble, nous construisons un outil puissant pour la communauté Symfony.** 🚀
+**Thank you for contributing to the ReverseEngineeringBundle! Together, we're building a powerful tool for the Symfony community.** 🚀
