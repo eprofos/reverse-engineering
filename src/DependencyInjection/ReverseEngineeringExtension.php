@@ -28,6 +28,8 @@ class ReverseEngineeringExtension extends Extension
 
         // Define configuration parameters
         $container->setParameter('reverse_engineering.config', $config);
+        $container->setParameter('reverse_engineering.config.database', $config['database'] ?? []);
+        $container->setParameter('reverse_engineering.config.generation', $config['generation'] ?? []);
     }
 
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration

@@ -42,7 +42,7 @@ class ReverseGenerateCommand extends Command
             )
             ->addOption(
                 'exclude',
-                'e',
+                'x',
                 InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
                 'Tables to exclude from processing',
             )
