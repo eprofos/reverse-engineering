@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace Eprofos\ReverseEngineeringBundle\Service;
 
-use App\Exception\MetadataExtractionException;
+use Eprofos\ReverseEngineeringBundle\Exception\MetadataExtractionException;
 use Exception;
 
 use function in_array;

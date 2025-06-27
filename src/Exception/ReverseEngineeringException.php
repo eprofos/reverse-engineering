@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Exception;
+namespace Eprofos\ReverseEngineeringBundle\Exception;
 
 use Exception;
 use Throwable;

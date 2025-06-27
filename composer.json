@@ -61,12 +61,12 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "src/"
+            "Eprofos\\ReverseEngineeringBundle\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "App\\Tests\\": "tests/"
+            "Eprofos\\ReverseEngineeringBundle\\Tests\\": "tests/"
         }
     },
     "config": {

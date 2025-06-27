@@ -149,3 +149,5 @@ docker-compose.override.yml
 # Sakila test files
 /sakila_backup.sql
 /sakila-*.sql
+
+/sf_project

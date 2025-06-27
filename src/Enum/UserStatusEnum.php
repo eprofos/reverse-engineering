@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Enum;
+namespace Eprofos\ReverseEngineeringBundle\Enum;
 
 /**
  * Enum for users.status values

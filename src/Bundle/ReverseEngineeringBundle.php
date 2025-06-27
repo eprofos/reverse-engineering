@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Bundle;
+namespace Eprofos\ReverseEngineeringBundle;
 
-use App\DependencyInjection\ReverseEngineeringExtension;
+use Eprofos\ReverseEngineeringBundle\DependencyInjection\ReverseEngineeringExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

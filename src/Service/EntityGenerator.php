@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace Eprofos\ReverseEngineeringBundle\Service;
 
-use App\Exception\EntityGenerationException;
+use Eprofos\ReverseEngineeringBundle\Exception\EntityGenerationException;
 use Exception;
 use Twig\Environment;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace Eprofos\ReverseEngineeringBundle\Service;
 
-use App\Exception\FileWriteException;
+use Eprofos\ReverseEngineeringBundle\Exception\FileWriteException;
 use Exception;
 
 use function sprintf;

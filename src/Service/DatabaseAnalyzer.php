@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace Eprofos\ReverseEngineeringBundle\Service;
 
-use App\Exception\DatabaseConnectionException;
+use Eprofos\ReverseEngineeringBundle\Exception\DatabaseConnectionException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Exception;

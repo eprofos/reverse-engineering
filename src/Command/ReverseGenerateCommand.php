@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Command;
+namespace Eprofos\ReverseEngineeringBundle\Command;
 
-use App\Service\ReverseEngineeringService;
+use Eprofos\ReverseEngineeringBundle\Service\ReverseEngineeringService;
 use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
