@@ -7,6 +7,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Service\DatabaseAnalyzer;
 use App\Service\EntityGenerator;
+use App\Service\EnumClassGenerator;
 use App\Service\FileWriter;
 use App\Service\MetadataExtractor;
 use App\Service\ReverseEngineeringService;
@@ -76,7 +77,13 @@ try {
     $loader = new FilesystemLoader(__DIR__ . '/../src/Resources/templates');
     $twig   = new Environment($loader);
 
-    $entityGenerator = new EntityGenerator($twig);
+    // Configurer EnumClassGenerator
+    $enumClassGenerator = new EnumClassGenerator(__DIR__ . '/..', [
+        'enum_namespace' => 'App\\Enum',
+        'enum_output_dir' => 'src/Enum'
+    ]);
+
+    $entityGenerator = new EntityGenerator($twig, $enumClassGenerator);
     $fileWriter      = new FileWriter(__DIR__ . '/..');
 
     $service = new ReverseEngineeringService(

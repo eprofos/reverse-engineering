@@ -15,6 +15,11 @@ services:
 
     App\Service\MetadataExtractor: ~
 
+    App\Service\EnumClassGenerator:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $config: '%reverse_engineering.config.generation%'
+
     App\Service\EntityGenerator:
         arguments:
             $config: '%reverse_engineering.config.generation%'

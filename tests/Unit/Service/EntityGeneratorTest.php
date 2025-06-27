@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service;
 
 use App\Exception\EntityGenerationException;
 use App\Service\EntityGenerator;
+use App\Service\EnumClassGenerator;
 use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -20,18 +21,21 @@ class EntityGeneratorTest extends TestCase
 
     private Environment|MockObject $twig;
 
+    private EnumClassGenerator|MockObject $enumClassGenerator;
+
     private array $config;
 
     protected function setUp(): void
     {
         $this->twig   = $this->createMock(Environment::class);
+        $this->enumClassGenerator = $this->createMock(EnumClassGenerator::class);
         $this->config = [
             'namespace'           => 'App\\Entity',
             'generate_repository' => true,
             'use_annotations'     => false,
         ];
 
-        $this->entityGenerator = new EntityGenerator($this->twig, $this->config);
+        $this->entityGenerator = new EntityGenerator($this->twig, $this->enumClassGenerator, $this->config);
     }
 
     public function testGenerateEntitySuccess(): void
@@ -854,5 +858,117 @@ class EntityGeneratorTest extends TestCase
 
         // Assert
         $this->assertTrue($result['has_lifecycle_callbacks']);
+    }
+
+    public function testGenerateEntityWithEnumColumn(): void
+    {
+        // Arrange
+        $tableName = 'users';
+        $metadata = [
+            'entity_name' => 'User',
+            'table_name' => 'users',
+            'repository_name' => 'UserRepository',
+            'columns' => [
+                [
+                    'name' => 'id',
+                    'property_name' => 'id',
+                    'type' => 'int',
+                    'doctrine_type' => 'integer',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => true,
+                    'comment' => '',
+                    'is_foreign_key' => false,
+                ],
+                [
+                    'name' => 'status',
+                    'property_name' => 'status',
+                    'type' => 'string',
+                    'doctrine_type' => 'string',
+                    'nullable' => false,
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'default' => null,
+                    'auto_increment' => false,
+                    'comment' => '',
+                    'is_foreign_key' => false,
+                    'enum_values' => ['active', 'inactive', 'pending'],
+                ],
+            ],
+            'relations' => [],
+            'indexes' => [],
+            'primary_key' => ['id'],
+        ];
+
+        $expectedCode = '<?php class User {}';
+
+        // Mock the enum class generator
+        $this->enumClassGenerator
+            ->expects($this->exactly(2))
+            ->method('generateEnumClassName')
+            ->with('users', 'status')
+            ->willReturn('UserStatusEnum');
+
+        $this->enumClassGenerator
+            ->expects($this->once())
+            ->method('generateEnumContent')
+            ->with('UserStatusEnum', ['active', 'inactive', 'pending'], 'users', 'status')
+            ->willReturn('<?php enum UserStatusEnum: string {}');
+
+        $this->enumClassGenerator
+            ->expects($this->once())
+            ->method('writeEnumFile')
+            ->with('UserStatusEnum', '<?php enum UserStatusEnum: string {}', true)
+            ->willReturn('/path/to/UserStatusEnum.php');
+
+        $this->enumClassGenerator
+            ->expects($this->exactly(2))
+            ->method('getEnumFullyQualifiedName')
+            ->with('UserStatusEnum')
+            ->willReturn('App\\Enum\\UserStatusEnum');
+
+        $this->twig
+            ->expects($this->exactly(2))
+            ->method('render')
+            ->willReturnCallback(function ($template, $data) use ($expectedCode) {
+                if ($template === 'entity.php.twig') {
+                    // Verify that enum import is included
+                    $this->assertContains('App\\Enum\\UserStatusEnum', $data['imports']);
+                    
+                    // Verify that the status property has enum class information
+                    $statusProperty = null;
+                    foreach ($data['properties'] as $property) {
+                        if ($property['name'] === 'status') {
+                            $statusProperty = $property;
+                            break;
+                        }
+                    }
+                    
+                    $this->assertNotNull($statusProperty);
+                    $this->assertTrue($statusProperty['has_enum_class']);
+                    $this->assertEquals('UserStatusEnum', $statusProperty['enum_class']);
+                    $this->assertEquals('App\\Enum\\UserStatusEnum', $statusProperty['enum_fqn']);
+                    
+                    return $expectedCode;
+                }
+
+                if ($template === 'repository.php.twig') {
+                    return '<?php class UserRepository {}';
+                }
+
+                return '';
+            });
+
+        // Act
+        $result = $this->entityGenerator->generateEntity($tableName, $metadata);
+
+        // Assert
+        $this->assertIsArray($result);
+        $this->assertEquals('User', $result['name']);
+        $this->assertCount(2, $result['properties']);
     }
 }

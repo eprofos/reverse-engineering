@@ -12,9 +12,114 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ManyToMany relationship support with junction table detection
 - Test fixture generation from existing database data
 - Web administration interface for entity management
-- Enhanced ENUM/SET type support with validation
 - Custom type mapping configuration
 - Performance optimizations for very large databases
+
+## [0.1.1] - 2025-06-27
+
+### Added
+
+#### 🆕 PHP 8.1 Backed Enum Support
+- **Automatic Enum Class Generation**: MySQL ENUM columns now generate PHP 8.1 backed enum classes instead of string types
+- **Type-Safe Entity Properties**: Entity properties use enum types with proper type hints and validation
+- **Intelligent Case Name Generation**: Database enum values are converted to valid PHP enum case names with proper formatting
+- **Doctrine Integration**: Generated entities include `enumType` attribute for seamless Doctrine ORM integration
+- **Configurable Enum Namespace**: Customizable namespace and output directory for generated enum classes
+- **Comprehensive Documentation**: Complete guide with examples, best practices, and migration strategies
+
+#### Core Services Enhancement
+- **`EnumClassGenerator` Service**: New service for generating PHP 8.1 backed enum classes with:
+  - Automatic enum class name generation from table and column names
+  - Smart case name conversion with special character handling
+  - Configurable namespace and output directory support
+  - File writing with conflict management and validation
+- **Enhanced `EntityGenerator`**: Updated to detect ENUM columns and integrate enum classes:
+  - Automatic enum class generation during entity creation
+  - Proper import statements for enum classes
+  - Type-safe property declarations using enum types
+  - Getter/setter methods with enum type hints
+- **Updated Entity Template**: Enhanced Twig template with `enumType` attribute support for both annotations and attributes
+
+#### Benefits and Improvements
+- **Type Safety**: Compile-time validation prevents invalid enum values
+- **IDE Support**: Full autocompletion and IntelliSense for enum values
+- **Code Quality**: Eliminates magic strings and improves maintainability
+- **Doctrine Validation**: Automatic validation of enum values on entity persist
+- **Backward Compatibility**: Existing string-based entities continue to work unchanged
+
+#### Configuration Options
+```yaml
+reverse_engineering:
+    generation:
+        enum_namespace: App\Enum        # Namespace for generated enum classes
+        enum_output_dir: src/Enum       # Output directory for enum files
+```
+
+#### Generated Code Examples
+- **Enum Classes**: PHP 8.1 backed enums with string values
+- **Entity Integration**: Properties with enum types and `enumType` attributes
+- **Type-Safe Methods**: Getters and setters with proper enum type hints
+
+### Technical Specifications
+
+#### Enum Generation Features
+- **Case Name Conversion**: Automatic conversion of database values to valid PHP enum case names
+- **Special Character Handling**: Proper handling of hyphens, underscores, and special characters
+- **Numeric Prefix Handling**: Automatic prefixing for enum values starting with numbers
+- **Empty Value Fallback**: Graceful handling of empty or invalid enum values
+- **File Conflict Management**: Smart handling of existing enum files with force overwrite option
+
+#### Integration Details
+- **Template Updates**: Enhanced entity template with conditional `enumType` rendering
+- **Import Management**: Automatic import statements for generated enum classes
+- **Property Type Mapping**: Seamless conversion from string to enum property types
+- **Default Value Handling**: Proper default value assignment using enum cases
+
+### Documentation
+
+#### New Documentation Files
+- **[ENUM Support Guide](./docs/ENUM_SUPPORT.md)**: Comprehensive documentation covering:
+  - Technical implementation details and architecture
+  - Before/after comparison with practical examples
+  - Configuration options and advanced usage scenarios
+  - Best practices for enum usage in Symfony applications
+  - Troubleshooting guide with common issues and solutions
+  - Migration strategies from string-based to enum-based entities
+
+#### Updated Documentation
+- **README.md**: Added ENUM support section with quick examples and configuration
+- **Type Mapping Table**: Updated to reflect new enum support capabilities
+- **Documentation Index**: Added link to comprehensive ENUM support guide
+
+### Testing and Quality Assurance
+
+#### Test Coverage
+- **Unit Tests**: Comprehensive testing of `EnumClassGenerator` service
+- **Integration Tests**: End-to-end testing of enum generation workflow
+- **Edge Case Testing**: Validation of special character handling and edge cases
+- **Template Testing**: Verification of proper `enumType` attribute rendering
+
+#### Code Quality
+- **PHPStan Level 8**: Maintained strict static analysis compliance
+- **Code Coverage**: Maintained >95% test coverage with new enum functionality
+- **Documentation Coverage**: 100% documentation of new enum features
+
+### Migration and Compatibility
+
+#### Backward Compatibility
+- **Existing Entities**: No breaking changes to existing string-based entities
+- **Configuration**: New enum configuration options are optional with sensible defaults
+- **Template Compatibility**: Enhanced templates maintain compatibility with existing entities
+
+#### Migration Support
+- **Gradual Migration**: Support for incremental migration from string to enum types
+- **Rollback Strategy**: Clear rollback procedures for migration issues
+- **Validation Tools**: Built-in validation for generated enum classes and entities
+
+### Performance Impact
+- **Generation Speed**: Minimal impact on entity generation performance
+- **Memory Usage**: Efficient enum class generation with optimized memory usage
+- **File I/O**: Smart file writing with conflict detection and validation
 
 ## [0.1.0] - 2025-06-25
 

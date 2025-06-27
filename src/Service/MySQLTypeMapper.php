@@ -124,10 +124,10 @@ class MySQLTypeMapper
     public static function generateEnumConstants(array $enumValues, string $propertyName): array
     {
         $constants = [];
-        $prefix    = strtoupper($propertyName);
+        $prefix    = self::normalizeConstantName($propertyName);
 
         foreach ($enumValues as $value) {
-            $constantName             = $prefix . '_' . strtoupper(preg_replace('/[^A-Z0-9]/', '_', $value));
+            $constantName             = $prefix . '_' . self::normalizeConstantName($value);
             $constants[$constantName] = $value;
         }
 
@@ -140,14 +140,32 @@ class MySQLTypeMapper
     public static function generateSetConstants(array $setValues, string $propertyName): array
     {
         $constants = [];
-        $prefix    = strtoupper($propertyName);
+        $prefix    = self::normalizeConstantName($propertyName);
 
         foreach ($setValues as $value) {
-            $constantName             = $prefix . '_' . strtoupper(preg_replace('/[^A-Z0-9]/', '_', $value));
+            $constantName             = $prefix . '_' . self::normalizeConstantName($value);
             $constants[$constantName] = $value;
         }
 
         return $constants;
+    }
+
+    /**
+     * Normalizes a string to be used as a PHP constant name.
+     * Converts to uppercase, handles spaces and special characters properly.
+     */
+    private static function normalizeConstantName(string $input): string
+    {
+        // Convert to uppercase first
+        $normalized = strtoupper($input);
+        
+        // Replace sequences of non-alphanumeric characters with single underscores
+        $normalized = preg_replace('/[^A-Z0-9]+/', '_', $normalized);
+        
+        // Remove leading and trailing underscores
+        $normalized = trim($normalized, '_');
+        
+        return $normalized;
     }
 
     /**

@@ -6,6 +6,7 @@ namespace App\Tests\Integration;
 
 use App\Service\DatabaseAnalyzer;
 use App\Service\EntityGenerator;
+use App\Service\EnumClassGenerator;
 use App\Service\MetadataExtractor;
 use App\Tests\TestHelper;
 use Doctrine\DBAL\Connection;
@@ -23,6 +24,7 @@ class LifecycleCallbackIntegrationTest extends TestCase
     private MetadataExtractor $metadataExtractor;
     private EntityGenerator $entityGenerator;
     private Environment $twig;
+    private EnumClassGenerator $enumClassGenerator;
 
     protected function setUp(): void
     {
@@ -43,11 +45,21 @@ class LifecycleCallbackIntegrationTest extends TestCase
         $loader = new ArrayLoader($templates);
         $this->twig = new Environment($loader);
         
-        $this->entityGenerator = new EntityGenerator($this->twig, [
-            'namespace' => 'App\\Entity',
-            'generate_repository' => true,
-            'use_annotations' => false,
-        ]);
+        // Create EnumClassGenerator for testing
+        $this->enumClassGenerator = new EnumClassGenerator(
+            sys_get_temp_dir(),
+            ['enum_namespace' => 'App\\Enum']
+        );
+        
+        $this->entityGenerator = new EntityGenerator(
+            $this->twig,
+            $this->enumClassGenerator,
+            [
+                'namespace' => 'App\\Entity',
+                'generate_repository' => true,
+                'use_annotations' => false,
+            ]
+        );
     }
 
     public function testEntityGenerationWithCurrentTimestampInAttributesMode(): void

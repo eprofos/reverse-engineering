@@ -36,6 +36,13 @@ reverse_engineering:
         # Use annotations instead of PHP 8 attributes
         use_annotations: false
         
+        # 🆕 ENUM Support Configuration
+        # Namespace for generated enum classes
+        enum_namespace: App\Enum
+        
+        # Output directory for enum classes
+        enum_output_dir: src/Enum
+        
         # Specific tables to process (all if empty)
         tables: []
         # Example to process only certain tables:
@@ -53,3 +60,12 @@ reverse_engineering:
         #     - cache_items
         #     - sessions
         #     - logs
+
+# Example: Custom enum configuration for modular applications
+# reverse_engineering:
+#     generation:
+#         # Custom enum namespace per module
+#         enum_namespace: MyApp\Domain\Enum
+#
+#         # Custom enum output directory
+#         enum_output_dir: src/Domain/Enum

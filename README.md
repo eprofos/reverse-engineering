@@ -18,6 +18,7 @@
 - **Multi-Database Support**: MySQL, PostgreSQL, SQLite, MariaDB with comprehensive type mapping
 - **Automatic Entity Generation**: PHP 8+ attributes or Doctrine annotations with intelligent property mapping
 - **Advanced Type Mapping**: Smart conversion of database types to PHP/Doctrine types including ENUM/SET support
+- **🆕 PHP 8.1 Backed Enum Support**: Automatic generation of type-safe enum classes from MySQL ENUM columns
 - **Relationship Detection**: Automatic ManyToOne, OneToMany, and ManyToMany relationship generation
 - **Repository Generation**: Doctrine repositories with customizable templates
 - **Intuitive CLI Interface**: Rich command-line interface with extensive options and validation
@@ -472,6 +473,98 @@ class Product
 }
 ```
 
+## 🆕 PHP 8.1 Backed Enum Support
+
+The bundle now automatically generates PHP 8.1 backed enum classes from MySQL ENUM columns, providing type safety and better IDE support.
+
+### Example: From Database to Type-Safe Enums
+
+**Database Schema:**
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    status ENUM('active', 'inactive', 'pending') DEFAULT 'pending'
+);
+```
+
+**Generated Enum Class (`src/Enum/UserStatusEnum.php`):**
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Enum;
+
+enum UserStatusEnum: string
+{
+    case ACTIVE = 'active';
+    case INACTIVE = 'inactive';
+    case PENDING = 'pending';
+}
+```
+
+**Generated Entity with Enum Integration:**
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+use App\Enum\UserStatusEnum;
+
+#[ORM\Entity]
+#[ORM\Table(name: 'users')]
+class User
+{
+    #[ORM\Column(type: 'string', enumType: UserStatusEnum::class)]
+    private UserStatusEnum $status = UserStatusEnum::PENDING;
+
+    public function getStatus(): UserStatusEnum
+    {
+        return $this->status;
+    }
+
+    public function setStatus(UserStatusEnum $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+}
+```
+
+**Type-Safe Usage:**
+```php
+// Type-safe with IDE autocompletion
+$user->setStatus(UserStatusEnum::ACTIVE);
+
+// Compile-time error prevention
+$user->setStatus('invalid'); // PHP Fatal Error
+
+// Easy value checking
+if ($user->getStatus() === UserStatusEnum::ACTIVE) {
+    // Handle active user
+}
+```
+
+### Configuration
+
+Configure enum generation in `config/packages/reverse_engineering.yaml`:
+
+```yaml
+reverse_engineering:
+    generation:
+        # Namespace for generated enum classes
+        enum_namespace: App\Enum
+        
+        # Output directory for enum classes
+        enum_output_dir: src/Enum
+```
+
+📖 **[Complete ENUM Documentation](./docs/ENUM_SUPPORT.md)** - Detailed guide with advanced usage, best practices, and troubleshooting.
+
 ## 🔧 Supported Data Types
 
 ### MySQL Data Types
@@ -486,7 +579,7 @@ class Product
 | `VARCHAR`, `CHAR`, `TEXT`, `LONGTEXT` | `string` | `string` | Length constraints |
 | `JSON` | `array` | `json` | Native JSON support |
 | `BLOB`, `LONGBLOB` | `string` | `blob` | Binary data |
-| `ENUM` | `string` | `string` | Values documented in comments |
+| `ENUM` | `PHP 8.1 Enum` | `string` | **🆕 Auto-generated backed enum classes** |
 | `SET` | `string` | `string` | Values documented in comments |
 | `YEAR` | `int` | `integer` | Year validation |
 
@@ -769,6 +862,7 @@ This project is licensed under the MIT License. See the [`LICENSE`](./LICENSE) f
 - 🔧 [API Documentation](./docs/API.md) - Complete API reference and examples
 - 🚨 [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) - Common issues and solutions
 - 🎯 [Advanced Usage](./docs/ADVANCED_USAGE.md) - Advanced scenarios and customization
+- 🆕 [ENUM Support Guide](./docs/ENUM_SUPPORT.md) - PHP 8.1 backed enum generation and usage
 - 🐳 [Docker Setup](./DOCKER_SETUP.md) - Docker environment configuration
 - ⚡ [Generate and Copy Guide](./GENERATE_AND_COPY.md) - Automated workflow documentation
 - 🧪 [Testing Guide](./tests/README.md) - Testing framework and procedures

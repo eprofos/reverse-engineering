@@ -6,6 +6,7 @@ namespace App\Tests\Integration;
 
 use App\Service\DatabaseAnalyzer;
 use App\Service\EntityGenerator;
+use App\Service\EnumClassGenerator;
 use App\Service\FileWriter;
 use App\Service\MetadataExtractor;
 use App\Service\ReverseEngineeringService;
@@ -303,7 +304,13 @@ class ReverseEngineeringIntegrationTest extends TestCase
         ]);
         $twig = new Environment($loader);
 
-        $entityGenerator = new EntityGenerator($twig);
+        // Create EnumClassGenerator for testing
+        $enumClassGenerator = new EnumClassGenerator(
+            sys_get_temp_dir(),
+            ['enum_namespace' => 'App\\Enum']
+        );
+
+        $entityGenerator = new EntityGenerator($twig, $enumClassGenerator);
         $fileWriter      = new FileWriter('');
 
         $this->service = new ReverseEngineeringService(

@@ -15,8 +15,11 @@ use function in_array;
  */
 class EntityGenerator
 {
+    private array $generatedEnumClasses = [];
+
     public function __construct(
         private readonly Environment $twig,
+        private readonly EnumClassGenerator $enumClassGenerator,
         private readonly array $config = [],
     ) {
     }
@@ -67,7 +70,7 @@ class EntityGenerator
     {
         $useAnnotations = $options['use_annotations'] ?? $this->config['use_annotations'] ?? false;
 
-        $properties = $this->prepareProperties($metadata['columns'], $metadata['primary_key']);
+        $properties = $this->prepareProperties($metadata['columns'], $metadata['primary_key'], $metadata['table_name'] ?? 'unknown');
 
         $namespace = $options['namespace'] ?? $this->config['namespace'] ?? 'App\\Entity';
         
@@ -102,7 +105,7 @@ class EntityGenerator
     /**
      * Prepares entity properties.
      */
-    private function prepareProperties(array $columns, array $primaryKey): array
+    private function prepareProperties(array $columns, array $primaryKey, string $tableName = 'unknown'): array
     {
         $properties = [];
 
@@ -129,6 +132,29 @@ class EntityGenerator
                 'setter_name'    => $this->generateSetterName($column['property_name']),
                 'needs_lifecycle_callback' => $column['needs_lifecycle_callback'] ?? false,
             ];
+
+            // Handle ENUM columns - generate enum class and modify property
+            if (isset($column['enum_values']) && !empty($column['enum_values'])) {
+                $enumData = $this->generateEnumClassForProperty($column, $tableName);
+                if ($enumData) {
+                    $property['enum_class'] = $enumData['class_name'];
+                    $property['enum_fqn'] = $enumData['fqn'];
+                    $property['type'] = $enumData['class_name'];
+                    $property['doctrine_type'] = 'string';
+                    $property['enum_values'] = $column['enum_values'];
+                    $property['has_enum_class'] = true;
+                }
+            }
+
+            // Preserve enum_values for template compatibility
+            if (isset($column['enum_values'])) {
+                $property['enum_values'] = $column['enum_values'];
+            }
+
+            // Preserve set_values for template compatibility
+            if (isset($column['set_values'])) {
+                $property['set_values'] = $column['set_values'];
+            }
 
             $properties[] = $property;
         }
@@ -183,6 +209,16 @@ class EntityGenerator
         // Add DateTime import if lifecycle callbacks are needed
         if ($hasLifecycleCallbacks) {
             $imports[] = 'DateTime';
+        }
+
+        // Add enum class imports
+        foreach ($metadata['columns'] as $column) {
+            if (isset($column['enum_values']) && !empty($column['enum_values'])) {
+                $tableName = $metadata['table_name'] ?? 'unknown';
+                $enumClassName = $this->enumClassGenerator->generateEnumClassName($tableName, $column['name']);
+                $enumFqn = $this->enumClassGenerator->getEnumFullyQualifiedName($enumClassName);
+                $imports[] = $enumFqn;
+            }
         }
 
         return array_unique($imports);
@@ -257,6 +293,11 @@ class EntityGenerator
         $constants = [];
 
         foreach ($properties as $property) {
+            // Skip generating constants if an enum class is being generated for this property
+            if (isset($property['has_enum_class']) && $property['has_enum_class']) {
+                continue;
+            }
+
             // Generate constants for ENUM
             if (isset($property['enum_values']) && ! empty($property['enum_values'])) {
                 $enumConstants = MySQLTypeMapper::generateEnumConstants(
@@ -291,5 +332,57 @@ class EntityGenerator
         }
 
         return false;
+    }
+
+    /**
+     * Generates enum class for a property with ENUM values.
+     */
+    private function generateEnumClassForProperty(array $column, string $tableName): ?array
+    {
+        if (!isset($column['enum_values']) || empty($column['enum_values'])) {
+            return null;
+        }
+
+        $columnName = $column['name'];
+        
+        // Generate enum class name
+        $enumClassName = $this->enumClassGenerator->generateEnumClassName($tableName, $columnName);
+        
+        // Check if we've already generated this enum class
+        $enumKey = $tableName . '.' . $columnName;
+        if (isset($this->generatedEnumClasses[$enumKey])) {
+            return $this->generatedEnumClasses[$enumKey];
+        }
+        
+        try {
+            // Generate enum content
+            $enumContent = $this->enumClassGenerator->generateEnumContent(
+                $enumClassName,
+                $column['enum_values'],
+                $tableName,
+                $columnName
+            );
+            
+            // Write enum file
+            $this->enumClassGenerator->writeEnumFile($enumClassName, $enumContent, true);
+            
+            // Get fully qualified name
+            $enumFqn = $this->enumClassGenerator->getEnumFullyQualifiedName($enumClassName);
+            
+            $enumData = [
+                'class_name' => $enumClassName,
+                'fqn' => $enumFqn,
+                'file_path' => $this->enumClassGenerator->getEnumFilePath($enumClassName),
+            ];
+            
+            // Cache the generated enum class
+            $this->generatedEnumClasses[$enumKey] = $enumData;
+            
+            return $enumData;
+        } catch (Exception $e) {
+            // Log error but don't fail entity generation
+            error_log("Failed to generate enum class for {$tableName}.{$columnName}: " . $e->getMessage());
+            return null;
+        }
     }
 }

@@ -63,11 +63,11 @@ class {{ entity_name }}
 {% if property.auto_increment %}
      * @ORM\GeneratedValue
 {% endif %}
-     * @ORM\Column(type="{{ property.doctrine_type }}"{% if property.length %}, length={{ property.length }}{% endif %}{% if not property.nullable %}, nullable=false{% endif %})
+     * @ORM\Column(type="{{ property.doctrine_type }}"{% if property.length %}, length={{ property.length }}{% endif %}{% if not property.nullable %}, nullable=false{% endif %}{% if property.has_enum_class is defined and property.has_enum_class %}, enumType="{{ property.enum_fqn }}"{% endif %})
      */
 {% else %}
     /**
-     * @ORM\Column(type="{{ property.doctrine_type }}"{% if property.length %}, length={{ property.length }}{% endif %}{% if property.nullable %}, nullable=true{% endif %}{% if property.default is not null %}, options={"default": "{{ property.default }}"}{% endif %})
+     * @ORM\Column(type="{{ property.doctrine_type }}"{% if property.length %}, length={{ property.length }}{% endif %}{% if property.nullable %}, nullable=true{% endif %}{% if property.default is not null %}, options={"default": "{{ property.default }}"}{% endif %}{% if property.has_enum_class is defined and property.has_enum_class %}, enumType="{{ property.enum_fqn }}"{% endif %})
      */
 {% endif %}
 {% else %}
@@ -76,12 +76,12 @@ class {{ entity_name }}
 {% if property.auto_increment %}
     #[ORM\GeneratedValue]
 {% endif %}
-    #[ORM\Column(type: '{{ property.doctrine_type }}'{% if property.length %}, length: {{ property.length }}{% endif %}{% if not property.nullable %}, nullable: false{% endif %})]
+    #[ORM\Column(type: '{{ property.doctrine_type }}'{% if property.length %}, length: {{ property.length }}{% endif %}{% if not property.nullable %}, nullable: false{% endif %}{% if property.has_enum_class is defined and property.has_enum_class %}, enumType: {{ property.enum_class }}::class{% endif %})]
 {% else %}
-    #[ORM\Column(type: '{{ property.doctrine_type }}'{% if property.length %}, length: {{ property.length }}{% endif %}{% if property.nullable %}, nullable: true{% endif %}{% if property.default is not null %}, options: ['default' => '{{ property.default }}']{% endif %})]
+    #[ORM\Column(type: '{{ property.doctrine_type }}'{% if property.length %}, length: {{ property.length }}{% endif %}{% if property.nullable %}, nullable: true{% endif %}{% if property.default is not null %}, options: ['default' => '{{ property.default }}']{% endif %}{% if property.has_enum_class is defined and property.has_enum_class %}, enumType: {{ property.enum_class }}::class{% endif %})]
 {% endif %}
 {% endif %}
-    private {{ property.type }} ${{ property.name }}{% if property.default is not null and property.type == 'string' %} = '{{ property.default }}'{% elseif property.default is not null and property.default != 'CURRENT_TIMESTAMP' and property.default != 'G' %} = {{ property.default }}{% elseif property.nullable and not property.is_primary %} = null{% endif %};
+    private {% if property.has_enum_class is defined and property.has_enum_class %}{% if property.nullable %}?{% endif %}{{ property.enum_class }}{% else %}{{ property.type }}{% endif %} ${{ property.name }}{% if property.default is not null and property.type == 'string' %} = '{{ property.default }}'{% elseif property.default is not null and property.default != 'CURRENT_TIMESTAMP' and property.default != 'G' %} = {{ property.default }}{% elseif property.nullable and not property.is_primary %} = null{% endif %};
 
 {% endfor %}
 {% for relation in relations %}
@@ -104,7 +104,7 @@ class {{ entity_name }}
     /**
      * Getter for {{ property.name }}
      */
-    public function {{ property.getter_name }}(): {{ property.type }}
+    public function {{ property.getter_name }}(): {% if property.has_enum_class is defined and property.has_enum_class %}{% if property.nullable %}?{% endif %}{{ property.enum_class }}{% else %}{{ property.type }}{% endif %}
     {
         return $this->{{ property.name }};
     }
@@ -112,7 +112,7 @@ class {{ entity_name }}
     /**
      * Setter for {{ property.name }}
      */
-    public function {{ property.setter_name }}({{ property.type }} ${{ property.name }}): static
+    public function {{ property.setter_name }}({% if property.has_enum_class is defined and property.has_enum_class %}{% if property.nullable %}?{% endif %}{{ property.enum_class }}{% else %}{{ property.type }}{% endif %} ${{ property.name }}): static
     {
         $this->{{ property.name }} = ${{ property.name }};
         return $this;
